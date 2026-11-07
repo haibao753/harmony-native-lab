@@ -10,7 +10,7 @@
 
 ## 重要状态说明
 
-这些文件是首轮原生源码实现，不等同于完整 DevEco Studio 工程。仓库尚未包含由特定 DevEco Studio / HarmonyOS SDK 版本生成的 `hvigor`、`oh-package`、`module.json5` 等工程配置。用户当前没有安装 DevEco Studio，目标设备系统版本与 API Level 也尚未核实，因此不能声称源码已构建或已在 MatePad 真机运行。
+这些文件是首轮原生源码实现，不等同于完整 DevEco Studio 工程。仓库尚未包含由特定 DevEco Studio / HarmonyOS SDK 版本生成的 `hvigor`、`oh-package`、`module.json5` 等工程配置。用户已安装 DevEco Studio，目标平板系统为 HarmonyOS 7.0.0；本机 IDE 版本和 API 26 SDK 安装情况仍待核验，不能声称源码已构建或已在 MatePad 真机运行。
 
 下一步应先用目标 SDK 的官方 Stage 模板补齐工程外壳，再编译并修正任何 ArkTS 版本差异。Canvas、PanGesture 和 ArkUI 组件属性均须以实际 SDK 类型定义为准。
 
@@ -22,14 +22,6 @@
 - 当前没有内置 C++ 编译执行器，也没有 AI 手绘识别。
 
 
-## Generate the official Stage project shell
+## 生成官方 Stage 工程
 
-From the repository root, on a machine/runner with the official API 26 toolchain configured:
-
-```bash
-bash scripts/bootstrap-algolab-stage.sh
-cd dist/AlgoLab-Stage
-devecocli build --modules entry --build-mode debug
-```
-
-The script uses the official Empty Ability template and overlays the tracked AlgoLab source. It does not create or guess HarmonyOS project metadata.
+优先使用 Windows 本机的 DevEco Studio 官方向导创建工程并接入这三个源码文件，详见[本机开发指南](../../../docs/development-guide.md)。Linux CLI 脚本属于可选路线，尚未在 API 26 环境中实测。
