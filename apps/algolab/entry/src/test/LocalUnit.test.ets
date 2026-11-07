@@ -1,33 +1,46 @@
-import { describe, beforeAll, beforeEach, afterEach, afterAll, it, expect } from '@ohos/hypium';
+import { describe, it, expect } from '@ohos/hypium';
+import {
+  addNode,
+  createEmptyDocument,
+  findNode,
+  setNext,
+  setNodeValue
+} from '../main/ets/domain/LinkedListModel';
 
 export default function localUnitTest() {
-  describe('localUnitTest', () => {
-    // Defines a test suite. Two parameters are supported: test suite name and test suite function.
-    beforeAll(() => {
-      // Presets an action, which is performed only once before all test cases of the test suite start.
-      // This API supports only one parameter: preset action function.
+  describe('LinkedListModel', () => {
+    it('updates node data without changing its next reference', 0, () => {
+      let document = createEmptyDocument();
+      document = addNode(document, 10, 0, 0);
+      document = addNode(document, 20, 160, 0);
+
+      const firstId = document.nodes[0].id;
+      const secondId = document.nodes[1].id;
+      const linkedDocument = setNext(document, firstId, secondId);
+      expect(linkedDocument !== null).assertTrue();
+
+      if (linkedDocument !== null) {
+        const updatedDocument = setNodeValue(linkedDocument, firstId, 42);
+        expect(updatedDocument !== null).assertTrue();
+
+        if (updatedDocument !== null) {
+          const updatedNode = findNode(updatedDocument, firstId);
+          expect(updatedNode !== null).assertTrue();
+          if (updatedNode !== null) {
+            expect(updatedNode.value).assertEqual(42);
+            expect(updatedNode.nextId).assertEqual(secondId);
+          }
+        }
+      }
     });
-    beforeEach(() => {
-      // Presets an action, which is performed before each unit test case starts.
-      // The number of execution times is the same as the number of test cases defined by **it**.
-      // This API supports only one parameter: preset action function.
-    });
-    afterEach(() => {
-      // Presets a clear action, which is performed after each unit test case ends.
-      // The number of execution times is the same as the number of test cases defined by **it**.
-      // This API supports only one parameter: clear action function.
-    });
-    afterAll(() => {
-      // Presets a clear action, which is performed after all test cases of the test suite end.
-      // This API supports only one parameter: clear action function.
-    });
-    it('assertContain', 0, () => {
-      // Defines a test case. This API supports three parameters: test case name, filter parameter, and test case function.
-      let a = 'abc';
-      let b = 'b';
-      // Defines a variety of assertion methods, which are used to declare expected boolean conditions.
-      expect(a).assertContain(b);
-      expect(a).assertEqual(a);
+
+    it('rejects non-integer values and unknown node ids', 0, () => {
+      let document = createEmptyDocument();
+      document = addNode(document, 10, 0, 0);
+      const nodeId = document.nodes[0].id;
+
+      expect(setNodeValue(document, nodeId, 1.5) === null).assertTrue();
+      expect(setNodeValue(document, 'missing', 20) === null).assertTrue();
     });
   });
 }
