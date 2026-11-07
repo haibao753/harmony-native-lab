@@ -10,10 +10,11 @@
 
 | 项目 | 记录 |
 |---|---|
-| DevEco Studio | 待填写 |
-| HarmonyOS SDK / API Level | 待填写 |
+| DevEco Studio | 26.0.0 Release（建议与 SDK 配套） |
+| HarmonyOS SDK / API Level | HarmonyOS 26.0.0 Release / API 26 |
+
 | 设备型号 | Huawei MatePad Pro 13.2 |
-| 设备系统版本 | 待填写 |
+| 设备系统版本 | HarmonyOS 7.0.0（API 26.0.0） |
 | 构建时间与结果 | 待首次构建后填写 |
 
 ## 2. 创建首个工程
@@ -53,18 +54,36 @@
 
 ## 6. 云端命令行构建（无需安装 DevEco Studio 图形界面）
 
-华为官方支持使用 HarmonyOS Command Line Tools + Hvigor 在 Linux、Windows 和 macOS 上构建 HAP，也明确将该方式用于 CI 流水线。命令行工具包内含 HarmonyOS SDK；Linux 构建环境要求 64 位系统、GLIBC 2.28 或更高，官方建议内存至少 8GB、磁盘 100GB 及以上。
+华为官方支持使用 HarmonyOS Command Line Tools + Hvigor 在 Linux、Windows 和 macOS 上构建 HAP，也明确将该方式用于 CI 流水线。命令行工具包内含 HarmonyOS SDK。官方 Linux 流水线指南建议使用 32GB 及以上内存、100GB 及以上磁盘；实际云端环境还需核对系统库和工具链兼容性。
 
 建议流程：
 
-1. 先确认目标平板的 HarmonyOS 完整版本，并据此选择兼容的 Command Line Tools / SDK。
-2. 获取官方 Command Line Tools，按华为文档配置 JDK、Node.js、hvigorw、ohpm 和 hdc。
-3. 用 DevEco 官方 Stage 模板或匹配版本的模板生成完整工程配置；不要手写猜测 `hvigor`、`module.json5` 或签名配置。
-4. 在 Linux CI 环境安装依赖后执行 `hvigorw assembleHap --mode module -p product=default -p buildMode=debug --no-daemon`。
-5. 若要安装到真机，还需按官方流程准备调试签名文件；证书、Profile、私钥和密码不得提交到 GitHub 仓库。
+1. 目标设备已确认运行 HarmonyOS 7.0.0；华为官方版本表对应 API 26.0.0。
+2. 选择 HarmonyOS 26.0.0 Release SDK，以及配套的 DevEco Studio / Command Line Tools 26.0.0 Release。官方 DevEco Studio 26.0.0.865 发布说明列出了配套 SDK、Hvigor、ohpm 和 Node.js 版本。
+3. 可使用官方 DevEco CLI 按 API 26 创建 Stage 工程（例如 `devecocli create --project-path ./AlgoLab --app-name AlgoLab --bundle-name com.haibao.algolab --api-level 26`），也可用匹配版本的官方 Stage 模板。不要手写猜测 `hvigor`、`module.json5` 或签名配置。
+4. 获取官方 Command Line Tools，按华为文档配置其自带的 Node.js、hvigorw、ohpm 和 hdc。命令行工具内含匹配的 HarmonyOS SDK。
+5. 在 Linux CI 环境按官方流水线文档安装系统依赖并执行与该工具版本匹配的 Hvigor 构建任务。具体命令以 26.0.0 工具包内的模板与帮助信息为准。
+6. 若要安装到真机，还需按官方流程准备调试签名文件；证书、Profile、私钥和密码不得提交到 GitHub 仓库。
 
 参考：
 - [华为官方：搭建命令行构建流水线](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ide-command-line-building-app/)
 - [华为官方：Hvigor 命令行工具](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/ide-hvigor-commandline/)
 
-当前仓库尚未生成完整 Stage 工程，因此暂不添加会失败的 GitHub Actions 构建工作流。待工程外壳与 SDK 版本确定后，再加入 CI 构建和产物归档。
+当前仓库尚未生成完整 Stage 工程，因此暂不添加会失败的 GitHub Actions 构建工作流。设备系统与 API 对应关系已确认，下一步应使用官方 26.0.0 CLI / 模板生成工程外壳，再加入 CI 构建和产物归档。
+
+
+## 7. 已确认的 AlgoLab 目标版本
+
+- 目标设备系统：HarmonyOS 7.0.0。
+- 对应 API：26.0.0（API 26）。
+- 开发套件：HarmonyOS SDK 26.0.0 Release。
+- 推荐工具配套：DevEco Studio 26.0.0 Release 与同版本 Command Line Tools。
+- 官方发布说明示例版本：DevEco Studio / Command Line Tools 26.0.0.865。
+
+版本依据：
+- [华为官方：API 版本与设备系统对应表](https://developer.huawei.com/consumer/en/doc/harmonyos-releases/sdk-version-percentage/)
+- [华为官方：升级适配至 API 26.0.0](https://developer.huawei.com/consumer/en/doc/harmonyos-releases/upgrade-adaptation)
+- [华为官方：DevEco Studio 26.0.0 Release 说明](https://developer.huawei.com/consumer/cn/doc/doccenter-release-notes/deveco-studio-new-features-2600/)
+- [华为官方：DevEco CLI 创建与构建命令](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ide-deveco-cli-options/)
+
+注意：API 版本对应关系已经确认，但工程模板、具体 API 签名与 HAP 构建仍需用匹配的 26.0.0 工具链实际验证。
