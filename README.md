@@ -14,13 +14,13 @@
 
 ## 目标设备与开发环境
 
-- 主要体验设备：Huawei MatePad Pro 13.2（2023 款；具体系统版本与 API 能力待实机确认）。
-- IDE：DevEco Studio（用户当前尚未安装）。
+- 主要体验设备：Huawei MatePad Pro 13.2（2023 款；系统版本已确认为 HarmonyOS 7.0.0，最终设备兼容性仍需 HAP 真机验证）。
+- IDE：不强制安装 DevEco Studio；优先尝试官方 Command Line Tools + DevEco CLI 云端构建。
 - SDK：HarmonyOS 26.0.0 Release（API 26），对应目标设备 HarmonyOS 7.0.0。
 - 语言与 UI：ArkTS + ArkUI。
 - 应用模型：Stage 模型。
 
-请基于当前 DevEco Studio 和 HarmonyOS SDK 创建官方 Stage 工程。不同版本的工程模板、构建配置和 API 签名可能不同，因此仓库不会伪造未经 SDK 验证的 hvigor 配置，也不会声称未执行的构建已经通过。
+使用官方 DevEco CLI 的 API 26 Empty Ability 模板生成 Stage 工程，见 [工程生成脚本](scripts/README.md)。不同版本的工程模板、构建配置和 API 签名可能不同，因此仓库不会伪造未经 SDK 验证的 hvigor 配置，也不会声称未执行的构建已经通过。
 
 ## 仓库结构
 
@@ -52,7 +52,7 @@ harmony-native-lab/
 - [AlgoLab 交互设计](docs/INTERACTION_DESIGN.md)
 - [AlgoLab 技术架构](docs/TECHNICAL_ARCHITECTURE.md)
 - [首轮实现记录与验收场景](docs/IMPLEMENTATION_LOG.md)
-- [开发环境与工作流](docs/development-guide.md)
+- [开发环境与工作流](docs/development-guide.md)\n- [官方 Stage 工程生成脚本](scripts/README.md)
 - [仓库通用架构约定](docs/architecture.md)
 - [AlgoLab 应用入口](apps/algolab/README.md)
 
@@ -67,4 +67,4 @@ harmony-native-lab/
 
 ## 当前状态
 
-目标设备版本已确认：HarmonyOS 7.0.0，对应 API 26.0.0；工具链按 HarmonyOS SDK / DevEco 26.0.0 Release 规划。当前仓库处于**产品方案与首轮源码原型阶段**。已提交产品需求、交互设计、技术架构和首轮 ArkTS 源码；尚未补齐 DevEco Studio 生成的 Stage 工程配置，也没有经过目标 HarmonyOS SDK 编译或 MatePad 真机验证。当前连接交互仍采用选择起点、再选择目标的方式；直接拖拽连接端口、内存视图和 C++ 真正编译执行仍待实现。
+目标设备版本已确认：HarmonyOS 7.0.0，对应 API 26.0.0；工具链按 HarmonyOS SDK / DevEco 26.0.0 Release 规划。当前仓库处于**首轮源码原型与工程引导脚本阶段**。已提交产品需求、交互设计、技术架构、ArkTS 源码和官方 CLI 工程生成脚本；完整 Stage 工程仍需在装有 API 26 Command Line Tools 的环境中生成，尚未经过 HarmonyOS SDK 编译或 MatePad 真机验证。当前连接交互仍采用选择起点、再选择目标的方式；直接拖拽连接端口、内存视图和 C++ 真正编译执行仍待实现。
