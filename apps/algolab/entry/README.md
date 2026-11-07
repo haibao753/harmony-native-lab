@@ -20,3 +20,16 @@
 - 连接采用“选中起点 → 点击连接 next → 选择目标节点”的可靠交互；后续真机验证后再升级为直接拖拽连接端口。
 - 首轮代码面板只读，代码由结构模型确定性生成。
 - 当前没有内置 C++ 编译执行器，也没有 AI 手绘识别。
+
+
+## Generate the official Stage project shell
+
+From the repository root, on a machine/runner with the official API 26 toolchain configured:
+
+```bash
+bash scripts/bootstrap-algolab-stage.sh
+cd dist/AlgoLab-Stage
+devecocli build --modules entry --build-mode debug
+```
+
+The script uses the official Empty Ability template and overlays the tracked AlgoLab source. It does not create or guess HarmonyOS project metadata.
