@@ -35,7 +35,7 @@ harmony-native-lab/
 │   ├── INTERACTION_DESIGN.md
 │   ├── TECHNICAL_ARCHITECTURE.md
 │   └── IMPLEMENTATION_LOG.md
-├── scripts/
+├── .github/\n│   └── workflows/\n│       └── algolab-bootstrap-check.yml\n├── scripts/
 │   ├── README.md
 │   └── bootstrap-algolab-stage.sh
 ├── apps/
@@ -56,7 +56,7 @@ harmony-native-lab/
 - [AlgoLab 技术架构](docs/TECHNICAL_ARCHITECTURE.md)
 - [首轮实现记录与验收场景](docs/IMPLEMENTATION_LOG.md)
 - [开发环境与工作流](docs/development-guide.md)
-- [官方 Stage 工程生成脚本](scripts/README.md)
+- [官方 Stage 工程生成脚本](scripts/README.md)\n- [GitHub Actions 轻量检查](.github/workflows/algolab-bootstrap-check.yml)
 - [仓库通用架构约定](docs/architecture.md)
 - [AlgoLab 应用入口](apps/algolab/README.md)
 
