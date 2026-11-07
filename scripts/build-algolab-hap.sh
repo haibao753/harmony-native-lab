@@ -19,6 +19,14 @@ fi
 mkdir -p "$OUTPUT_ROOT"
 bash "$ROOT_DIR/scripts/bootstrap-algolab-stage.sh" "$STAGE_DIR"
 
+echo "Installing project and entry-module dependencies..."
+if [[ -f "$STAGE_DIR/oh-package.json5" ]]; then
+  (cd "$STAGE_DIR" && ohpm install --all)
+fi
+if [[ -f "$STAGE_DIR/entry/oh-package.json5" ]]; then
+  (cd "$STAGE_DIR/entry" && ohpm install --all)
+fi
+
 echo "Building entry HAP with the official DevEco CLI..."
 (
   cd "$STAGE_DIR"
