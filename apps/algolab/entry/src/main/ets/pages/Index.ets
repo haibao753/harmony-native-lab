@@ -9,7 +9,8 @@ import {
   findNode,
   moveNode,
   setHead,
-  setNext
+  setNext,
+  setNodeValue
 } from '../domain/LinkedListModel';
 import { generateCpp } from '../codegen/CppLinkedListGenerator';
 
@@ -92,6 +93,7 @@ struct NodeCard {
 struct Index {
   @State @Watch('drawConnections') document: LinkedListDocument = createEmptyDocument();
   @State selectedId: string = '';
+  @State valueInput: string = '';
   @State connectionSourceId: string = '';
   @State showCode: boolean = false;
   @State generatedCode: string = '';
@@ -112,7 +114,13 @@ struct Index {
     this.refreshDerivedState();
   }
 
+  private syncSelectedValueInput(): void {
+    const selectedNode = findNode(this.document, this.selectedId);
+    this.valueInput = selectedNode === null ? '' : selectedNode.value.toString();
+  }
+
   private refreshDerivedState(): void {
+    this.syncSelectedValueInput();
     const generated = generateCpp(this.document);
     this.generatedCode = generated.code;
     this.warnings = generated.warnings;
@@ -152,7 +160,8 @@ struct Index {
     const nextDocument = addNode(this.document, value, x, y);
     this.applyDocument(nextDocument);
     this.selectedId = nodeId;
-    this.message = '已创建 ' + nodeId + '。试着选择它，再连接到另一个节点。';
+    this.syncSelectedValueInput();
+    this.message = '已创建 ' + nodeId + '。可以修改 data，再尝试连接其他节点。';
   }
 
   private handleNodeTap(nodeId: string): void {
@@ -163,12 +172,33 @@ struct Index {
       if (nextDocument !== null) {
         this.applyDocument(nextDocument);
         this.selectedId = nodeId;
+        this.syncSelectedValueInput();
         this.message = sourceId + ' 的 next 现在指向 ' + nodeId + '。';
       }
       return;
     }
     this.selectedId = nodeId;
-    this.message = '已选择 ' + nodeId + '。可以设为 head、连接 next 或断开 next。';
+    this.syncSelectedValueInput();
+    this.message = '已选择 ' + nodeId + '。可以修改 data、设为 head 或连接 next。';
+  }
+
+  private applySelectedValue(): void {
+    if (this.selectedId === '') {
+      this.message = '请先选择一个节点。';
+      return;
+    }
+    const rawValue = this.valueInput.trim();
+    const nextValue = Number(rawValue);
+    if (rawValue.length === 0 || nextValue % 1 !== 0) {
+      this.message = '请输入有效整数，例如 10 或 -3。';
+      return;
+    }
+    const nodeId = this.selectedId;
+    const nextDocument = setNodeValue(this.document, nodeId, nextValue);
+    if (nextDocument !== null) {
+      this.applyDocument(nextDocument);
+      this.message = nodeId + '.data 已更新为 ' + nextValue.toString() + '，生成的 C++ 代码已同步。';
+    }
   }
 
   private beginConnection(): void {
@@ -220,6 +250,7 @@ struct Index {
       this.applyDocument(nextDocument);
       this.selectedId = '';
       this.connectionSourceId = '';
+      this.syncSelectedValueInput();
       this.message = '已删除 ' + removedId + '，指向它的 next 已断开；可以撤销恢复。';
     }
   }
@@ -352,6 +383,20 @@ struct Index {
         Button('删除节点')
           .type(ButtonType.Normal)
           .onClick(() => this.deleteSelectedNode())
+        if (this.selectedId !== '') {
+          Text(this.selectedId + '.data')
+            .fontSize(12)
+            .fontColor('#52616B')
+          TextInput({ text: this.valueInput, placeholder: '整数' })
+            .width(96)
+            .height(40)
+            .onChange((value: string) => {
+              this.valueInput = value;
+            })
+          Button('应用')
+            .type(ButtonType.Normal)
+            .onClick(() => this.applySelectedValue())
+        }
         Button('撤销')
           .enabled(this.canUndo)
           .type(ButtonType.Normal)
