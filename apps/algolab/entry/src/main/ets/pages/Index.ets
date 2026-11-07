@@ -14,8 +14,8 @@ import { generateCpp } from '../codegen/CppLinkedListGenerator';
 
 @Component
 struct NodeCard {
-  @Prop node: LinkedNode;
-  @Prop selected: boolean;
+  @Prop node: LinkedNode = { id: 'N0', value: 0, nextId: null, x: 0, y: 0 };
+  @Prop selected: boolean = false;
   onTap: (id: string) => void = (id: string) => {};
   onMove: (id: string, x: number, y: number) => void =
     (id: string, x: number, y: number) => {};
