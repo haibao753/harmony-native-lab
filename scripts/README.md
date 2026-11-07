@@ -2,7 +2,7 @@
 
 ## Generate a real HarmonyOS Stage project
 
-Run from a machine or CI runner with Huawei's **Command Line Tools 26.0.0 Release** and the official DevEco CLI configured:
+Run from a machine or CI runner with Huawei's **Command Line Tools 26.0.0 Release** and the official DevEco CLI configured. The user does not need the DevEco Studio graphical IDE.\n\nInstall the CLI after configuring the matching Command Line Tools and Node.js:\n\n```bash\nnpm install -g @deveco/deveco-cli@latest\ndevecocli help\n```\n\nThen run:
 
 ```bash
 bash scripts/bootstrap-algolab-stage.sh
