@@ -59,3 +59,11 @@
 ## 验证声明
 
 本轮只完成了 GitHub 源码写入与静态审阅，没有 DevEco Studio / HarmonyOS SDK 构建环境，也没有 MatePad 真机测试。不能将当前源码描述为已构建、已安装或已运行。
+
+
+## 云端工具链接入准备（本轮）
+
+- 新增 `scripts/build-algolab-hap.sh`：先生成 API 26 Stage 工程，再调用官方 DevEco CLI 构建 entry HAP，并收集实际生成的 `.hap` 文件。
+- 新增 `.github/workflows/algolab-harmonyos-hap.yml`：手动触发，要求带 `harmonyos-api-26` 标签的 Linux self-hosted runner；先验证 glibc、内存、可用磁盘和 SDK 路径，再构建并上传 HAP。
+- 新增 `docs/cloud-build-runner.md`：记录云端 VM 规格、华为工具包获取与完整性校验、GitHub Runner 注册和安全要求。
+- **尚未接通实际云端机器**：当前没有可供本次会话使用的云厂商账号或已注册 Runner，也没有可直接安装的华为 Command Line Tools 下载包。没有声称已经执行 HAP 构建。
