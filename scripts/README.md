@@ -1,6 +1,6 @@
 # AlgoLab build scripts
 
-Windows DevEco Studio is the primary workflow; see the [local development guide](../docs/development-guide.md). The Linux scripts and self-hosted runner below are optional and have not yet been validated with the API 26 SDK.
+Windows DevEco Studio is the primary workflow: open the existing official Stage project at `apps/algolab`; see the [local development guide](../docs/development-guide.md). The Linux scripts below are a historical optional route for generating a separate project and have not been validated with API 26. They are not needed to open or build the existing project.
 
 ## Optional Linux prerequisites
 
