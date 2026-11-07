@@ -49,3 +49,22 @@
 - `fix/<topic>`：问题修复。
 - 提交信息使用简洁前缀，例如 `feat:`、`fix:`、`docs:`、`chore:`。
 - 大功能通过 PR 合并，并在 PR 描述中附测试证据。
+
+
+## 6. 云端命令行构建（无需安装 DevEco Studio 图形界面）
+
+华为官方支持使用 HarmonyOS Command Line Tools + Hvigor 在 Linux、Windows 和 macOS 上构建 HAP，也明确将该方式用于 CI 流水线。命令行工具包内含 HarmonyOS SDK；Linux 构建环境要求 64 位系统、GLIBC 2.28 或更高，官方建议内存至少 8GB、磁盘 100GB 及以上。
+
+建议流程：
+
+1. 先确认目标平板的 HarmonyOS 完整版本，并据此选择兼容的 Command Line Tools / SDK。
+2. 获取官方 Command Line Tools，按华为文档配置 JDK、Node.js、hvigorw、ohpm 和 hdc。
+3. 用 DevEco 官方 Stage 模板或匹配版本的模板生成完整工程配置；不要手写猜测 `hvigor`、`module.json5` 或签名配置。
+4. 在 Linux CI 环境安装依赖后执行 `hvigorw assembleHap --mode module -p product=default -p buildMode=debug --no-daemon`。
+5. 若要安装到真机，还需按官方流程准备调试签名文件；证书、Profile、私钥和密码不得提交到 GitHub 仓库。
+
+参考：
+- [华为官方：搭建命令行构建流水线](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ide-command-line-building-app/)
+- [华为官方：Hvigor 命令行工具](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/ide-hvigor-commandline/)
+
+当前仓库尚未生成完整 Stage 工程，因此暂不添加会失败的 GitHub Actions 构建工作流。待工程外壳与 SDK 版本确定后，再加入 CI 构建和产物归档。
