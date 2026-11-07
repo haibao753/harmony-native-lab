@@ -1,0 +1,40 @@
+name: AlgoLab bootstrap checks
+
+on:
+  pull_request:
+    paths:
+      - "scripts/**"
+      - "apps/algolab/entry/src/main/ets/**"
+      - ".github/workflows/algolab-bootstrap-check.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/**"
+      - "apps/algolab/entry/src/main/ets/**"
+      - ".github/workflows/algolab-bootstrap-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap-script:
+    name: Validate bootstrap script and source inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check Bash syntax
+        run: bash -n scripts/bootstrap-algolab-stage.sh
+
+      - name: Verify source overlay inputs
+        run: |
+          test -s apps/algolab/entry/src/main/ets/domain/LinkedListModel.ets
+          test -s apps/algolab/entry/src/main/ets/codegen/CppLinkedListGenerator.ets
+          test -s apps/algolab/entry/src/main/ets/pages/Index.ets
+
+      - name: Verify API 26 bootstrap guard
+        run: |
+          grep -Fq 'API_LEVEL:-26' scripts/bootstrap-algolab-stage.sh
+          grep -Fq 'devecocli create' scripts/bootstrap-algolab-stage.sh
