@@ -1,0 +1,114 @@
+name: AlgoLab HarmonyOS HAP Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: algolab-harmonyos-hap-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-hap:
+    name: Build API 26 HAP on dedicated runner
+    # Register a Linux cloud VM as a self-hosted runner with the
+    # additional label "harmonyos-api-26".
+    runs-on: [self-hosted, linux, harmonyos-api-26]
+    timeout-minutes: 90
+    env:
+      COMMANDLINE_TOOL_DIR: ${{ vars.HARMONYOS_COMMANDLINE_TOOL_DIR || '/opt/command-line-tools' }}
+      JAVA_HOME: ${{ vars.HARMONYOS_JAVA_HOME || '/opt/jdk-21' }}
+      DEVECO_SDK_HOME: ${{ vars.HARMONYOS_SDK_HOME || '/opt/command-line-tools/sdk' }}
+
+    steps:
+      - name: Check out selected branch
+        uses: actions/checkout@v4
+
+      - name: Validate cloud runner resources and toolchain paths
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          arch="$(uname -m)"
+          case "$arch" in
+            x86_64|aarch64) ;;
+            *)
+              echo "Unsupported Linux architecture: $arch" >&2
+              exit 10
+              ;;
+          esac
+
+          libc_version="$(getconf GNU_LIBC_VERSION | awk '{print $2}')"
+          if [[ "$(printf '%s\n' 2.28 "$libc_version" | sort -V | head -n1)" != "2.28" ]]; then
+            echo "glibc $libc_version is below Huawei's documented 2.28 minimum." >&2
+            exit 11
+          fi
+
+          memory_kb="$(awk '/MemTotal/ {print $2}' /proc/meminfo)"
+          if (( memory_kb < 8 * 1024 * 1024 )); then
+            echo "At least 8 GiB RAM is required; detected $((memory_kb / 1024)) MiB." >&2
+            exit 12
+          fi
+
+          available_kb="$(df -Pk "$RUNNER_TEMP" | awk 'NR==2 {print $4}')"
+          if (( available_kb < 100 * 1024 * 1024 )); then
+            echo "At least 100 GiB free disk is required; detected $((available_kb / 1024 / 1024)) GiB." >&2
+            exit 13
+          fi
+
+          test -d "$COMMANDLINE_TOOL_DIR"
+          test -d "$DEVECO_SDK_HOME/default/openharmony"
+          test -x "$JAVA_HOME/bin/java"
+
+          for path in \
+            "$COMMANDLINE_TOOL_DIR/node/bin" \
+            "$COMMANDLINE_TOOL_DIR/hvigor/bin" \
+            "$COMMANDLINE_TOOL_DIR/command-line-tools/bin" \
+            "$COMMANDLINE_TOOL_DIR/bin" \
+            "$DEVECO_SDK_HOME/default/openharmony/toolchains" \
+            "$JAVA_HOME/bin"; do
+            if [[ -d "$path" ]]; then
+              echo "$path" >> "$GITHUB_PATH"
+            fi
+          done
+
+          echo "Runner architecture: $arch"
+          echo "glibc: $libc_version"
+          echo "RAM: $((memory_kb / 1024 / 1024)) GiB"
+          echo "Free disk: $((available_kb / 1024 / 1024)) GiB"
+
+      - name: Install DevEco CLI
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npm install --global @deveco/deveco-cli@latest
+          devecocli help >/dev/null
+
+      - name: Verify toolchain
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node --version
+          java -version
+          hvigorw -v
+          ohpm -v
+          hdc -v
+          devecocli help | head -n 20
+
+      - name: Generate Stage project and build HAP
+        shell: bash
+        env:
+          BUILD_OUTPUT_ROOT: ${{ runner.temp }}/algolab-build-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -Eeuo pipefail
+          bash scripts/build-algolab-hap.sh "$BUILD_OUTPUT_ROOT"
+
+      - name: Upload HAP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AlgoLab-API26-HAP-${{ github.sha }}
+          path: ${{ runner.temp }}/algolab-build-${{ github.run_id }}-${{ github.run_attempt }}/artifacts/*.hap
+          if-no-files-found: error
+          retention-days: 14
