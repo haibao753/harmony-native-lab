@@ -36,6 +36,12 @@ AlgoLab 不替代华为笔记、系统浏览器、课程平台或通用 AI 助�
 
 - [首轮实现记录与手动验收场景](../../docs/IMPLEMENTATION_LOG.md)
 
+## 目标平台
+
+- 设备系统：HarmonyOS 7.0.0
+- 对应 API：26.0.0（API 26）
+- 工具链：HarmonyOS SDK / DevEco 26.0.0 Release
+
 ## 工程状态
 
 已开始编写 ArkTS / ArkUI 源码，但尚未补齐 DevEco Studio 生成的 Stage 工程配置，尚未完成 SDK 编译或 MatePad 真机验证。当前连接操作采用选择起点与目标节点的方式；节点删除和撤销已纳入首轮页面。直接拖拽连接端口、内存视图、节点值编辑和 C++ 真正编译执行仍在后续阶段。
