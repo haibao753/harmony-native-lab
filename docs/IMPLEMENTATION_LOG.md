@@ -25,9 +25,18 @@
   - 撤销和重做；
   - 展开 C++ 代码面板。
 
-## 本轮新增的工程引导\n\n- 新增 `scripts/bootstrap-algolab-stage.sh`：通过华为官方 DevEco CLI 创建 API 26 Empty Ability Stage 工程，再覆盖 AlgoLab 的领域模型、C++ 生成器与 ArkUI 页面。\n- 新增 `scripts/README.md`：记录 CLI 前置条件、生成方式、构建命令与云端资源约束。\n- 新增 `.github/workflows/algolab-bootstrap-check.yml`：在 GitHub Actions 中检查引导脚本 Bash 语法和源码输入文件是否存在；它不是 HarmonyOS SDK 编译。\n- 已从 GitHub 重新读取并核对上述文件。\n- **尚未执行脚本**：当前没有已配置 API 26 Command Line Tools 的可用构建运行器，因此没有声称 Stage 工程已生成或 HAP 已构建。\n\n## 尚未完成
+## 本轮新增的工程引导
 
-- 在具备官方 Command Line Tools 26.0.0 的运行器中执行 Stage 工程生成脚本；\n- SDK/API Level 对应的 ArkTS 编译验证；
+- 新增 `scripts/bootstrap-algolab-stage.sh`：通过华为官方 DevEco CLI 创建 API 26 Empty Ability Stage 工程，再覆盖 AlgoLab 的领域模型、C++ 生成器与 ArkUI 页面。
+- 新增 `scripts/README.md`：记录 CLI 前置条件、生成方式、构建命令与云端资源约束。
+- 新增 `.github/workflows/algolab-bootstrap-check.yml`：在 GitHub Actions 中检查引导脚本 Bash 语法和源码输入文件是否存在；它不是 HarmonyOS SDK 编译。
+- 已从 GitHub 重新读取并核对上述文件。
+- **尚未执行脚本**：当前没有已配置 API 26 Command Line Tools 的可用构建运行器，因此没有声称 Stage 工程已生成或 HAP 已构建。
+
+## 尚未完成
+
+- 在具备官方 Command Line Tools 26.0.0 的运行器中执行 Stage 工程生成脚本；
+- SDK/API Level 对应的 ArkTS 编译验证；
 - SDK/API Level 确认及 ArkTS 编译；
 - MatePad Pro 13.2 真机手势、布局和性能验证；
 - 直接拖拽连接端口；
