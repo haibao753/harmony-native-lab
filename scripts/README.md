@@ -51,3 +51,8 @@ Huawei documents this command as the CLI route for building a module HAP. The ma
 The repository does not yet contain a CI workflow that downloads Huawei's proprietary Command Line Tools. Huawei directs developers to obtain the package from its Download Center and verify its integrity. The Linux pipeline guide specifies 64-bit Linux, GLIBC 2.28+, at least 8 GB RAM, and 100 GB disk (16 GB RAM recommended).
 
 A GitHub-hosted standard runner must not be assumed to satisfy those requirements. Before enabling automatic HAP builds, provision a runner with the documented resources and a legally obtained, checksum-verified Command Line Tools package. Never commit signing certificates, private keys, or passwords.
+
+
+## Lightweight GitHub Actions check
+
+`.github/workflows/algolab-bootstrap-check.yml` runs on relevant pull requests and main-branch changes. It checks Bash syntax and verifies that the three ArkTS overlay inputs exist. This is a lightweight repository check only; it does **not** install the HarmonyOS SDK, compile ArkTS, or produce a HAP.
