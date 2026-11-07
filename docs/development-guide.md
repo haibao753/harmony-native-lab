@@ -1,89 +1,34 @@
 # HarmonyOS 原生开发指南
 
-## 1. 目标平台
+## 目标与状态
 
-- 主要设备：Huawei MatePad Pro 13.2（2023 款）。
-- 设备系统：HarmonyOS 7.0.0（用户确认）。
-- 对应开发 API：HarmonyOS 26.0.0 Release / API 26。
-- 推荐工具链：Command Line Tools 26.0.0 Release。
-- 技术栈：ArkTS + ArkUI + Stage 模型。
+- 开发电脑：Windows 11，用户已安装 DevEco Studio；安装版本和 SDK 组件仍需在本机核验。
+- 目标工具链：DevEco Studio 26.0.0 Release 与 HarmonyOS SDK API 26；目标平板为 HarmonyOS 7.0.0。
+- 技术栈：ArkTS、ArkUI、Stage 模型。
+- 当前仓库只有源码原型，尚无由官方工具生成的完整 Stage 工程，也没有已验证的 HAP。现有 GitHub Actions 轻量检查不编译 ArkTS。
 
-DevEco Studio 图形界面不是强制条件。本项目优先采用华为官方 Command Line Tools + DevEco CLI 生成工程和构建 HAP。
+## 本机创建官方工程
 
-## 2. 工具链准备
+1. 在 DevEco Studio 的 About 中核对版本，在 SDK Manager 确认安装 HarmonyOS SDK API 26；实际界面和选项以安装版本为准。
+2. 使用 DevEco Studio 官方向导创建 ArkTS 的 Empty Ability Stage 应用。应用名可用 `AlgoLab`，包名使用 `com.haibao.algolab`；选择可用的 API 26 目标。不要手工补写或猜测工程元数据。
+3. 记录生成目录和 IDE、SDK 的实际版本，先构建一次未修改的模板；保留原始生成的工程文件和构建日志。
+4. 将仓库以下三个文件复制到生成工程的对应路径，仅替换模板页面，不覆盖任何工程元数据、配置或资源：
 
-1. 从[华为开发者下载中心](https://developer.huawei.com/consumer/cn/download/)获取 Command Line Tools 26.0.0 Release，并按官方流程校验下载完整性。
-2. 按华为命令行构建指南配置工具包中的 SDK、Hvigor、ohpm、Node.js 和 HDC。
-3. 安装满足 DevEco CLI 要求的 Node.js，然后安装 CLI：
+   - `apps/algolab/entry/src/main/ets/domain/LinkedListModel.ets` → `entry/src/main/ets/domain/LinkedListModel.ets`
+   - `apps/algolab/entry/src/main/ets/codegen/CppLinkedListGenerator.ets` → `entry/src/main/ets/codegen/CppLinkedListGenerator.ets`
+   - `apps/algolab/entry/src/main/ets/pages/Index.ets` → `entry/src/main/ets/pages/Index.ets`
 
-```bash
-npm install -g @deveco/deveco-cli@latest
-devecocli help
-```
+   缺少 `domain` 和 `codegen` 目录时在源码目录下创建。保留模板原始页面的备份，并按官方 IDE 的实际路径检查。
+5. 在 DevEco Studio 中构建 entry 模块，根据实际 SDK 编译诊断修正 ArkTS；记录编译日志、产物路径及签名状态。IDE 创建成功不代表源码编译通过。
 
-4. 确认 CLI 可正常启动，并且已安装 API 26 对应 SDK。
+## 真机验证
 
-官方参考：
-- [DevEco CLI 命令说明](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ide-deveco-cli-options/)
-- [DevEco CLI npm 包](https://www.npmjs.com/package/@deveco/deveco-cli)
-- [HarmonyOS 命令行构建流水线](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/ide-command-line-building-app/)
+通过 DevEco Studio 的实际指引连接平板并配置调试签名；证书、Profile、私钥和密码不提交到 GitHub。只有构建成功且签名与设备条件满足时才安装 HAP，逐项验证触控、节点拖动、连接、撤销与布局。记录设备型号、系统、结果和未覆盖场景。
 
-## 3. 生成官方 Stage 工程
+## 可选：Linux 自托管 Runner
 
-在仓库根目录执行：
+仓库保留手动触发的 [HAP 工作流](../.github/workflows/algolab-harmonyos-hap.yml)和 [Runner 接入指南](cloud-build-runner.md)；它们是后续可选方案，本地开发不需要购买云主机或注册 Runner。现有 Bash 脚本及云构建路线尚未在 API 26 工具链上验证。
 
-```bash
-bash scripts/bootstrap-algolab-stage.sh
-```
+## 验证记录
 
-脚本固定 API 26 与包名 `com.haibao.algolab`，调用官方 `devecocli create` 的 Empty Ability 模板生成 Stage 工程，检查官方模板生成的关键配置文件，再覆盖 AlgoLab 的领域模型、C++ 代码生成器和 ArkUI 页面。
-
-默认输出：`dist/AlgoLab-Stage`。如果 CLI 不存在、模板结构不符合预期或输出目录已存在，脚本会停止，不会手工伪造或静默覆盖工程元数据。
-
-## 4. 构建 HAP
-
-```bash
-cd dist/AlgoLab-Stage
-devecocli build --modules entry --build-mode debug
-```
-
-华为 CLI 文档说明，指定模块构建会生成 HAP / HSP / HAR；首次构建的实际产物路径以工具输出为准。此步骤需要真实安装的 API 26 工具链，不能仅靠 GitHub 文件编辑完成。
-
-## 5. 云端构建资源要求
-
-华为 Linux 流水线文档列出的环境要求：
-- 64 位 Linux；
-- GLIBC 2.28 或更高；
-- 内存至少 8 GB，推荐 16 GB 及以上；
-- 磁盘 100 GB 及以上；
-- Command Line Tools 26.0.0 及以上建议使用 JDK 21。
-
-因此不能假定普通 GitHub-hosted runner 一定满足要求。启用自动 HAP 构建前，必须确认 runner 的内存、磁盘、系统库，以及 Command Line Tools 的合法下载来源和完整性校验。当前仓库尚未配置自动构建工作流。
-
-## 6. 真机安装与验证
-
-1. 在平板开启开发者选项与 USB 调试。
-2. 使用匹配版本的 HDC 检查设备连接。
-3. 按华为官方流程准备调试签名；证书、Profile、私钥和密码不得提交到 GitHub。
-4. 构建后通过 HDC 安装 HAP，并在 MatePad Pro 13.2 上逐项验证触控、拖动、布局和稳定性。
-
-## 7. 验收记录要求
-
-每次验证至少记录：
-- HarmonyOS 系统版本与 API Level；
-- Command Line Tools / DevEco CLI 版本；
-- 构建命令与构建结果；
-- HAP 产物路径与签名状态；
-- 真机型号、系统版本和测试结果；
-- 已知问题与未覆盖场景。
-
-未经真实 SDK 构建和设备测试，不标记为“已完成”或“可运行”。
-
-
-## 8. 接入专用云端 Runner
-
-普通 GitHub-hosted Ubuntu Runner 只有 14GB SSD，不能满足华为 Linux CI 文档要求的 100GB 磁盘。仓库因此采用手动触发的 self-hosted Runner 工作流，避免普通 Runner 排队或在构建中途失败。
-
-接入步骤、VM 规格、Command Line Tools 安装目录、GitHub Runner 注册和安全注意事项见 [云端构建 Runner 接入指南](cloud-build-runner.md)。
-
-Runner 在线后，在 GitHub Actions 中手动运行 `AlgoLab HarmonyOS HAP Build`。该工作流会执行 `scripts/build-algolab-hap.sh`，调用官方 `devecocli build --modules entry --build-mode debug`，并上传 HAP 产物。
+每次记录实际 IDE/SDK 版本、构建命令或 IDE 操作、结果、HAP 路径和签名状态，以及真机测试结果。未经真实 SDK 构建或设备测试，不标记为相应步骤已通过。
