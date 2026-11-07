@@ -1,7 +1,6 @@
 import {
   LinkedListDocument,
-  analyzeDocument,
-  findNode
+  analyzeDocument
 } from '../domain/LinkedListModel';
 
 export interface CodeLineLink {
