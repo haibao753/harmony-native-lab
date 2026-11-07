@@ -15,7 +15,12 @@ import { generateCpp } from '../codegen/CppLinkedListGenerator';
 
 @Component
 struct NodeCard {
-  @Prop node: LinkedNode = { id: 'N0', value: 0, nextId: null, x: 0, y: 0 };
+  @Prop node: LinkedNode = {
+    id: 'N0',
+    value: 0,
+    nextId: null,
+    position: { x: 0, y: 0 }
+  };
   @Prop selected: boolean = false;
   onTap: (id: string) => void = (id: string) => {};
   onMove: (id: string, x: number, y: number) => void =
@@ -46,7 +51,7 @@ struct NodeCard {
       color: this.selected ? '#168477' : '#D9E0E7'
     })
     .borderRadius(14)
-    .position({ x: this.node.x, y: this.node.y })
+    .position({ x: this.node.position.x, y: this.node.position.y })
     .translate({ x: this.dragOffsetX, y: this.dragOffsetY })
     .onClick(() => {
       this.onTap(this.node.id);
@@ -67,8 +72,8 @@ struct NodeCard {
           if (event !== undefined) {
             this.onMove(
               this.node.id,
-              this.node.x + event.offsetX,
-              this.node.y + event.offsetY
+              this.node.position.x + event.offsetX,
+              this.node.position.y + event.offsetY
             );
           }
           this.dragOffsetX = 0;
@@ -277,22 +282,22 @@ struct Index {
         continue;
       }
 
-      let startX = source.x + 136;
-      let endX = target.x;
-      if (target.x < source.x) {
-        startX = source.x;
-        endX = target.x + 136;
+      let startX = source.position.x + 136;
+      let endX = target.position.x;
+      if (target.position.x < source.position.x) {
+        startX = source.position.x;
+        endX = target.position.x + 136;
       }
-      const startY = source.y + 44;
-      const endY = target.y + 44;
+      const startY = source.position.y + 44;
+      const endY = target.position.y + 44;
 
       this.canvasContext.beginPath();
       if (source.id === target.id) {
-        this.canvasContext.moveTo(source.x + 68, source.y);
+        this.canvasContext.moveTo(source.position.x + 68, source.position.y);
         this.canvasContext.bezierCurveTo(
-          source.x + 150, source.y - 70,
-          source.x + 160, source.y + 125,
-          source.x + 76, source.y + 88
+          source.position.x + 150, source.position.y - 70,
+          source.position.x + 160, source.position.y + 125,
+          source.position.x + 76, source.position.y + 88
         );
       } else {
         this.canvasContext.moveTo(startX, startY);
