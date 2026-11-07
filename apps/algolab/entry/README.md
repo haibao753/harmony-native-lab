@@ -10,9 +10,7 @@
 
 ## 重要状态说明
 
-这些文件是首轮原生源码实现，不等同于完整 DevEco Studio 工程。仓库尚未包含由特定 DevEco Studio / HarmonyOS SDK 版本生成的 `hvigor`、`oh-package`、`module.json5` 等工程配置。用户已安装 DevEco Studio，目标平板系统为 HarmonyOS 7.0.0；本机 IDE 版本和 API 26 SDK 安装情况仍待核验，不能声称源码已构建或已在 MatePad 真机运行。
-
-下一步应先用目标 SDK 的官方 Stage 模板补齐工程外壳，再编译并修正任何 ArkTS 版本差异。Canvas、PanGesture 和 ArkUI 组件属性均须以实际 SDK 类型定义为准。
+仓库 `apps/algolab` 包含由 DevEco Studio 官方模板生成的 Stage 工程；`module.json5` 补充了 tablet 设备类型。三个原型源码文件保持原内容。Windows DevEco Studio 26.0.0.865 / HarmonyOS SDK 26.0.0.105 已构建出未签名 debug HAP，尚未完成签名、安装或 MatePad 真机验证。
 
 ## 首轮交互边界
 
@@ -24,4 +22,4 @@
 
 ## 生成官方 Stage 工程
 
-优先使用 Windows 本机的 DevEco Studio 官方向导创建工程并接入这三个源码文件，详见[本机开发指南](../../../docs/development-guide.md)。Linux CLI 脚本属于可选路线，尚未在 API 26 环境中实测。
+在 DevEco Studio 中直接打开仓库的 `apps/algolab`，详见[本机开发指南](../../../docs/development-guide.md)。Linux CLI 脚本是可选的历史路线，尚未在 API 26 环境中实测。
