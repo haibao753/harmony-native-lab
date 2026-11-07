@@ -23,7 +23,7 @@
 
 将 IDE 生成的工程配置、模块配置、资源目录和源码整体提交到仓库。不要手工猜测或复制其他 API 级别的 hvigor、oh-package 或 module 配置。
 
-## 3. 推荐实现顺序
+## 3. 构建\n\n在生成的工程目录中执行：\n\n```bash\ncd dist/AlgoLab-Stage\ndevecocli build --modules entry --build-mode debug\n```\n\n官方 CLI 将模块构建产物输出为 HAP。首次构建的具体输出路径以 CLI 日志为准。\n\n## 4. 推荐实现顺序
 
 1. 工程能在模拟器或真机启动。
 2. 建立页面导航、主题和基础布局。
@@ -32,7 +32,7 @@
 5. 接入设备能力（相机、传感器、文件等）时逐项验证权限和 API 兼容性。
 6. 最后接入远程 AI 服务；密钥不得硬编码进仓库或客户端。
 
-## 4. 验证要求
+## 5. 验证要求
 
 每个功能至少记录：
 - 使用的 SDK / API Level；
@@ -54,7 +54,7 @@
 
 ## 6. 云端命令行构建（无需安装 DevEco Studio 图形界面）
 
-华为官方支持使用 HarmonyOS Command Line Tools + Hvigor 在 Linux、Windows 和 macOS 上构建 HAP，也明确将该方式用于 CI 流水线。命令行工具包内含 HarmonyOS SDK。官方 Linux 流水线指南建议使用 32GB 及以上内存、100GB 及以上磁盘；实际云端环境还需核对系统库和工具链兼容性。
+华为官方支持使用 HarmonyOS Command Line Tools + Hvigor 在 Linux、Windows 和 macOS 上构建 HAP，也明确将该方式用于 CI 流水线。命令行工具包内含 HarmonyOS SDK。官方 Linux 流水线指南要求 64 位系统、GLIBC 2.28 或更高、至少 8GB 内存（推荐 16GB）及 100GB 以上磁盘；实际云端环境还需核对系统库和工具链兼容性。
 
 建议流程：
 
