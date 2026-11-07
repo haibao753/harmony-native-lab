@@ -39,8 +39,8 @@ AlgoLab 首期聚焦单链表实验：
 ## 当前实现边界
 
 - 首轮 ArkTS 源码已经放入 `apps/algolab/entry/src/main/ets`。
-- 当前仓库还没有 DevEco Studio 生成的完整 Stage 工程配置。
-- 尚未完成目标 SDK 编译和 MatePad Pro 13.2 真机验证。
+- `apps/algolab` 包含 DevEco Studio 官方模板生成的 Stage 工程配置。
+- 已在 DevEco Studio 26.0.0.865 / HarmonyOS SDK 26.0.0.105 构建未签名 debug HAP；尚未完成签名、安装和 MatePad Pro 13.2 真机验证。
 - 不把 Canvas、手势或存储 API 的文档示例等同于本项目已编译通过。
 - 连接操作当前采用选择起点、再选择目标的交互；直接拖拽连接端口仍待真机验证。
 
