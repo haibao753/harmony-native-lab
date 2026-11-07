@@ -33,10 +33,15 @@ harmony-native-lab/
 │   ├── development-guide.md
 │   ├── PRODUCT_SPEC.md
 │   ├── INTERACTION_DESIGN.md
-│   └── TECHNICAL_ARCHITECTURE.md
+│   ├── TECHNICAL_ARCHITECTURE.md
+│   └── IMPLEMENTATION_LOG.md
 ├── apps/
 │   └── algolab/
-│       └── README.md
+│       ├── README.md
+│       └── entry/src/main/ets/
+│           ├── domain/
+│           ├── codegen/
+│           └── pages/
 ├── shared/
 └── experiments/
 ```
@@ -46,6 +51,7 @@ harmony-native-lab/
 - [AlgoLab 产品需求](docs/PRODUCT_SPEC.md)
 - [AlgoLab 交互设计](docs/INTERACTION_DESIGN.md)
 - [AlgoLab 技术架构](docs/TECHNICAL_ARCHITECTURE.md)
+- [首轮实现记录与验收场景](docs/IMPLEMENTATION_LOG.md)
 - [开发环境与工作流](docs/development-guide.md)
 - [仓库通用架构约定](docs/architecture.md)
 - [AlgoLab 应用入口](apps/algolab/README.md)
@@ -61,4 +67,4 @@ harmony-native-lab/
 
 ## 当前状态
 
-当前仓库处于**产品方案与技术设计阶段**。已建立 AlgoLab 的产品需求、交互设计和技术架构文档；尚未提交可运行的 HarmonyOS 原生工程，也没有已验证的 HAP 构建产物。云端构建能力仍需先用实际 SDK 和工具链做最小验证。
+当前仓库处于**产品方案与首轮源码原型阶段**。已提交产品需求、交互设计、技术架构和首轮 ArkTS 源码；尚未补齐 DevEco Studio 生成的 Stage 工程配置，也没有经过目标 HarmonyOS SDK 编译或 MatePad 真机验证。当前连接交互仍采用选择起点、再选择目标的方式；直接拖拽连接端口、内存视图和 C++ 真正编译执行仍待实现。
