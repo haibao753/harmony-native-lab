@@ -1,6 +1,6 @@
 # Connect a HarmonyOS API 26 cloud build runner
 
-This repository is prepared to build AlgoLab HAPs through GitHub Actions, but the actual Huawei toolchain must be installed on a cloud VM first. A GitHub Actions workflow cannot provision a cloud VM or obtain Huawei's licensed download on the user's behalf.
+Optional and deferred: the primary route is Windows DevEco Studio and an installed API 26 SDK; see the [local guide](development-guide.md). This manual GitHub Actions route has not been verified with the Huawei toolchain. It requires a separately provisioned runner and is not needed for local builds.
 
 ## Why a dedicated runner
 
@@ -11,7 +11,7 @@ Huawei's Linux CI guidance specifies:
 - 100 GiB or more disk;
 - JDK 21 for Command Line Tools 26.0.0 and later.
 
-The repository is public, but GitHub's standard hosted Ubuntu runner has only 14 GB SSD. It cannot meet Huawei's 100 GB disk requirement. A dedicated self-hosted cloud VM is therefore the reliable path.
+The repository is public, but GitHub's standard hosted Ubuntu runner has only 14 GB SSD. It cannot meet Huawei's 100 GB disk requirement. A dedicated self-hosted cloud VM is one possible CI path; it is not required for the local Windows workflow.
 
 Official references:
 - [Huawei: Command Line Tools download and integrity verification](https://developer.huawei.com/consumer/en/doc/harmonyos-guides/ide-commandline-get/)
