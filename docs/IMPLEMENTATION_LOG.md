@@ -1,5 +1,8 @@
 # AlgoLab 首轮实现记录
 
+> 状态更新（2026-11-07）：本文下方保留早期实现与云端引导记录，其中“尚未生成工程/构建”的描述反映当时状态。现在 `apps/algolab` 已包含官方 DevEco Studio 模板生成的工程，Windows DevEco Studio 26.0.0.865 与 HarmonyOS SDK 26.0.0.105 已构建未签名 debug HAP；签名和真机测试仍待完成。详见 [开发指南](development-guide.md)。
+
+
 ## 当前分支
 
 `feat/algolab-first-native-slice`
