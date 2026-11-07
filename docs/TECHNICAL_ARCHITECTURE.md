@@ -282,3 +282,14 @@ apps/algolab/
 GitHub Actions 或云端 Linux 构建是否可行，取决于华为 SDK 获取方式、许可条款、工具链兼容性、签名和构建环境。必须先做最小构建验证，不能仅凭存在命令行工具就宣称云端构建已打通。
 
 v0.1 的“运行 C++”也需要单独决策：可先导出源码供外部编译；云端 C++ 沙箱涉及网络、隔离、成本和隐私，未经验证不纳入首期承诺。
+
+
+## 14. 官方接口参考
+
+以下官方文档用于实现阶段核对接口；最终以项目实际安装的 HarmonyOS SDK 类型定义和编译结果为准：
+
+- [Canvas 自定义绘制（ArkTS）](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkts-drawing-customization-on-canvas/)
+- [PanGesture API 参考](https://developer.huawei.com/consumer/cn/doc/harmonyos-references/ts-basic-gestures-pangesture/)
+- [ArkTS 单一手势事件指导](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/arkts-gesture-events-single-gesture/)
+
+本轮页面使用 Canvas 绘制指针连接线，使用 PanGesture 拖动节点。官方文档说明 Canvas 可绘制基础图形与文本，PanGesture 提供开始、更新、结束和取消等回调；但这不等于本仓库源码已通过目标 SDK 编译或真机验证。
