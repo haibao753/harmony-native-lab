@@ -60,6 +60,8 @@ harmony-native-lab/
 - [首轮实现记录与验收场景](docs/IMPLEMENTATION_LOG.md)
 - [开发环境与工作流](docs/development-guide.md)
 - [官方 Stage 工程生成脚本](scripts/README.md)
+- [云端构建 Runner 接入指南](docs/cloud-build-runner.md)
+- [手动触发 HAP 构建工作流](.github/workflows/algolab-harmonyos-hap.yml)
 - [GitHub Actions 轻量检查](.github/workflows/algolab-bootstrap-check.yml)
 - [仓库通用架构约定](docs/architecture.md)
 - [AlgoLab 应用入口](apps/algolab/README.md)
@@ -75,4 +77,4 @@ harmony-native-lab/
 
 ## 当前状态
 
-目标设备版本已确认：HarmonyOS 7.0.0，对应 API 26.0.0。当前仓库处于**首轮源码原型与工程引导脚本阶段**：已提交产品需求、交互设计、技术架构、ArkTS 源码，以及调用官方 DevEco CLI 生成 Stage 工程的脚本。完整 Stage 工程仍需在装有 API 26 Command Line Tools 的运行环境中生成；目前尚未经过 HarmonyOS SDK 编译或 MatePad 真机验证。当前连接交互采用选择起点、再选择目标的方式；直接拖拽连接端口、内存视图和 C++ 真正编译执行仍待实现。
+目标设备版本已确认：HarmonyOS 7.0.0，对应 API 26.0.0。当前仓库处于**首轮源码原型与工程引导脚本阶段**：已提交产品需求、交互设计、技术架构、ArkTS 源码，以及调用官方 DevEco CLI 生成 Stage 工程的脚本。已加入官方 CLI 工程生成脚本、HAP 构建脚本和手动触发的 GitHub Actions 工作流；真正编译仍需先接入满足华为资源要求的专用云端 Runner 并安装 API 26 Command Line Tools。目前尚未经过 HarmonyOS SDK 编译或 MatePad 真机验证。当前连接交互采用选择起点、再选择目标的方式；直接拖拽连接端口、内存视图和 C++ 真正编译执行仍待实现。
