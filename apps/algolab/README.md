@@ -32,6 +32,10 @@ AlgoLab 不替代华为笔记、系统浏览器、课程平台或通用 AI 助�
 - [C++ 代码生成器](entry/src/main/ets/codegen/CppLinkedListGenerator.ets)
 - [ArkUI 页面原型](entry/src/main/ets/pages/Index.ets)
 
+## 实现记录
+
+- [首轮实现记录与手动验收场景](../../docs/IMPLEMENTATION_LOG.md)
+
 ## 工程状态
 
 已开始编写 ArkTS / ArkUI 源码，但尚未补齐 DevEco Studio 生成的 Stage 工程配置，尚未完成 SDK 编译或 MatePad 真机验证。当前连接操作采用选择起点与目标节点的方式；直接拖拽连接端口、内存视图和 C++ 真正编译执行均在后续阶段。
