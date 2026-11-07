@@ -366,7 +366,7 @@ struct Index {
               selected: this.selectedId === node.id,
               onTap: (id: string) => this.handleNodeTap(id),
               onMove: (id: string, x: number, y: number) => this.moveSelectedNode(id, x, y)
-            });
+            })
           },
           (node: LinkedNode) => node.id
         )
