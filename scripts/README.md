@@ -56,3 +56,10 @@ A GitHub-hosted standard runner must not be assumed to satisfy those requirement
 ## Lightweight GitHub Actions check
 
 `.github/workflows/algolab-bootstrap-check.yml` runs on relevant pull requests and main-branch changes. It checks Bash syntax and verifies that the three ArkTS overlay inputs exist. This is a lightweight repository check only; it does **not** install the HarmonyOS SDK, compile ArkTS, or produce a HAP.
+
+
+## Build a HAP through GitHub Actions
+
+The repository includes a manual-only workflow at `.github/workflows/algolab-harmonyos-hap.yml`. It targets a self-hosted Linux runner with the `harmonyos-api-26` label, validates memory/disk/GLIBC and the installed SDK paths, installs DevEco CLI, generates the Stage project and builds the entry HAP.
+
+See [cloud runner setup](../docs/cloud-build-runner.md). The workflow cannot run until a qualifying runner is registered and online.
