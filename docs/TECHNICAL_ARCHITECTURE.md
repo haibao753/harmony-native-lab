@@ -4,7 +4,7 @@
 - 平台：HarmonyOS NEXT 原生应用
 - 语言/UI：ArkTS + ArkUI
 - 应用模型：Stage
-- 工程状态：尚未生成并验证真实 DevEco Studio 工程；SDK/API Level 待确定
+- 工程状态：`apps/algolab` 为官方 DevEco Studio 模板生成的 Stage 工程；Windows 的 DevEco Studio 26.0.0.865 / HarmonyOS SDK 26.0.0.105 已构建未签名 debug HAP，签名和真机测试仍待完成。
 
 ## 1. 架构目标
 
@@ -277,7 +277,7 @@ apps/algolab/
 
 ## 13. 构建与发布风险
 
-当前用户电脑尚未安装 DevEco Studio，仓库也尚无真实 HarmonyOS 工程。下一步需要确定可用的 DevEco Studio / HarmonyOS SDK 版本，并生成官方模板。
+当前工程由 DevEco Studio 官方模板生成，目标 API 26；下一步完成签名、平板安装及真机交互验证。
 
 GitHub Actions 或云端 Linux 构建是否可行，取决于华为 SDK 获取方式、许可条款、工具链兼容性、签名和构建环境。必须先做最小构建验证，不能仅凭存在命令行工具就宣称云端构建已打通。
 
