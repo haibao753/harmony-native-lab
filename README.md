@@ -16,7 +16,7 @@
 
 - 主要体验设备：Huawei MatePad Pro 13.2（2023 款；具体系统版本与 API 能力待实机确认）。
 - IDE：DevEco Studio（用户当前尚未安装）。
-- SDK：待选择与目标设备兼容的 HarmonyOS SDK。
+- SDK：HarmonyOS 26.0.0 Release（API 26），对应目标设备 HarmonyOS 7.0.0。
 - 语言与 UI：ArkTS + ArkUI。
 - 应用模型：Stage 模型。
 
@@ -67,4 +67,4 @@ harmony-native-lab/
 
 ## 当前状态
 
-当前仓库处于**产品方案与首轮源码原型阶段**。已提交产品需求、交互设计、技术架构和首轮 ArkTS 源码；尚未补齐 DevEco Studio 生成的 Stage 工程配置，也没有经过目标 HarmonyOS SDK 编译或 MatePad 真机验证。当前连接交互仍采用选择起点、再选择目标的方式；直接拖拽连接端口、内存视图和 C++ 真正编译执行仍待实现。
+目标设备版本已确认：HarmonyOS 7.0.0，对应 API 26.0.0；工具链按 HarmonyOS SDK / DevEco 26.0.0 Release 规划。当前仓库处于**产品方案与首轮源码原型阶段**。已提交产品需求、交互设计、技术架构和首轮 ArkTS 源码；尚未补齐 DevEco Studio 生成的 Stage 工程配置，也没有经过目标 HarmonyOS SDK 编译或 MatePad 真机验证。当前连接交互仍采用选择起点、再选择目标的方式；直接拖拽连接端口、内存视图和 C++ 真正编译执行仍待实现。
