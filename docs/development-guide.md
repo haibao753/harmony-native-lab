@@ -87,3 +87,26 @@
 - [华为官方：DevEco CLI 创建与构建命令](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ide-deveco-cli-options/)
 
 注意：API 版本对应关系已经确认，但工程模板、具体 API 签名与 HAP 构建仍需用匹配的 26.0.0 工具链实际验证。
+
+
+## 8. 官方 CLI 工程生成与源码接入
+
+仓库新增 `scripts/bootstrap-algolab-stage.sh`。该脚本不伪造工程配置，而是调用已经安装并配置 API 26 的华为官方 DevEco CLI：
+
+```bash
+bash scripts/bootstrap-algolab-stage.sh
+cd dist/AlgoLab-Stage
+devecocli build --modules entry --build-mode debug
+```
+
+脚本固定 API 26、包名 `com.haibao.algolab`，先调用 `devecocli create` 生成官方 Empty Ability Stage 工程，再检查官方模板生成的关键文件，最后覆盖 AlgoLab 的三个 ArkTS 源码文件。若 CLI 不存在、模板文件不符合预期或输出目录已存在，脚本会停止，不会静默覆盖。
+
+DevEco CLI 官方命令文档：
+- [创建 HarmonyOS 应用工程](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/ide-deveco-cli-options/)
+- [命令行构建 HAP / APP](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/ide-command-line-building-app/)
+
+CLI 的安装前提是配套的 DevEco Studio 26.0.0 或 Command Line Tools 26.0.0 及以上；官方 Command Line Tools 下载需从华为下载中心获取，并按官方流程校验完整性。CLI npm 包说明可参考 [@deveco/deveco-cli](https://www.npmjs.com/package/@deveco/deveco-cli)。
+
+## 9. 云端构建资源要求
+
+华为 Linux 流水线文档要求 64 位 Linux、GLIBC 2.28 或更高、至少 8 GB 内存（推荐 16 GB）及 100 GB 以上磁盘。不能假定普通 GitHub-hosted runner 满足这些条件。当前先提供可复现的工程生成脚本；只有在云端 runner 资源与官方工具包来源都确认后，才启用自动 HAP 构建，避免提交一个注定失败的 CI 工作流。
