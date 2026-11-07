@@ -20,7 +20,7 @@
 - 语言与 UI：ArkTS + ArkUI。
 - 应用模型：Stage 模型。
 
-使用 DevEco Studio 官方向导生成 API 26 Stage 工程，再接入仓库中的 ArkTS 源码，见[本机开发指南](docs/development-guide.md)。不手工伪造工程配置，也不声称未执行的构建已经通过。
+已将 DevEco Studio 官方模板生成的 API 26 Stage 工程放在 `apps/algolab`，并接入现有 ArkTS 源码。打开工程与继续开发请看[本机开发指南](docs/development-guide.md)。
 
 ## 仓库结构
 
@@ -77,4 +77,4 @@ harmony-native-lab/
 
 ## 当前状态
 
-目标设备版本已确认：HarmonyOS 7.0.0，对应 API 26.0.0。当前仓库处于**首轮源码原型与工程引导脚本阶段**：已提交产品需求、交互设计、技术架构、ArkTS 源码，以及调用官方 DevEco CLI 生成 Stage 工程的脚本。仓库保留可选的 Linux CLI 脚本和手动触发工作流；本机安装 API 26 SDK 后可优先使用 DevEco Studio 官方模板进行工程创建与构建，无需购买云主机。目前尚未经过 HarmonyOS SDK 编译或 MatePad 真机验证。当前连接交互采用选择起点、再选择目标的方式；直接拖拽连接端口、内存视图和 C++ 真正编译执行仍待实现。
+已使用 DevEco Studio 26.0.0.865 和 HarmonyOS SDK 26.0.0.105 在 Windows 构建出未签名 debug HAP。尚未完成签名、安装或 MatePad 真机验证。仓库中的 Linux CLI 生成脚本和手动自托管工作流是可选的历史路线，无需购买云主机。当前连接交互采用选择起点、再选择目标的方式；直接拖拽连接端口、内存视图和 C++ 真正编译执行仍待实现。
