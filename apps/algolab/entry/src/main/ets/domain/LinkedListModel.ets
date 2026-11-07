@@ -1,9 +1,13 @@
+export interface Point {
+  x: number;
+  y: number;
+}
+
 export interface LinkedNode {
   id: string;
   value: number;
   nextId: string | null;
-  x: number;
-  y: number;
+  position: Point;
 }
 
 export interface LinkedListDocument {
@@ -38,8 +42,7 @@ export function cloneDocument(source: LinkedListDocument): LinkedListDocument {
       id: node.id,
       value: node.value,
       nextId: node.nextId,
-      x: node.x,
-      y: node.y
+      position: { x: node.position.x, y: node.position.y }
     });
   }
   return {
@@ -75,8 +78,7 @@ export function addNode(
     id: id,
     value: value,
     nextId: null,
-    x: x,
-    y: y
+    position: { x: x, y: y }
   });
   if (next.headId === null) {
     next.headId = id;
@@ -111,8 +113,8 @@ export function moveNode(
   const next = cloneDocument(document);
   for (let i = 0; i < next.nodes.length; i++) {
     if (next.nodes[i].id === nodeId) {
-      next.nodes[i].x = Math.max(0, x);
-      next.nodes[i].y = Math.max(0, y);
+      next.nodes[i].position.x = Math.max(0, x);
+      next.nodes[i].position.y = Math.max(0, y);
       return next;
     }
   }
