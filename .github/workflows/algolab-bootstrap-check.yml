@@ -38,3 +38,5 @@ jobs:
         run: |
           grep -Fq 'API_LEVEL:-26' scripts/bootstrap-algolab-stage.sh
           grep -Fq 'devecocli create' scripts/bootstrap-algolab-stage.sh
+          grep -Fq 'devecocli build --modules entry --build-mode debug' scripts/build-algolab-hap.sh
+          test -s .github/workflows/algolab-harmonyos-hap.yml
