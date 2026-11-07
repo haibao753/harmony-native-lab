@@ -5,6 +5,7 @@ import {
   analyzeDocument,
   cloneDocument,
   createEmptyDocument,
+  deleteNode,
   findNode,
   moveNode,
   setHead,
@@ -70,6 +71,10 @@ struct NodeCard {
               this.node.y + event.offsetY
             );
           }
+          this.dragOffsetX = 0;
+          this.dragOffsetY = 0;
+        })
+        .onActionCancel(() => {
           this.dragOffsetX = 0;
           this.dragOffsetY = 0;
         })
@@ -162,6 +167,11 @@ struct Index {
   }
 
   private beginConnection(): void {
+    if (this.connectionSourceId !== '') {
+      this.connectionSourceId = '';
+      this.message = '已取消连接操作。';
+      return;
+    }
     if (this.selectedId === '') {
       this.message = '请先选择一个起点节点。';
       return;
@@ -191,6 +201,21 @@ struct Index {
     if (nextDocument !== null) {
       this.applyDocument(nextDocument);
       this.message = this.selectedId + ' 现在是 head。';
+    }
+  }
+
+  private deleteSelectedNode(): void {
+    if (this.selectedId === '') {
+      this.message = '请先选择要删除的节点。';
+      return;
+    }
+    const removedId = this.selectedId;
+    const nextDocument = deleteNode(this.document, removedId);
+    if (nextDocument !== null) {
+      this.applyDocument(nextDocument);
+      this.selectedId = '';
+      this.connectionSourceId = '';
+      this.message = '已删除 ' + removedId + '，指向它的 next 已断开；可以撤销恢复。';
     }
   }
 
@@ -310,7 +335,7 @@ struct Index {
       .width('100%')
 
       Row({ space: 8 }) {
-        Button('连接 next')
+        Button(this.connectionSourceId === '' ? '连接 next' : '取消连接')
           .type(ButtonType.Normal)
           .onClick(() => this.beginConnection())
         Button('断开')
@@ -319,6 +344,9 @@ struct Index {
         Button('设为 head')
           .type(ButtonType.Normal)
           .onClick(() => this.setSelectedAsHead())
+        Button('删除节点')
+          .type(ButtonType.Normal)
+          .onClick(() => this.deleteSelectedNode())
         Button('撤销')
           .enabled(this.canUndo)
           .type(ButtonType.Normal)
