@@ -78,3 +78,12 @@ devecocli build --modules entry --build-mode debug
 - 已知问题与未覆盖场景。
 
 未经真实 SDK 构建和设备测试，不标记为“已完成”或“可运行”。
+
+
+## 8. 接入专用云端 Runner
+
+普通 GitHub-hosted Ubuntu Runner 只有 14GB SSD，不能满足华为 Linux CI 文档要求的 100GB 磁盘。仓库因此采用手动触发的 self-hosted Runner 工作流，避免普通 Runner 排队或在构建中途失败。
+
+接入步骤、VM 规格、Command Line Tools 安装目录、GitHub Runner 注册和安全注意事项见 [云端构建 Runner 接入指南](cloud-build-runner.md)。
+
+Runner 在线后，在 GitHub Actions 中手动运行 `AlgoLab HarmonyOS HAP Build`。该工作流会执行 `scripts/build-algolab-hap.sh`，调用官方 `devecocli build --modules entry --build-mode debug`，并上传 HAP 产物。
