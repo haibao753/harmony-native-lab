@@ -1,6 +1,8 @@
 # AlgoLab build scripts
 
-## Prerequisites
+Windows DevEco Studio is the primary workflow; see the [local development guide](../docs/development-guide.md). The Linux scripts and self-hosted runner below are optional and have not yet been validated with the API 26 SDK.
+
+## Optional Linux prerequisites
 
 Run on a machine or CI runner with Huawei **Command Line Tools 26.0.0 Release** configured. The DevEco Studio graphical IDE is not required.
 
@@ -58,7 +60,7 @@ A GitHub-hosted standard runner must not be assumed to satisfy those requirement
 `.github/workflows/algolab-bootstrap-check.yml` runs on relevant pull requests and main-branch changes. It checks Bash syntax and verifies that the three ArkTS overlay inputs exist. This is a lightweight repository check only; it does **not** install the HarmonyOS SDK, compile ArkTS, or produce a HAP.
 
 
-## Build a HAP through GitHub Actions
+## Optional: build a HAP through GitHub Actions
 
 The repository includes a manual-only workflow at `.github/workflows/algolab-harmonyos-hap.yml`. It targets a self-hosted Linux runner with the `harmonyos-api-26` label, validates memory/disk/GLIBC and the installed SDK paths, installs DevEco CLI, generates the Stage project and builds the entry HAP.
 
