@@ -1,0 +1,30 @@
+# IDE / OS
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build outputs
+build/
+.out/
+*.hap
+*.app
+*.har
+*.hsp
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# Local environment / secrets
+.local/
+.env
+.env.*
+!.env.example
+*.p12
+*.pfx
+*.keystore
+*.jks
+
+# Node / package caches
+node_modules/
