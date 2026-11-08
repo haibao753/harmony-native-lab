@@ -904,6 +904,7 @@ struct Index {
           // the linked-list document; it only drives the active pointer/code highlights.
           if (this.showTeaching) {
             TeachingWorkbench({
+              panelWidth: this.viewportWidth > 1250 ? 360 : 320,
               activeLessonId: this.activeLessonId,
               lessonTitle: getLinkedListLesson(this.activeLessonId).title,
               lessonSubtitle: getLinkedListLesson(this.activeLessonId).subtitle,
