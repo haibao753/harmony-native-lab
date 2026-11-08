@@ -44,6 +44,7 @@ export struct FaceMeshViewer {
   private lastDrawCostMs: number = 0;
   private surfaceColors: string[] = ['#17263D', '#203A59', '#2B5678', '#367C91', '#5DAAA8', '#B6D8C7'];
   private deformationColors: string[] = ['#2457C5', '#1688D4', '#21B6C8', '#48C78E', '#B9D94A', '#F3D34A', '#F39A38', '#E94D5A'];
+  private regionColors: string[] = ['#27364A', '#71849A', '#D66BA0', '#F08DB6', '#53C5D9', '#6D9EF2', '#E5B85C', '#D99B4A', '#B58AE0', '#65C99B'];
 
   redraw(_propertyName?: string): void {
     this.draw();
@@ -314,10 +315,6 @@ export struct FaceMeshViewer {
         if (this.cachedTopologyRevision !== this.topologyRevision) {
           this.rebuildRegionBins();
         }
-        const regionColors: string[] = [
-          '#27364A', '#71849A', '#D66BA0', '#F08DB6', '#53C5D9',
-          '#6D9EF2', '#E5B85C', '#D99B4A', '#B58AE0', '#65C99B'
-        ];
         for (let bucket = 0; bucket < this.regionBins.length; bucket++) {
           const faces = this.regionBins[bucket];
           if (faces.length === 0) {
@@ -333,7 +330,7 @@ export struct FaceMeshViewer {
             ctx.lineTo(c.x, c.y);
             ctx.closePath();
           }
-          ctx.fillStyle = regionColors[bucket];
+          ctx.fillStyle = this.regionColors[bucket];
           ctx.globalAlpha = 0.94;
           ctx.fill();
         }
@@ -403,8 +400,10 @@ export struct FaceMeshViewer {
         ctx.fillStyle = '#F2C078';
         ctx.fillText('先采集中性表情基准以启用形变热力图', 14, 43);
       }
-    } else {
+    } else if (this.mode === 'wireframe') {
       // Wireframe is intentionally edge-only: no hidden face fill or surface overlay.
+      this.drawEdges(1, '#69D9E8', 0.9);
+    } else {
       this.drawEdges(1, '#69D9E8', 0.9);
     }
 
