@@ -2,7 +2,17 @@
 
 HarmonyOS 原生三维人脸与新型交互实验应用。
 
-## 当前版本：0.4.3 — Live Deformation Heatmap & Lite Rendering
+## 当前版本：0.5.0 — GPU Native Face Renderer
+
+- 以 ArkTS XComponent SURFACE 承载原生 OpenGL ES 3.2 渲染画面。
+- 使用 C++ NAPI 直接接收 AR Engine TypedArray 网格数据，减少 ArkTS 普通数组转换。
+- 使用 VBO / EBO 更新顶点与静态拓扑，Shader 实现实体光照、线框、形变热力和部位分区。
+- 原生渲染线程目标约 30 FPS，与约 5 Hz 的 AR 网格数据更新解耦。
+- 保留 ARView 相机预览、头部姿态、BlendShapes 和本地数据处理。
+- 增加原生性能诊断：渲染 FPS、AR 网格更新 Hz、NAPI 复制耗时、GL 命令提交 CPU 耗时和网格规模。
+- 真机性能、EGL / Shader 兼容性和资源生命周期仍待 MatePad 验收。
+
+## 0.4.3 — Live Deformation Heatmap & Lite Rendering
 
 - 修复 ArkUI `@Prop` 响应式代理与 JavaScript TypedArray 内部槽不兼容导致的首帧绘制崩溃。
 - AR 回调层继续使用 TypedArray；UI 边界复用稳定的普通 `number[]`，避免每帧重新分配和重复代理包装。
@@ -55,7 +65,7 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 
 ## 测试步骤
 
-1. 安装 0.4.3。
+1. 安装 0.5.0。
 2. 点击“开始追踪”。
 3. 在系统弹窗中允许 FaceLab 使用摄像头。
 4. 将脸放在前置摄像头画面内，观察人脸计数、Mesh、Pose 和 BlendShapes 指标。
@@ -98,3 +108,16 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 ## 隐私
 
 所有数据只在设备内存中用于实时展示，不保存、不上传。FaceLab 不进行身份识别，不访问系统人脸认证数据，也不读取 dToF 原始传感器帧。
+
+
+## 0.5.0 验证状态
+
+0.5.0 已加入 XComponent + EGL + OpenGL ES 3.2 原生渲染链路。渲染线程目标约 30 FPS，AR 网格数据仍约 5 Hz 更新。该版本的源码和 NDK 构建配置已经建立，但必须先在 DevEco Studio / SDK 26.0.0 完成 C++ / ArkTS 构建，再在 MatePad Pro 13.2（2023）上验证 EGL 初始化、网格显示、四种模式、触控、停止与重启、连续运行和实际帧率。
+
+## 0.5.0 官方 API 参考
+
+- [ArkTS XComponent 自定义渲染](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/napi-xcomponent-guidelines/)
+- [OpenGL ES 3.2](https://developer.huawei.com/consumer/cn/doc/harmonyos-references/opengles/)
+- [EGL](https://developer.huawei.com/consumer/cn/doc/harmonyos-references/egl/)
+- [NativeWindow](https://developer.huawei.com/consumer/cn/doc/harmonyos-references/capi-external-window-h/)
+- [Hvigor C++ / CMake 配置](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/ide-hmos-hvigor-cpp/)
