@@ -85,6 +85,14 @@ FaceLab 是一个 HarmonyOS 原生视觉与交互实验应用，优先研究 Mat
 - 探索眨眼、张嘴等 BlendShapes 触发方式。
 - 与触控笔、触摸输入结合，避免仅靠面部动作产生误触。
 
+### 0.5.1 — GPU Region Rendering
+- 将 AR Engine 的三角面标签（-1 至 8）经 Node-API Int32Array 直接传递至 C++。
+- 使用每三角形展开的 GPU 顶点缓冲，为每个三角面赋予固定区域 ID，避免共享顶点的区域边界颜色混合。
+- 在 GLSL ES 中按区域 ID 选择与原 Canvas 方案对应的十种颜色，并通过 glDrawArrays(GL_TRIANGLES) 绘制。
+- 移除部位分区的 ArkUI Canvas / number[] 专用路径，使四种显示模式统一使用原生 GPU Surface。
+- 其他三种 GPU 模式继续使用原有 indexed VBO / EBO 绘制；AR 数据更新频率和本地隐私策略保持不变。
+- DevEco SDK 26 构建、区域颜色映射和 MatePad 性能对比仍需真机验收。
+
 ## 5. 非目标
 - 不访问系统人脸解锁或认证模板。
 - 不尝试绕过 TEE、安全权限或系统隐私边界。
