@@ -129,3 +129,23 @@
 - Main merge commit: `beceadcb871543d943c28cd482c1ded8680fd71c`.
 - A release snapshot branch `release/facelab-0.5.1` pins this release.
 - No numerical per-mode FPS, thermal or battery benchmark was supplied; do not infer a 30 FPS guarantee or quantify performance from the successful deployment alone.
+
+
+## 0.5.1 GPU region mode acceptance (2026-11-08)
+- User confirms the 0.5.1 region mode no longer lags on MatePad Pro 13.2 (2023).
+- All four visualization modes are considered smooth in the user's target-device test.
+- This is a qualitative user acceptance result; no numerical FPS / thermal / battery benchmark is recorded.
+
+## 0.5.2 Gesture Interaction Lab — pending device acceptance
+| Test | Expected result | Status |
+|---|---|---|
+| SDK 26 ArkTS + NDK build | HAP packages successfully | Pending DevEco |
+| 30 Hz pose / BlendShapes sampling | Gesture inputs update without increasing mesh publication cadence | Pending device |
+| Left unilateral wink | Focus moves to previous option once per closure | Pending device |
+| Right unilateral wink | Focus moves to next option once per closure | Pending device |
+| Natural bilateral blink | No unilateral-wink action | Pending device |
+| Sustained jaw open | Confirms selected option after 350 ms threshold hold | Pending device |
+| Gesture input disabled | No demo action is triggered | Pending device |
+| Touch / M-Pencil fallback | Direct option selection still works | Pending device |
+| GPU rendering regression | All four visualization modes remain smooth | Pending device |
+| Stop / restart | Camera, gesture latches and counters reset cleanly | Pending device |
