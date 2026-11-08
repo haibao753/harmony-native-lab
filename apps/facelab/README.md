@@ -129,3 +129,13 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 ## 0.5.0 技术边界
 
 GPU 渲染线程目标约 30 Hz，AR Engine 网格发布仍约 5 Hz；两者不是同一帧率。当前没有设备实测数据，不能承诺达到 30 FPS，也不能预先认定卡顿已消除。所有面部数据仅在内存中处理，不保存、不上传。
+
+## Native module packaging (SDK 26)
+
+The native library's ArkTS declaration package follows the HarmonyOS project layout:
+- `entry/src/main/cpp/types/libfacelab_native/index.d.ts`
+- `entry/src/main/cpp/types/libfacelab_native/oh-package.json5`
+- `entry/oh-package.json5` declares `libfacelab_native.so` as a local dependency.
+- `entry/build-profile.json5` lists the module under `arkOptions.runtimeOnly.packages`.
+
+After pulling this change, synchronize OHPM dependencies in DevEco Studio before rebuilding.
