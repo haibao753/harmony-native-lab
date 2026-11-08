@@ -4,7 +4,7 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 
 ## 当前版本：0.5.0 — OpenGL ES Native Face Renderer
 
-- 线框、实体和形变热力迁移到 OpenGL ES 3.2 原生 GPU 渲染。
+- 线框、实体和形变热力迁移到 OpenGL ES 3.0 原生 GPU 渲染。
 - 使用 ArkTS XComponent SURFACE / EGL / NativeWindow；C++ 侧使用 VBO / EBO 绘制。
 - Node-API 直接接收 AR 回调 TypedArray，GPU 模式不再转换为 ArkUI 普通数组。
 - 原生线程目标约 30 Hz 重绘，AR Mesh 数据仍约 5 Hz 更新；实际帧率待 MatePad 实测。
