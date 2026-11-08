@@ -816,11 +816,11 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
     const rightClosed = rightBlink >= 0.72;
 
     // Bilateral closure is a natural blink; only unilateral closure becomes a wink.
-    if (leftClosed && !rightClosed && !this.leftEyeLatched && now - this.lastLeftWinkAt >= 650) {
+    if (leftClosed && rightBlink <= 0.35 && !this.leftEyeLatched && now - this.lastLeftWinkAt >= 650) {
       leftWink = true;
       this.lastLeftWinkAt = now;
     }
-    if (rightClosed && !leftClosed && !this.rightEyeLatched && now - this.lastRightWinkAt >= 650) {
+    if (rightClosed && leftBlink <= 0.35 && !this.rightEyeLatched && now - this.lastRightWinkAt >= 650) {
       rightWink = true;
       this.lastRightWinkAt = now;
     }
