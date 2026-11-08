@@ -2,6 +2,7 @@ import { describe, it, expect } from '@ohos/hypium';
 import {
   addNode,
   createEmptyDocument,
+  createMemorySnapshot,
   findNode,
   setNext,
   setNodeValue
@@ -159,6 +160,85 @@ export default function localUnitTest() {
       expect(hasComment).assertTrue();
       expect(hasDirective).assertTrue();
       expect(hasHeader).assertTrue();
+    });
+
+
+    it('creates symbolic memory records with head, next and reachability', 0, () => {
+      let document = createEmptyDocument();
+      document = addNode(document, 10, 0, 0);
+      document = addNode(document, 20, 160, 0);
+      document = addNode(document, 30, 320, 0);
+
+      const firstId = document.nodes[0].id;
+      const secondId = document.nodes[1].id;
+      const linkedDocument = setNext(document, firstId, secondId);
+      expect(linkedDocument !== null).assertTrue();
+
+      if (linkedDocument !== null) {
+        const snapshot = createMemorySnapshot(linkedDocument);
+        expect(snapshot.headId).assertEqual(firstId);
+        expect(snapshot.nodes.length).assertEqual(3);
+        expect(snapshot.nodes[0].data).assertEqual(10);
+        expect(snapshot.nodes[0].nextId).assertEqual(secondId);
+        expect(snapshot.nodes[0].isHead).assertTrue();
+        expect(snapshot.nodes[0].isReachable).assertTrue();
+        expect(snapshot.nodes[2].isReachable).assertFalse();
+        expect(snapshot.unreachableCount).assertEqual(1);
+      }
+    });
+
+    it('marks cycle entry and shared references in the memory snapshot', 0, () => {
+      let document = createEmptyDocument();
+      document = addNode(document, 10, 0, 0);
+      document = addNode(document, 20, 160, 0);
+      document = addNode(document, 30, 320, 0);
+
+      const firstId = document.nodes[0].id;
+      const secondId = document.nodes[1].id;
+      const thirdId = document.nodes[2].id;
+      const firstLink = setNext(document, firstId, secondId);
+      expect(firstLink !== null).assertTrue();
+
+      if (firstLink !== null) {
+        const cycleDocument = setNext(firstLink, secondId, firstId);
+        expect(cycleDocument !== null).assertTrue();
+        if (cycleDocument !== null) {
+          const cycleSnapshot = createMemorySnapshot(cycleDocument);
+          expect(cycleSnapshot.hasCycle).assertTrue();
+          expect(cycleSnapshot.cycleEntryId).assertEqual(firstId);
+          expect(cycleSnapshot.nodes[0].isCycleEntry).assertTrue();
+        }
+
+        const sharedA = setNext(firstLink, thirdId, secondId);
+        expect(sharedA !== null).assertTrue();
+        if (sharedA !== null) {
+          const sharedSnapshot = createMemorySnapshot(sharedA);
+          expect(sharedSnapshot.hasSharedSuccessor).assertTrue();
+          expect(sharedSnapshot.nodes[1].incomingCount).assertEqual(2);
+        }
+      }
+    });
+
+    it('maps generated next-pointer code lines back to source and target nodes', 0, () => {
+      let document = createEmptyDocument();
+      document = addNode(document, 10, 0, 0);
+      document = addNode(document, 20, 160, 0);
+      const firstId = document.nodes[0].id;
+      const secondId = document.nodes[1].id;
+      const linkedDocument = setNext(document, firstId, secondId);
+      expect(linkedDocument !== null).assertTrue();
+
+      if (linkedDocument !== null) {
+        const generated = generateCpp(linkedDocument);
+        let foundLink = false;
+        for (let i = 0; i < generated.lineLinks.length; i++) {
+          const link = generated.lineLinks[i];
+          if (link.role === 'next' && link.nodeId === firstId && link.targetNodeId === secondId) {
+            foundLink = true;
+          }
+        }
+        expect(foundLink).assertTrue();
+      }
     });
 
   });
