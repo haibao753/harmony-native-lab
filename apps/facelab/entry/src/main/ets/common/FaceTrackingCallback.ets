@@ -37,6 +37,13 @@ export interface FaceMetrics {
   poseRoll: number;
 }
 
+export interface FaceFrameDiagnostics {
+  callbackCount: number;
+  rateHz: number;
+  lastIntervalMs: number;
+  maxGapMs: number;
+}
+
 export interface FaceGestureMetrics {
   faceDetected: boolean;
   pitch: number;
@@ -185,7 +192,15 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
   private lastErrorMessage: string = '';
   private onMetrics: (metrics: FaceMetrics) => void;
   private onGesture: (metrics: FaceGestureMetrics) => void;
+  private onFramePulse: (diagnostics: FaceFrameDiagnostics) => void;
   private onError: (message: string) => void;
+  private frameCallbackCount: number = 0;
+  private previousFrameTimestampUs: number = 0;
+  private frameWindowStartUs: number = 0;
+  private frameWindowCount: number = 0;
+  private frameRateHz: number = 0;
+  private maxFrameGapUs: number = 0;
+  private lastFrameReportUs: number = 0;
 
   private poseBaseline: QuaternionValues | undefined = undefined;
   private translationBaseline: VectorValues | undefined = undefined;
@@ -210,17 +225,26 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
   constructor(
     onMetrics: (metrics: FaceMetrics) => void,
     onError: (message: string) => void,
-    onGesture: (metrics: FaceGestureMetrics) => void
+    onGesture: (metrics: FaceGestureMetrics) => void,
+    onFramePulse: (diagnostics: FaceFrameDiagnostics) => void
   ) {
     super();
     this.onMetrics = onMetrics;
     this.onError = onError;
     this.onGesture = onGesture;
+    this.onFramePulse = onFramePulse;
   }
 
   stop(): void {
     this.active = false;
     this.processing = false;
+    this.frameCallbackCount = 0;
+    this.previousFrameTimestampUs = 0;
+    this.frameWindowStartUs = 0;
+    this.frameWindowCount = 0;
+    this.frameRateHz = 0;
+    this.maxFrameGapUs = 0;
+    this.lastFrameReportUs = 0;
     this.previousVertices = undefined;
     this.neutralVertices = undefined;
     this.neutralCaptureRequested = false;
@@ -263,9 +287,46 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
     // Face tracking does not require plane anchors.
   }
 
+  private recordFramePulse(timestampUs: number): void {
+    this.frameCallbackCount++;
+    let intervalUs = 0;
+    if (this.previousFrameTimestampUs > 0 && timestampUs > this.previousFrameTimestampUs) {
+      intervalUs = timestampUs - this.previousFrameTimestampUs;
+      this.maxFrameGapUs = Math.max(this.maxFrameGapUs, intervalUs);
+    }
+    this.previousFrameTimestampUs = timestampUs;
+
+    if (this.frameWindowStartUs === 0) {
+      this.frameWindowStartUs = timestampUs;
+      this.frameWindowCount = 1;
+    } else {
+      this.frameWindowCount++;
+      const elapsedUs = timestampUs - this.frameWindowStartUs;
+      if (elapsedUs >= 1000000) {
+        this.frameRateHz = this.frameWindowCount * 1000000 / elapsedUs;
+        this.frameWindowStartUs = timestampUs;
+        this.frameWindowCount = 0;
+      }
+    }
+
+    if (this.lastFrameReportUs === 0 || timestampUs - this.lastFrameReportUs >= 500000) {
+      this.lastFrameReportUs = timestampUs;
+      this.onFramePulse({
+        callbackCount: this.frameCallbackCount,
+        rateHz: this.frameRateHz,
+        lastIntervalMs: intervalUs / 1000,
+        maxGapMs: this.maxFrameGapUs / 1000
+      });
+    }
+  }
+
   async onFrameUpdate(ctx: arViewController.ARViewContext, sysBootTs: number): Promise<void> {
+    if (!this.active) {
+      return;
+    }
+    this.recordFramePulse(sysBootTs);
     const shouldPublishMetrics = sysBootTs - this.lastPublishedTimestamp >= MESH_PUBLISH_INTERVAL_US;
-    if (!this.active || this.processing ||
+    if (this.processing ||
       (sysBootTs - this.lastGestureTimestamp < GESTURE_SAMPLE_INTERVAL_US && !shouldPublishMetrics)) {
       return;
     }

@@ -120,3 +120,15 @@ FaceLab 是一个 HarmonyOS 原生视觉与交互实验应用，优先研究 Mat
 - 不尝试绕过 TEE、安全权限或系统隐私边界。
 - 不以未经验证的 dToF 数据作为产品功能基础。
 - 不作为医疗、身份认证、驾驶辅助或生命安全用途。
+
+
+### 0.7.0-alpha.1 — Split-Screen Camera Continuity Probe
+
+- 显式声明主窗口支持 fullscreen、split、floating 多窗口模式。
+- 通过 API 20+ WindowStageLifecycleEventType 记录 SHOWN / RESUMED / PAUSED / HIDDEN；通过主窗口 WindowEventType 记录 ACTIVE / INACTIVE，避免把失焦等同于后台。
+- 监听窗口模式变化和可见性变化，分别显示 SPLIT_SCREEN / FLOATING / FULL_SCREEN、焦点与可见状态。
+- 在 ARViewCallback 的每次 onFrameUpdate 调用入口独立采样回调计数与时间间隔，不依赖约 5 Hz 的 Mesh 发布节流。
+- 在窗口处于 SPLIT_SCREEN、可见且 INACTIVE 时累计 AR 帧回调；10 秒初步观察阈值为至少 50 次回调、最近估算回调率至少 5 Hz、检测到人脸、最近帧距今小于 1.5 秒。
+- 窗口仅 INACTIVE 时不停止追踪；窗口 HIDDEN 时清理 AR 会话。系统后台相机断流规则不被绕过。
+- 不注入系统输入、不操控第三方应用；本版本仅验证感知链路能否在分屏失焦状态持续运行。
+- 所有诊断只保留在当前进程内存，不保存相机帧、人脸网格或面部动作数据；设备实测前不宣称通过。

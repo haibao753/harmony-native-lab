@@ -2,7 +2,7 @@ import { abilityAccessCtrl, common, Permissions } from '@kit.AbilityKit';
 import { ARView, arEngine, arViewController } from '@kit.AREngine';
 import { Scene } from '@kit.ArkGraphics3D';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { FaceGestureMetrics, FaceMetrics, FaceTrackingCallback } from '../common/FaceTrackingCallback';
+import { FaceFrameDiagnostics, FaceGestureMetrics, FaceMetrics, FaceTrackingCallback } from '../common/FaceTrackingCallback';
 import { FaceGpuSurface, FaceGpuSurfaceController } from '../components/FaceGpuSurface';
 import { FACE_PEN_PALETTE, FacePenCanvas } from '../components/FacePenCanvas';
 
@@ -33,6 +33,19 @@ struct Index {
   @State meshViewMode: string = 'wireframe';
   @State meshLabelsAvailable: boolean = false;
   @State errorMessage: string = '';
+  @StorageLink('faceLabWindowLifecycle') windowLifecycleState: string = 'UNKNOWN';
+  @StorageLink('faceLabWindowFocus') windowFocusState: string = 'UNKNOWN';
+  @StorageLink('faceLabWindowMode') windowMode: string = 'UNKNOWN';
+  @StorageLink('faceLabWindowVisible') windowVisible: boolean = false;
+  @StorageLink('faceLabWindowEventLog') windowEventLog: string = '';
+  @State frameCallbackCount: number = 0;
+  @State frameRateHz: number = 0;
+  @State frameLastIntervalMs: number = 0;
+  @State frameMaxGapMs: number = 0;
+  @State frameLastSeenAtMs: number = 0;
+  @State frameAgeMs: number = -1;
+  @State framesWhileInactive: number = 0;
+  @State inactiveElapsedMs: number = 0;
   @State gestureLabEnabled: boolean = false;
   @State gestureAxisSummary: string = '等待人脸姿态';
   @State gestureLeftBlink: string = '—';
@@ -52,6 +65,73 @@ struct Index {
   private gpuSurfaceController: FaceGpuSurfaceController = new FaceGpuSurfaceController();
   private lastTextMetricsUpdate: number = 0;
   private lastGestureUiUpdate: number = 0;
+  private frameAgeTimerId: number = -1;
+  private lastWindowFocusState: string = 'UNKNOWN';
+  private inactiveStartAtMs: number = 0;
+  private inactiveFrameBaseline: number = 0;
+  private hiddenStopRequested: boolean = false;
+
+  private onFramePulse(diagnostics: FaceFrameDiagnostics): void {
+    this.frameCallbackCount = diagnostics.callbackCount;
+    this.frameRateHz = diagnostics.rateHz;
+    this.frameLastIntervalMs = diagnostics.lastIntervalMs;
+    this.frameMaxGapMs = diagnostics.maxGapMs;
+    this.frameLastSeenAtMs = Date.now();
+    this.frameAgeMs = 0;
+    if (this.windowFocusState === 'INACTIVE' && this.windowVisible &&
+      this.windowLifecycleState !== 'HIDDEN') {
+      this.framesWhileInactive = Math.max(0, diagnostics.callbackCount - this.inactiveFrameBaseline);
+    }
+  }
+
+  private splitProbeStatus(): string {
+    if (this.windowMode !== 'SPLIT_SCREEN') {
+      return '等待进入 SPLIT_SCREEN：请将 FaceLab 与华为笔记并排分屏';
+    }
+    if (!this.windowVisible || this.windowLifecycleState === 'HIDDEN') {
+      return '窗口当前不可见或已进入后台';
+    }
+    if (this.windowFocusState !== 'INACTIVE') {
+      return '等待失焦：点击另一侧应用，使 FaceLab 保持可见但不获焦';
+    }
+    if (this.arContext === undefined) {
+      return '请先启动 AR 追踪';
+    }
+    if (this.faceCount <= 0) {
+      return 'AR 会话已启动，但尚未检测到人脸';
+    }
+    if (this.frameAgeMs < 0) {
+      return '等待 AR 帧回调';
+    }
+    if (this.frameAgeMs > 1500) {
+      return '异常：最近 1.5 秒没有收到 AR 帧回调';
+    }
+    if (this.inactiveElapsedMs < 10000) {
+      return '观察中：请保持分屏失焦状态至少 10 秒';
+    }
+    if (this.framesWhileInactive >= 50 && this.frameRateHz >= 5) {
+      return '初步通过：失焦期间持续收到 AR 帧，且人脸仍被检测';
+    }
+    return '观察未达阈值：检查回调累计数、帧率和人脸检测状态';
+  }
+
+  private splitProbeStatusColor(): string {
+    const status = this.splitProbeStatus();
+    if (status.indexOf('初步通过') === 0) {
+      return '#63D6A5';
+    }
+    if (status.indexOf('异常') === 0) {
+      return '#F2C078';
+    }
+    return '#D2DCE8';
+  }
+
+  private resetSplitProbeCounters(): void {
+    this.inactiveFrameBaseline = this.frameCallbackCount;
+    this.framesWhileInactive = 0;
+    this.inactiveStartAtMs = this.windowFocusState === 'INACTIVE' ? Date.now() : 0;
+    this.inactiveElapsedMs = 0;
+  }
 
   private setMeshViewMode(mode: string): void {
     this.meshViewMode = mode;
@@ -275,6 +355,14 @@ struct Index {
 
     this.isStarting = true;
     this.errorMessage = '';
+    this.frameCallbackCount = 0;
+    this.frameRateHz = 0;
+    this.frameLastIntervalMs = 0;
+    this.frameMaxGapMs = 0;
+    this.frameLastSeenAtMs = 0;
+    this.frameAgeMs = -1;
+    this.framesWhileInactive = 0;
+    this.inactiveFrameBaseline = 0;
     this.status = '正在申请相机权限…';
 
     let stage = '申请相机权限';
@@ -309,6 +397,9 @@ struct Index {
         },
         (gesture: FaceGestureMetrics) => {
           this.onFaceGesture(gesture);
+        },
+        (diagnostics: FaceFrameDiagnostics) => {
+          this.onFramePulse(diagnostics);
         }
       );
       context.callback = this.faceCallback;
@@ -401,7 +492,51 @@ struct Index {
     }
   }
 
+  aboutToAppear(): void {
+    this.lastWindowFocusState = this.windowFocusState;
+    if (this.windowFocusState === 'INACTIVE') {
+      this.inactiveFrameBaseline = this.frameCallbackCount;
+      this.inactiveStartAtMs = Date.now();
+    }
+    this.frameAgeTimerId = setInterval(() => {
+      const focusState = this.windowFocusState;
+      if (focusState !== this.lastWindowFocusState) {
+        this.lastWindowFocusState = focusState;
+        if (focusState === 'INACTIVE') {
+          this.inactiveFrameBaseline = this.frameCallbackCount;
+          this.framesWhileInactive = 0;
+          this.inactiveStartAtMs = Date.now();
+          this.inactiveElapsedMs = 0;
+        } else if (focusState === 'ACTIVE') {
+          this.inactiveStartAtMs = 0;
+          this.inactiveElapsedMs = 0;
+          this.framesWhileInactive = 0;
+        }
+      }
+      if (this.inactiveStartAtMs > 0) {
+        this.inactiveElapsedMs = Date.now() - this.inactiveStartAtMs;
+      }
+      this.frameAgeMs = this.frameLastSeenAtMs > 0 ?
+        Date.now() - this.frameLastSeenAtMs : -1;
+
+      // INACTIVE is not background: split-screen must keep the AR session alive.
+      // Only a genuinely HIDDEN window triggers session cleanup.
+      if (this.windowLifecycleState === 'HIDDEN' && this.arContext !== undefined &&
+        !this.hiddenStopRequested) {
+        this.hiddenStopRequested = true;
+        this.stopTracking();
+      }
+      if (this.windowLifecycleState !== 'HIDDEN') {
+        this.hiddenStopRequested = false;
+      }
+    }, 250);
+  }
+
   aboutToDisappear(): void {
+    if (this.frameAgeTimerId >= 0) {
+      clearInterval(this.frameAgeTimerId);
+      this.frameAgeTimerId = -1;
+    }
     this.stopTracking();
   }
 
@@ -413,7 +548,7 @@ struct Index {
             .fontSize(32)
             .fontWeight(FontWeight.Bold)
             .fontColor('#F4F7FB')
-          Text('AR Face Tracking Lab · 0.6.0-alpha.1')
+          Text('AR Face Tracking Lab · 0.7.0-alpha.1')
             .fontSize(13)
             .fontColor('#9AA9BC')
         }
@@ -485,6 +620,65 @@ struct Index {
             })
         }
         .width('100%')
+
+        Column({ space: 10 }) {
+          Row() {
+            Column({ space: 4 }) {
+              Text('SPLIT-SCREEN CAMERA PROBE · 0.7')
+                .fontSize(11)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#8DA2BC')
+              Text('只观察窗口状态与 AR 帧回调，不注入系统输入')
+                .fontSize(11)
+                .fontColor('#9AA9BC')
+            }
+            .layoutWeight(1)
+            Button('重置失焦计数')
+              .height(34)
+              .fontSize(10)
+              .backgroundColor('#34445D')
+              .onClick(() => {
+                this.resetSplitProbeCounters();
+              })
+          }
+          .width('100%')
+          Text('窗口模式：' + this.windowMode + '  ·  生命周期：' + this.windowLifecycleState)
+            .fontSize(12)
+            .fontColor('#D2DCE8')
+          Text('焦点：' + this.windowFocusState + '  ·  可见：' + (this.windowVisible ? '是' : '否'))
+            .fontSize(12)
+            .fontColor('#D2DCE8')
+          Text('AR 帧回调：' + this.frameCallbackCount.toString() +
+            '  ·  估算回调率：' + this.frameRateHz.toFixed(1) + ' Hz')
+            .fontSize(12)
+            .fontColor('#D2DCE8')
+          Text('最近帧距今：' + (this.frameAgeMs >= 0 ? this.frameAgeMs.toFixed(0) + ' ms' : '尚无') +
+            '  ·  最近间隔：' + this.frameLastIntervalMs.toFixed(1) + ' ms')
+            .fontSize(12)
+            .fontColor('#D2DCE8')
+          Text('失焦期间回调：' + this.framesWhileInactive.toString() +
+            '  ·  失焦观察时长：' + (this.inactiveElapsedMs / 1000).toFixed(1) + ' s' +
+            '  ·  最大帧间隔：' + this.frameMaxGapMs.toFixed(1) + ' ms')
+            .fontSize(12)
+            .fontColor('#D2DCE8')
+          Text(this.splitProbeStatus())
+            .fontSize(13)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.splitProbeStatusColor())
+          Text('最近窗口事件')
+            .fontSize(10)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#8DA2BC')
+          Text(this.windowEventLog.length > 0 ? this.windowEventLog : '等待窗口事件…')
+            .fontSize(10)
+            .fontColor('#9AA9BC')
+            .lineHeight(15)
+        }
+        .alignItems(HorizontalAlign.Start)
+        .width('100%')
+        .padding(15)
+        .backgroundColor('#172235')
+        .borderRadius(15)
 
         Column({ space: 8 }) {
           Text('LIVE CAMERA / AR VIEW')

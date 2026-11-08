@@ -295,3 +295,22 @@
 - The above supersedes the earlier pending status for HAP build, overall gesture recognition, and GPU rendering regression.
 - Acceptance is qualitative; no numeric FPS, latency, false-positive, thermal, or battery benchmark was collected.
 - Stop / restart lifecycle and separate touch / M-Pencil fallback checks were not explicitly reported and remain unverified.
+
+
+## 2026-11-08 — FaceLab 0.7.0-alpha.1 Split-Screen Camera Continuity Probe
+
+### Implemented in code
+
+- Added explicit `supportWindowMode: ["fullscreen", "split", "floating"]` declaration.
+- EntryAbility subscribes to API 20+ `windowStageLifecycleEvent`, main-window `windowEvent`, `windowStatusDidChange`, and `windowVisibilityChange`; each state is mirrored to AppStorage and a bounded in-memory event log.
+- `FaceTrackingCallback` now counts each active `onFrameUpdate` invocation before the existing 30 Hz gesture / 5 Hz mesh processing gates, and reports callback rate, latest interval, and maximum observed gap at most twice per second.
+- Index displays split-screen mode, lifecycle, focus, visibility, frame callback telemetry, and an initial 10-second observation threshold.
+- `INACTIVE` does not stop AR tracking. `HIDDEN` triggers AR session cleanup; the operating system's camera background interruption policy remains in force.
+- No system touch injection, accessibility gesture injection, background keep-alive, or third-party app control is implemented.
+
+### Validation boundary
+
+- Repository source-contract checks are added for this experiment.
+- DevEco Studio / HarmonyOS SDK 26 ArkTS + NDK compilation has not been run in this environment.
+- MatePad Pro 13.2 (2023) split-screen focus-loss experiment has not yet been run.
+- A green in-app result is only a preliminary runtime observation; final acceptance requires a repeatable 10-second test and a separate full-background test.

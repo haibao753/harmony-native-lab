@@ -4,7 +4,7 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 
 ## 稳定基线：0.5.2 — Gesture Interaction Lab
 
-当前开发版本：`0.6.0-alpha.1` — FacePen Prototype（独立功能分支，尚未完成真机验收）。
+当前开发版本：`0.7.0-alpha.1` — Split-Screen Camera Continuity Probe（分屏持续感知实验，待 MatePad 真机验收）。
 
 - 线框、实体、形变热力和部位分区全部使用 OpenGL ES 3.0 原生 GPU 渲染。
 - 使用 ArkTS XComponent SURFACE / EGL / NativeWindow；C++ 侧使用 VBO / EBO 绘制。
@@ -12,6 +12,17 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 - 原生线程目标约 30 Hz 重绘，AR Mesh 数据仍约 5 Hz 更新；实际帧率待 MatePad 实测。
 - 部位分区通过 AR Engine 三角面标签为每个三角面分配颜色，使用 GPU 三角形绘制，不再进入 ArkUI Canvas。
 - 0.5.1 四种 GPU 模式已在 MatePad Pro 13.2（2023）真机验证流畅，部位分区卡顿问题已解决。
+
+## 0.7.0-alpha.1 — Split-Screen Camera Continuity Probe
+
+- 显式声明主窗口支持 fullscreen / split / floating。
+- 使用 API 20+ `windowStageLifecycleEvent` 记录前台/后台生命周期；使用主窗口 `windowEvent` 单独记录 ACTIVE / INACTIVE 焦点变化。
+- 监听 `windowStatusDidChange` 与 `windowVisibilityChange`，显示窗口模式、可见性和焦点状态。
+- AR 回调独立统计 `onFrameUpdate` 调用次数、估算回调率、最近帧间隔和最大间隔；不会将 5 Hz 网格发布频率误当成相机帧率。
+- 分屏失焦后，统计 10 秒观察窗口内的 AR 回调数量；初步阈值为至少 50 次回调、估算回调率至少 5 Hz、持续检测到人脸且最近帧距今小于 1.5 秒。
+- `INACTIVE` 不触发停止追踪；只有窗口进入 `HIDDEN` 才清理 AR 会话。后台相机断流遵循系统隐私策略，不尝试保活或绕过。
+- 当前只提供可观测性与实验面板，不控制华为笔记，也不注入系统级触摸事件。
+- 源码检查通过不代表相机在分屏失焦时持续工作；DevEco 构建和 MatePad 实测是结论依据。
 
 ## 0.5.2 — Gesture Interaction Lab
 
