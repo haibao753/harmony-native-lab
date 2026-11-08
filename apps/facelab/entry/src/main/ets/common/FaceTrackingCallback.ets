@@ -269,7 +269,6 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
       return;
     }
     this.processing = true;
-    this.lastPublishedTimestamp = sysBootTs;
 
     let frame: arEngine.ARFrame | undefined = undefined;
     let geometry: arEngine.ARGeometry | undefined = undefined;
@@ -442,33 +441,35 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
           poseYaw = euler.y;
           poseRoll = euler.z;
 
-          // Estimate short-term pose continuity from consecutive raw Euler samples.
-          // This is a local motion heuristic, not an AR Engine confidence score.
-          if (this.previousRawEuler !== undefined) {
-            const stepX = shortestAngleDelta(this.previousRawEuler.x, euler.x);
-            const stepY = shortestAngleDelta(this.previousRawEuler.y, euler.y);
-            const stepZ = shortestAngleDelta(this.previousRawEuler.z, euler.z);
-            const poseStep = Math.sqrt(stepX * stepX + stepY * stepY + stepZ * stepZ);
-            this.poseStepSamples.push(poseStep);
-            if (this.poseStepSamples.length > 8) {
-              this.poseStepSamples.shift();
+          if (shouldPublishMetrics) {
+            // Estimate short-term pose continuity from consecutive raw Euler samples.
+            // This is a local motion heuristic, not an AR Engine confidence score.
+            if (this.previousRawEuler !== undefined) {
+              const stepX = shortestAngleDelta(this.previousRawEuler.x, euler.x);
+              const stepY = shortestAngleDelta(this.previousRawEuler.y, euler.y);
+              const stepZ = shortestAngleDelta(this.previousRawEuler.z, euler.z);
+              const poseStep = Math.sqrt(stepX * stepX + stepY * stepY + stepZ * stepZ);
+              this.poseStepSamples.push(poseStep);
+              if (this.poseStepSamples.length > 8) {
+                this.poseStepSamples.shift();
+              }
+              let stepTotal = 0;
+              for (let i = 0; i < this.poseStepSamples.length; i++) {
+                stepTotal += this.poseStepSamples[i];
+              }
+              const averageStep = stepTotal / this.poseStepSamples.length;
+              trackingStabilitySummary = '近 ' + this.poseStepSamples.length.toString() +
+                ' 次更新平均变化 ' + averageStep.toFixed(2) + '°';
+              if (averageStep <= 0.8) {
+                trackingStabilityLabel = '较平稳';
+              } else if (averageStep <= 2.5) {
+                trackingStabilityLabel = '轻微变化';
+              } else {
+                trackingStabilityLabel = '头部运动中';
+              }
             }
-            let stepTotal = 0;
-            for (let i = 0; i < this.poseStepSamples.length; i++) {
-              stepTotal += this.poseStepSamples[i];
-            }
-            const averageStep = stepTotal / this.poseStepSamples.length;
-            trackingStabilitySummary = '近 ' + this.poseStepSamples.length.toString() +
-              ' 次更新平均变化 ' + averageStep.toFixed(2) + '°';
-            if (averageStep <= 0.8) {
-              trackingStabilityLabel = '较平稳';
-            } else if (averageStep <= 2.5) {
-              trackingStabilityLabel = '轻微变化';
-            } else {
-              trackingStabilityLabel = '头部运动中';
-            }
+            this.previousRawEuler = { x: euler.x, y: euler.y, z: euler.z };
           }
-          this.previousRawEuler = { x: euler.x, y: euler.y, z: euler.z };
 
           const alpha = 0.35;
 
