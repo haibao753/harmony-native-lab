@@ -28,6 +28,7 @@ export interface FaceMetrics {
   meshDeformation: Float32Array;
   meshLabels: Int32Array;
   meshLabelsAvailable: boolean;
+  meshTopologyRevision: number;
   posePitch: number;
   poseYaw: number;
   poseRoll: number;
@@ -138,11 +139,17 @@ function formatSigned(value: number, digits: number): string {
 
 /**
  * Reads AR Engine face data and computes relative pose / per-frame mesh movement.
- * UI updates are throttled to approximately 5 Hz; ARView rendering remains independent.
+ * Mesh/UI updates are throttled to approximately 10 Hz; ARView rendering remains independent.
  */
 export class FaceTrackingCallback extends arViewController.ARViewCallback {
   private active: boolean = true;
+  private processing: boolean = false;
   private lastPublishedTimestamp: number = 0;
+  private meshTopologyRevision: number = 0;
+  private cachedMeshLabelsAttempted: boolean = false;
+  private cachedMeshLabelsAvailable: boolean = false;
+  private cachedMeshVertices: Float32Array = new Float32Array(0);
+  private cachedMeshDeformation: Float32Array = new Float32Array(0);
   private lastErrorMessage: string = '';
   private onMetrics: (metrics: FaceMetrics) => void;
   private onError: (message: string) => void;
@@ -178,6 +185,7 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
 
   stop(): void {
     this.active = false;
+    this.processing = false;
     this.previousVertices = undefined;
     this.neutralVertices = undefined;
     this.neutralCaptureRequested = false;
@@ -188,6 +196,10 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
     this.cachedMeshTriangles = new Uint32Array(0);
     this.cachedMeshEdges = new Uint32Array(0);
     this.cachedMeshLabels = new Int32Array(0);
+    this.cachedMeshLabelsAttempted = false;
+    this.cachedMeshLabelsAvailable = false;
+    this.cachedMeshVertices = new Float32Array(0);
+    this.cachedMeshDeformation = new Float32Array(0);
     this.poseBaseline = undefined;
     this.translationBaseline = undefined;
   }
@@ -216,16 +228,17 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
   }
 
   async onFrameUpdate(ctx: arViewController.ARViewContext, sysBootTs: number): Promise<void> {
-    if (!this.active || sysBootTs - this.lastPublishedTimestamp < 200000) {
+    if (!this.active || this.processing || sysBootTs - this.lastPublishedTimestamp < 100000) {
       return;
     }
-    this.lastPublishedTimestamp = sysBootTs;
 
     const session = ctx.session;
     if (session === undefined) {
       this.reportError('AR 会话尚未就绪。');
       return;
     }
+    this.processing = true;
+    this.lastPublishedTimestamp = sysBootTs;
 
     let frame: arEngine.ARFrame | undefined = undefined;
     let geometry: arEngine.ARGeometry | undefined = undefined;
@@ -249,6 +262,10 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
       }
 
       if (firstFace === undefined) {
+        const hadTopology = this.cachedMeshVertexCount !== -1 || this.cachedMeshIndexCount !== -1;
+        if (hadTopology) {
+          this.meshTopologyRevision++;
+        }
         this.previousVertices = undefined;
         this.neutralVertices = undefined;
         this.neutralCaptureRequested = false;
@@ -259,6 +276,10 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
         this.cachedMeshTriangles = new Uint32Array(0);
         this.cachedMeshEdges = new Uint32Array(0);
         this.cachedMeshLabels = new Int32Array(0);
+        this.cachedMeshLabelsAttempted = false;
+        this.cachedMeshLabelsAvailable = false;
+        this.cachedMeshVertices = new Float32Array(0);
+        this.cachedMeshDeformation = new Float32Array(0);
         this.poseBaseline = undefined;
         this.translationBaseline = undefined;
         this.smoothedX = undefined;
@@ -293,6 +314,7 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
           meshDeformation: new Float32Array(0),
           meshLabels: new Int32Array(0),
           meshLabelsAvailable: false,
+          meshTopologyRevision: this.meshTopologyRevision,
           posePitch: 0,
           poseYaw: 0,
           poseRoll: 0
@@ -459,6 +481,10 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
         // unique edge list only when the vertex/index counts change.
         if (this.cachedMeshVertexCount !== vertexCount ||
           this.cachedMeshIndexCount !== indexCount) {
+          this.meshTopologyRevision++;
+          this.cachedMeshLabels = new Int32Array(0);
+          this.cachedMeshLabelsAttempted = false;
+          this.cachedMeshLabelsAvailable = false;
           const edgeKeys = new Set<number>();
           for (let i = 0; i + 2 < currentIndices.length; i += 3) {
             const a = currentIndices[i];
@@ -493,27 +519,40 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
           this.cachedMeshIndexCount = indexCount;
         }
 
-        meshVertices = new Float32Array(currentVertices.length);
-        meshVertices.set(currentVertices);
+        if (this.cachedMeshVertices.length !== currentVertices.length) {
+          this.cachedMeshVertices = new Float32Array(currentVertices.length);
+        }
+        this.cachedMeshVertices.set(currentVertices);
+        meshVertices = this.cachedMeshVertices;
         meshTriangles = this.cachedMeshTriangles;
         meshEdges = this.cachedMeshEdges;
-        meshDeformation = new Float32Array(vertexCount);
+        if (this.cachedMeshDeformation.length !== vertexCount) {
+          this.cachedMeshDeformation = new Float32Array(vertexCount);
+        }
+        for (let i = 0; i < this.cachedMeshDeformation.length; i++) {
+          this.cachedMeshDeformation[i] = 0;
+        }
+        meshDeformation = this.cachedMeshDeformation;
 
         // Triangle labels are optional on a device-by-device basis. Keep the
         // geometry viewer functional if the runtime does not expose this API.
-        try {
-          const labelBuffer = geometry.getTriangleLabels();
-          const currentLabels = new Int32Array(labelBuffer);
-          if (currentLabels.length === triangleCount) {
-            this.cachedMeshLabels = new Int32Array(currentLabels.length);
-            this.cachedMeshLabels.set(currentLabels);
-            meshLabels = this.cachedMeshLabels;
-            meshLabelsAvailable = true;
+        if (!this.cachedMeshLabelsAttempted) {
+          this.cachedMeshLabelsAttempted = true;
+          try {
+            const labelBuffer = geometry.getTriangleLabels();
+            const currentLabels = new Int32Array(labelBuffer);
+            if (currentLabels.length === triangleCount) {
+              this.cachedMeshLabels = new Int32Array(currentLabels.length);
+              this.cachedMeshLabels.set(currentLabels);
+              this.cachedMeshLabelsAvailable = true;
+            }
+          } catch (_) {
+            this.cachedMeshLabels = new Int32Array(0);
+            this.cachedMeshLabelsAvailable = false;
           }
-        } catch (_) {
-          meshLabels = new Int32Array(0);
-          meshLabelsAvailable = false;
         }
+        meshLabels = this.cachedMeshLabels;
+        meshLabelsAvailable = this.cachedMeshLabelsAvailable;
 
         if (this.neutralCaptureRequested) {
           const neutralSnapshot = new Float32Array(currentVertices.length);
@@ -571,9 +610,10 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
           meshMotionSummary = 'RMS ' + rms.toFixed(5) + ' · MAX ' + maxDisplacement.toFixed(5);
         }
 
-        const snapshot = new Float32Array(currentVertices.length);
-        snapshot.set(currentVertices);
-        this.previousVertices = snapshot;
+        if (this.previousVertices === undefined || this.previousVertices.length !== currentVertices.length) {
+          this.previousVertices = new Float32Array(currentVertices.length);
+        }
+        this.previousVertices.set(currentVertices);
         meshFrameAvailable = vertexCount > 0 && meshTriangles.length >= 3 && meshEdges.length >= 2;
       } catch (error) {
         this.previousVertices = undefined;
@@ -633,6 +673,7 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
         meshDeformation: meshDeformation,
         meshLabels: meshLabels,
         meshLabelsAvailable: meshLabelsAvailable,
+        meshTopologyRevision: this.meshTopologyRevision,
         posePitch: posePitch,
         poseYaw: poseYaw,
         poseRoll: poseRoll
@@ -669,6 +710,7 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
           // Ignore cleanup errors while the AR session is stopping.
         }
       }
+      this.processing = false;
     }
   }
 

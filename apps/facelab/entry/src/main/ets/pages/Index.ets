@@ -30,6 +30,7 @@ struct Index {
   @State trackingStabilitySummary: string = '等待姿态数据';
   @State poseCalibrated: boolean = false;
   @State meshRevision: number = 0;
+  @State meshTopologyRevision: number = -1;
   @State meshViewMode: string = 'wireframe';
   @State meshViewReset: number = 0;
   @State meshDataAvailable: boolean = false;
@@ -45,6 +46,14 @@ struct Index {
   private meshEdges: number[] = [];
   private meshDeformation: number[] = [];
   private meshLabels: number[] = [];
+  private lastTextMetricsUpdate: number = 0;
+
+  private copyNumericData(target: number[], source: Float32Array | Uint32Array | Int32Array): void {
+    target.length = source.length;
+    for (let i = 0; i < source.length; i++) {
+      target[i] = source[i];
+    }
+  }
 
   private describeError(error: Object): string {
     const err = error as BusinessError;
@@ -69,37 +78,52 @@ struct Index {
 
   private onFaceMetrics(metrics: FaceMetrics): void {
     this.faceCount = metrics.faceCount;
-    this.meshSummary = metrics.meshSummary;
-    this.poseSummary = metrics.poseSummary;
-    this.blendSummary = metrics.blendSummary;
-    this.leftBlink = metrics.leftBlink;
-    this.rightBlink = metrics.rightBlink;
-    this.jawOpen = metrics.jawOpen;
-    this.rotationX = metrics.rotationX;
-    this.rotationY = metrics.rotationY;
-    this.rotationZ = metrics.rotationZ;
-    this.quaternionSummary = metrics.quaternionSummary;
-    this.translationSummary = metrics.translationSummary;
-    this.meshMotionSummary = metrics.meshMotionSummary;
-    this.neutralDeformationSummary = metrics.neutralDeformationSummary;
     this.neutralCalibrated = metrics.neutralCalibrated;
-    this.trackingStabilityLabel = metrics.trackingStabilityLabel;
-    this.trackingStabilitySummary = metrics.trackingStabilitySummary;
     this.poseCalibrated = metrics.poseCalibrated;
-    // ArkUI @Prop wraps object values for observation. Convert TypedArrays to plain arrays here,
-    // because TypedArray accessors such as .length require the original internal slot.
-    this.meshVertices = Array.from(metrics.meshVertices);
-    this.meshTriangles = Array.from(metrics.meshTriangles);
-    this.meshEdges = Array.from(metrics.meshEdges);
-    this.meshDeformation = Array.from(metrics.meshDeformation);
     this.meshDataAvailable = metrics.meshFrameAvailable;
-    this.meshLabels = Array.from(metrics.meshLabels);
-    this.meshLabelsAvailable = metrics.meshLabelsAvailable;
     this.posePitch = metrics.posePitch;
     this.poseYaw = metrics.poseYaw;
     this.poseRoll = metrics.poseRoll;
+
+    // Keep the same plain-array instances across frames. The viewer redraws when
+    // meshRevision changes, so we avoid allocating and proxy-wrapping five arrays
+    // on every AR update.
+    this.copyNumericData(this.meshVertices, metrics.meshVertices);
+    this.copyNumericData(this.meshDeformation, metrics.meshDeformation);
+    if (this.meshTopologyRevision !== metrics.meshTopologyRevision) {
+      this.copyNumericData(this.meshTriangles, metrics.meshTriangles);
+      this.copyNumericData(this.meshEdges, metrics.meshEdges);
+      this.copyNumericData(this.meshLabels, metrics.meshLabels);
+      this.meshTopologyRevision = metrics.meshTopologyRevision;
+      this.meshLabelsAvailable = metrics.meshLabelsAvailable;
+    }
+
+    // The geometry viewer updates at 10 Hz; textual diagnostics only need 2 Hz.
+    const now = Date.now();
+    if (now - this.lastTextMetricsUpdate >= 500) {
+      this.meshSummary = metrics.meshSummary;
+      this.poseSummary = metrics.poseSummary;
+      this.blendSummary = metrics.blendSummary;
+      this.leftBlink = metrics.leftBlink;
+      this.rightBlink = metrics.rightBlink;
+      this.jawOpen = metrics.jawOpen;
+      this.rotationX = metrics.rotationX;
+      this.rotationY = metrics.rotationY;
+      this.rotationZ = metrics.rotationZ;
+      this.quaternionSummary = metrics.quaternionSummary;
+      this.translationSummary = metrics.translationSummary;
+      this.meshMotionSummary = metrics.meshMotionSummary;
+      this.neutralDeformationSummary = metrics.neutralDeformationSummary;
+      this.trackingStabilityLabel = metrics.trackingStabilityLabel;
+      this.trackingStabilitySummary = metrics.trackingStabilitySummary;
+      this.lastTextMetricsUpdate = now;
+    }
+
     this.meshRevision++;
-    this.status = metrics.faceCount > 0 ? '正在追踪人脸' : 'AR 已运行，等待人脸进入画面';
+    const nextStatus = metrics.faceCount > 0 ? '正在追踪人脸' : 'AR 已运行，等待人脸进入画面';
+    if (this.status !== nextStatus) {
+      this.status = nextStatus;
+    }
   }
 
   private calibratePose(): void {
@@ -244,11 +268,12 @@ struct Index {
       this.trackingStabilityLabel = '—';
       this.trackingStabilitySummary = '已停止';
       this.poseCalibrated = false;
-      this.meshVertices = [];
-      this.meshTriangles = [];
-      this.meshEdges = [];
-      this.meshDeformation = [];
-      this.meshLabels = [];
+      this.meshVertices.length = 0;
+      this.meshTriangles.length = 0;
+      this.meshEdges.length = 0;
+      this.meshDeformation.length = 0;
+      this.meshLabels.length = 0;
+      this.meshTopologyRevision = -1;
       this.meshLabelsAvailable = false;
       this.posePitch = 0;
       this.poseYaw = 0;
@@ -270,7 +295,7 @@ struct Index {
             .fontSize(32)
             .fontWeight(FontWeight.Bold)
             .fontColor('#F4F7FB')
-          Text('AR Face Tracking Lab · 0.4.1')
+          Text('AR Face Tracking Lab · 0.4.2')
             .fontSize(13)
             .fontColor('#9AA9BC')
         }
@@ -446,7 +471,8 @@ struct Index {
             posePitch: this.posePitch,
             poseYaw: this.poseYaw,
             poseRoll: this.poseRoll,
-            resetKey: this.meshViewReset
+            resetKey: this.meshViewReset,
+            topologyRevision: this.meshTopologyRevision
           })
             .width('100%')
           Text('单指拖动旋转 · 双指捏合缩放。模型随实时头部姿态转动；支持线框、半透明表面、形变热力和面部区域分区。形变热力需先采集中性表情；区域分区需设备返回三角面标签。当前使用三维顶点投影到原生 Canvas 绘制，非独立 GPU 三维场景。')
