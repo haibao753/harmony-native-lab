@@ -50,6 +50,12 @@ export interface FaceGestureMetrics {
   jawConfirm: boolean;
 }
 
+interface GestureEventResult {
+  leftWink: boolean;
+  rightWink: boolean;
+  jawConfirm: boolean;
+}
+
 interface QuaternionValues {
   x: number;
   y: number;
@@ -812,7 +818,7 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
     rightBlink: number,
     jawOpen: number,
     now: number
-  ): { leftWink: boolean; rightWink: boolean; jawConfirm: boolean } {
+  ): GestureEventResult {
     let leftWink = false;
     let rightWink = false;
     let jawConfirm = false;
@@ -869,7 +875,12 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
       this.jawConfirmLatched = false;
     }
 
-    return { leftWink: leftWink, rightWink: rightWink, jawConfirm: jawConfirm };
+    const result: GestureEventResult = {
+      leftWink: leftWink,
+      rightWink: rightWink,
+      jawConfirm: jawConfirm
+    };
+    return result;
   }
 
   private reportError(message: string): void {
