@@ -2,6 +2,14 @@ import { arEngine, arViewController } from '@kit.AREngine';
 import { Node } from '@kit.ArkGraphics3D';
 import { BusinessError } from '@kit.BasicServicesKit';
 
+// Values from Huawei's AR Engine API reference: FACE trackable 0x50000002,
+// TRACKING state 0, and BlendShape indices 0 / 7 / 17.
+const FACE_TRACKABLE_TYPE: arEngine.ARTrackableType = 0x50000002 as arEngine.ARTrackableType;
+const TRACKING_STATE: arEngine.ARTrackingState = 0 as arEngine.ARTrackingState;
+const BLEND_SHAPE_EYE_BLINK_LEFT: arEngine.ARBlendShapeType = 0 as arEngine.ARBlendShapeType;
+const BLEND_SHAPE_EYE_BLINK_RIGHT: arEngine.ARBlendShapeType = 7 as arEngine.ARBlendShapeType;
+const BLEND_SHAPE_JAW_OPEN: arEngine.ARBlendShapeType = 17 as arEngine.ARBlendShapeType;
+
 export interface FaceMetrics {
   faceCount: number;
   meshSummary: string;
@@ -79,12 +87,12 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
     try {
       frame = session.getFrame();
       const trackables: arEngine.ARTrackable[] =
-        session.getAllTrackables(arEngine.ARTrackableType.FACE);
+        session.getAllTrackables(FACE_TRACKABLE_TYPE);
 
       let faceCount = 0;
       let firstFace: arEngine.ARFace | undefined = undefined;
       for (let i = 0; i < trackables.length; i++) {
-        if (trackables[i].state === arEngine.ARTrackingState.TRACKING) {
+        if (trackables[i].state === TRACKING_STATE) {
           faceCount++;
           if (firstFace === undefined) {
             firstFace = trackables[i] as arEngine.ARFace;
@@ -140,9 +148,9 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
         blendSummary = blendShapes.count.toString() + ' 个参数 · ' +
           values.length.toString() + ' 个数值';
 
-        const leftIndex = types.indexOf(arEngine.ARBlendShapeType.EYE_BLINK_LEFT);
-        const rightIndex = types.indexOf(arEngine.ARBlendShapeType.EYE_BLINK_RIGHT);
-        const jawIndex = types.indexOf(arEngine.ARBlendShapeType.JAW_OPEN);
+        const leftIndex = types.indexOf(BLEND_SHAPE_EYE_BLINK_LEFT);
+        const rightIndex = types.indexOf(BLEND_SHAPE_EYE_BLINK_RIGHT);
+        const jawIndex = types.indexOf(BLEND_SHAPE_JAW_OPEN);
 
         leftBlink = formatWeight(values, leftIndex);
         rightBlink = formatWeight(values, rightIndex);
