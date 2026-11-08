@@ -6,7 +6,7 @@
 
 - `src/main/ets/domain/LinkedListModel.ets`：单链表文档模型、节点操作、可达性与环分析。
 - `src/main/ets/codegen/CppLinkedListGenerator.ets`：从结构模型确定性生成 C++ 构造/遍历/释放代码，并保留代码行映射。
-- `src/main/ets/pages/Index.ets`：首个 ArkUI 工作台页面原型，包含节点创建、节点拖动、通过选择起点/目标建立 next、断开连接、设置 head、删除节点、取消连接、撤销/重做和代码面板。
+- `src/main/ets/pages/Index.ets`：ArkUI 工作台页面，包含节点创建/拖动、通过选择起点/目标建立 next、断开连接、设置 head、删除节点、撤销/重做，以及可拖动、可缩放、可滚动的浮动 C++ 代码工作区。
 
 ## 重要状态说明
 
