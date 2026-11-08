@@ -134,6 +134,8 @@ struct Index {
   @State traceOptionA: string = '';
   @State traceOptionB: string = '';
   @State traceOptionC: string = '';
+  @State isPlaying: boolean = false;
+  @State traceProgressPercent: number = 0;
   // Used to tune the docked inspector width for narrower tablet windows.
   @State viewportWidth: number = 0;
   // Width of the actual horizontal code viewport. Short source lines must
@@ -159,9 +161,14 @@ struct Index {
   private canvasReady: boolean = false;
   private undoStack: LinkedListDocument[] = [];
   private redoStack: LinkedListDocument[] = [];
+  private playbackTimer: number = -1;
 
   aboutToAppear(): void {
     this.refreshDerivedState();
+  }
+
+  aboutToDisappear(): void {
+    this.pauseAutoPlay();
   }
 
   private syncSelectedValueInput(): void {
@@ -196,7 +203,42 @@ struct Index {
   }
 
 
+  private pauseAutoPlay(): void {
+    if (this.playbackTimer >= 0) {
+      clearInterval(this.playbackTimer);
+      this.playbackTimer = -1;
+    }
+    this.isPlaying = false;
+  }
+
+  private toggleAutoPlay(): void {
+    if (this.isPlaying) {
+      this.pauseAutoPlay();
+      return;
+    }
+    if (this.traceSteps.length === 0 || this.traceStepIndex >= this.traceSteps.length - 1) {
+      return;
+    }
+    this.isPlaying = true;
+    this.playbackTimer = setInterval(() => {
+      if (this.traceStepIndex >= this.traceSteps.length - 1) {
+        this.pauseAutoPlay();
+        return;
+      }
+      this.traceStepIndex++;
+      this.predictionChoice = -1;
+      this.predictionCorrect = false;
+      this.predictionFeedback = '';
+      this.applyTraceStep(this.traceStepIndex);
+      if (this.traceStepIndex >= this.traceSteps.length - 1) {
+        this.pauseAutoPlay();
+      }
+    }, 1400);
+  }
+
   private clearTrace(): void {
+    this.pauseAutoPlay();
+    this.traceProgressPercent = 0;
     this.traceSteps = [];
     this.traceStepIndex = 0;
     this.predictionChoice = -1;
@@ -222,6 +264,7 @@ struct Index {
   }
 
   private startTraversalTrace(): void {
+    this.pauseAutoPlay();
     if (this.document.nodes.length === 0) {
       this.message = '请先创建至少一个节点，再运行链表遍历演示。';
       return;
@@ -250,6 +293,9 @@ struct Index {
       : 'current = &' + step.currentId;
     this.traceVisitedLabel = step.visitedLabel;
     this.traceCodeLineNumber = step.codeLineNumber;
+    this.traceProgressPercent = this.traceSteps.length <= 1
+      ? 100
+      : (index / (this.traceSteps.length - 1)) * 100;
     this.traceCodeLineText = '';
     if (step.codeLineNumber > 0) {
       const lines = this.generatedCode.split('\n');
@@ -272,6 +318,7 @@ struct Index {
   }
 
   private answerPrediction(option: number): void {
+    this.pauseAutoPlay();
     if (this.traceStepIndex >= this.traceSteps.length) {
       return;
     }
@@ -282,6 +329,7 @@ struct Index {
   }
 
   private previousTraceStep(): void {
+    this.pauseAutoPlay();
     if (this.traceStepIndex <= 0) {
       return;
     }
@@ -293,6 +341,7 @@ struct Index {
   }
 
   private nextTraceStep(): void {
+    this.pauseAutoPlay();
     if (this.predictionChoice < 0 || this.traceStepIndex >= this.traceSteps.length - 1) {
       return;
     }
@@ -304,6 +353,7 @@ struct Index {
   }
 
   private restartTrace(): void {
+    this.pauseAutoPlay();
     if (this.traceSteps.length === 0) {
       this.startTraversalTrace();
       return;
@@ -316,12 +366,14 @@ struct Index {
   }
 
   private openMemoryFromTeaching(): void {
+    this.pauseAutoPlay();
     this.showTeaching = false;
     this.showCode = false;
     this.showMemory = true;
   }
 
   private openCodeFromTeaching(): void {
+    this.pauseAutoPlay();
     this.showTeaching = false;
     this.showMemory = false;
     this.showCode = true;
@@ -860,6 +912,9 @@ struct Index {
               traceReady: this.traceSteps.length > 0,
               stepIndex: this.traceStepIndex,
               stepCount: this.traceSteps.length,
+              progressPercent: this.traceProgressPercent,
+              isPlaying: this.isPlaying,
+              canPlay: this.traceSteps.length > 0 && this.traceStepIndex < this.traceSteps.length - 1,
               stepTitle: this.traceStepTitle,
               stepExplanation: this.traceStepExplanation,
               currentLabel: this.traceCurrentLabel,
@@ -880,10 +935,12 @@ struct Index {
               onAnswer: (option: number) => this.answerPrediction(option),
               onPrevious: () => this.previousTraceStep(),
               onNext: () => this.nextTraceStep(),
+              onTogglePlay: () => this.toggleAutoPlay(),
               onRestart: () => this.restartTrace(),
               onOpenMemory: () => this.openMemoryFromTeaching(),
               onOpenCode: () => this.openCodeFromTeaching(),
               onClose: () => {
+                this.pauseAutoPlay();
                 this.showTeaching = false;
               }
             })
