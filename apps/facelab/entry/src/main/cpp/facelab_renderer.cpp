@@ -320,8 +320,16 @@ public:
 
     void ClearMesh()
     {
-        MeshSnapshot empty;
-        UpdateMesh(std::move(empty));
+        std::lock_guard<std::mutex> lock(mutex_);
+        latest_.positions.clear();
+        latest_.triangles.clear();
+        latest_.edges.clear();
+        latest_.deformation.clear();
+        latest_.labels.clear();
+        latest_.revision++;
+        stats_.vertexCount = 0;
+        stats_.triangleCount = 0;
+        cv_.notify_all();
     }
 
 private:
