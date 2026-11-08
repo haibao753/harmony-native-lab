@@ -449,7 +449,7 @@ struct Index {
           Text(this.translationSummary)
             .fontSize(12)
             .fontColor('#F4F7FB')
-          Button(this.poseCalibrated ? '重新校准当前姿态为零点' : '校准当前姿态为零点')
+          Button('校准当前姿态为零点')
             .width('100%')
             .height(42)
             .enabled(this.faceCount > 0 && this.arContext !== undefined)
