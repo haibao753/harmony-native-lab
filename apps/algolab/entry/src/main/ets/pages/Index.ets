@@ -1034,7 +1034,7 @@ struct Index {
 
                       if (this.showAnnotations && line.annotationText !== '') {
                         Text(line.annotationText)
-                          .fontSize(10)
+                          .fontSize(12)
                           .fontColor('#8B8378')
                           .maxLines(3)
                           .width('100%')
