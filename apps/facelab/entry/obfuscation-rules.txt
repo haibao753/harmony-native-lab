@@ -1,0 +1,1 @@
+# FaceLab currently disables obfuscation in the release build profile.
