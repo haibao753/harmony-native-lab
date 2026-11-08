@@ -32,6 +32,10 @@ FaceLab 0.4.3 made the heatmap visible and reduced AR mesh publication to approx
 
 Face images, mesh geometry, and expression metrics remain in local memory. No face data is saved or uploaded. Surface destruction stops the native render thread and releases GL, EGL, and NativeWindow resources.
 
+## SDK 26 ArkTS compile correction
+
+The first user build completed CMake / native C++ compilation and failed in ArkTS because XComponentController and XComponentType were incorrectly imported from @kit.ArkUI. Huawei's ArkUI API declarations define these as global ArkTS declarations. The implementation now references them without named imports and retains the ArkTS XComponentOptions controller lifecycle path. The separate API 19+ NativeXComponentParameters overload is not used.
+
 ## Validation status
 
 **Status: Source implementation only**
