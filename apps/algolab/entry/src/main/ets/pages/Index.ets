@@ -13,7 +13,7 @@ import {
   setNodeValue
 } from '../domain/LinkedListModel';
 import { generateCpp } from '../codegen/CppLinkedListGenerator';
-import { highlightCpp, formatCppDisplayToken, CppDisplayLine, CppToken } from '../codegen/CppSyntaxHighlighter';
+import { highlightCpp, formatCppDisplayToken, measureCppLineWidth, CppDisplayLine, CppToken } from '../codegen/CppSyntaxHighlighter';
 
 @Component
 struct NodeCard {
@@ -310,16 +310,6 @@ struct Index {
       this.refreshDerivedState();
       this.message = '已恢复操作。';
     }
-  }
-
-  private codeLineWidth(line: CppDisplayLine): number {
-    let characterCount = 0;
-    for (let i = 0; i < line.tokens.length; i++) {
-      characterCount += formatCppDisplayToken(line.tokens[i].text).length;
-    }
-    // Monospace glyphs occupy approximately 0.62em. Give each line its own
-    // measured width so short lines start at column zero and long lines scroll.
-    return Math.max(180, characterCount * this.codeFontSize * 0.62 + 12);
   }
 
   private clampCodePanelX(value: number): number {
@@ -677,7 +667,7 @@ struct Index {
                     }
                     // One Text paragraph owns the entire source line. Span children
                     // only change token color; they cannot distribute tokens as Row items.
-                    .width(this.codeLineWidth(line))
+                    .width(measureCppLineWidth(line, this.codeFontSize))
                     .textAlign(TextAlign.Start)
                     .fontSize(this.codeFontSize)
                     .fontFamily('monospace')
