@@ -49,3 +49,12 @@
 - Replaced runtime enum-member dereferences on `arEngine` with Huawei-documented numeric enum values, retaining ArkTS enum type annotations.
 - Added explicit startup-stage diagnostics.
 - This patch has not yet been rebuilt or tested on the user's device.
+
+
+## 2026-11-08 — 0.2.2 duplicate capability-probe bypass
+
+- User's 0.2.1 run still failed at `检查 FACE 能力` with `Cannot read property ARFeatureType of undefined`.
+- The exact failure stage isolates the exception to the repeated capability-probe path.
+- 0.1.0 already proved FACE support on this exact target device, so 0.2.2 removes the redundant probe from the Start flow.
+- Restored official Huawei ArkTS enum member expressions for session configuration and callback trackable / state / BlendShape types.
+- This patch has not yet been rebuilt or tested on the user's MatePad.
