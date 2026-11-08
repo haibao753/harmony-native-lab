@@ -9,6 +9,7 @@ import {
 } from '../main/ets/domain/LinkedListModel';
 import { generateCpp } from '../main/ets/codegen/CppLinkedListGenerator';
 import { highlightCpp, formatCppDisplayToken, measureCppLineWidth } from '../main/ets/codegen/CppSyntaxHighlighter';
+import { LinkedListTraceStep, buildTraversalTrace, getLinkedListLesson } from '../main/ets/domain/LinkedListLessonEngine';
 
 export default function localUnitTest() {
   describe('LinkedListModel', () => {
@@ -239,6 +240,78 @@ export default function localUnitTest() {
         }
         expect(foundLink).assertTrue();
       }
+    });
+
+
+    it('builds a synchronized traversal trace for a normal linked list', 0, () => {
+      let document = createEmptyDocument();
+      document = addNode(document, 10, 0, 0);
+      document = addNode(document, 20, 160, 0);
+      document = addNode(document, 30, 320, 0);
+
+      const firstLink = setNext(document, document.nodes[0].id, document.nodes[1].id);
+      expect(firstLink !== null).assertTrue();
+      if (firstLink !== null) {
+        const secondLink = setNext(firstLink, document.nodes[1].id, document.nodes[2].id);
+        expect(secondLink !== null).assertTrue();
+        if (secondLink !== null) {
+          const generated = generateCpp(secondLink);
+          const trace: LinkedListTraceStep[] = buildTraversalTrace(secondLink, generated.code);
+          expect(trace.length > 0).assertTrue();
+          expect(trace[0].title).assertEqual('初始化 current');
+          expect(trace[0].codeLineNumber > 0).assertTrue();
+
+          let foundSecondNode = false;
+          let foundCompletion = false;
+          for (let i = 0; i < trace.length; i++) {
+            if (trace[i].currentId === document.nodes[1].id &&
+              trace[i].title === '沿 next 移动 current') {
+              foundSecondNode = true;
+            }
+            if (trace[i].title === '遍历完成') {
+              foundCompletion = true;
+              expect(trace[i].visitedLabel).assertEqual('N1 → N2 → N3');
+            }
+          }
+          expect(foundSecondNode).assertTrue();
+          expect(foundCompletion).assertTrue();
+        }
+      }
+    });
+
+    it('stops the traversal trace when a node address repeats', 0, () => {
+      let document = createEmptyDocument();
+      document = addNode(document, 10, 0, 0);
+      document = addNode(document, 20, 160, 0);
+
+      const firstLink = setNext(document, document.nodes[0].id, document.nodes[1].id);
+      expect(firstLink !== null).assertTrue();
+      if (firstLink !== null) {
+        const cycleDocument = setNext(firstLink, document.nodes[1].id, document.nodes[0].id);
+        expect(cycleDocument !== null).assertTrue();
+        if (cycleDocument !== null) {
+          const generated = generateCpp(cycleDocument);
+          const trace = buildTraversalTrace(cycleDocument, generated.code);
+          let foundCycle = false;
+          for (let i = 0; i < trace.length; i++) {
+            if (trace[i].title === '检测到重复节点') {
+              foundCycle = true;
+              expect(trace[i].currentId).assertEqual(document.nodes[0].id);
+              expect(trace[i].correctOption).assertEqual(0);
+            }
+          }
+          expect(foundCycle).assertTrue();
+          expect(cycleDocument.nodes[0].nextId).assertEqual(document.nodes[1].id);
+          expect(cycleDocument.nodes[1].nextId).assertEqual(document.nodes[0].id);
+        }
+      }
+    });
+
+    it('provides focused linked-list lesson content', 0, () => {
+      const lesson = getLinkedListLesson('traversal');
+      expect(lesson.id).assertEqual('traversal');
+      expect(lesson.title.indexOf('遍历') >= 0).assertTrue();
+      expect(lesson.keyPoint.indexOf('current') >= 0).assertTrue();
     });
 
   });
