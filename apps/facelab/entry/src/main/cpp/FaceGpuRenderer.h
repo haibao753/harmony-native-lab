@@ -25,6 +25,7 @@ public:
                     const uint32_t *triangles, size_t triangleIndexCount,
                     const uint32_t *edges, size_t edgeIndexCount,
                     const float *deformation, size_t deformationCount,
+                    const int32_t *labels, size_t labelCount,
                     float pitch, float yaw, float roll,
                     uint64_t topologyRevision, int32_t mode);
     void ClearMesh();
@@ -35,6 +36,7 @@ private:
         float position[3];
         float normal[3];
         float heat;
+        float region;
     };
 
     void RenderLoop();
@@ -56,6 +58,7 @@ private:
     std::vector<uint32_t> triangles_;
     std::vector<uint32_t> edges_;
     std::vector<float> deformation_;
+    std::vector<int32_t> labels_;
     uint64_t topologyRevision_{UINT64_MAX};
     uint64_t dataRevision_{0};
     uint64_t uploadedRevision_{UINT64_MAX};
@@ -88,6 +91,7 @@ private:
     GLint modeLocation_{-1};
     GLsizei triangleIndexCount_{0};
     GLsizei edgeIndexCount_{0};
+    GLsizei regionVertexCount_{0};
     int32_t surfaceWidth_{1};
     int32_t surfaceHeight_{1};
 };
