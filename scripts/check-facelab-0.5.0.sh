@@ -81,4 +81,4 @@ if grep -Fq '@Prop vertices: Float32Array' apps/facelab/entry/src/main/ets/compo
   exit 1
 fi
 
-echo "FaceLab 0.5.0 native GPU source contracts passed."
+echo "FaceLab 0.5.1 GPU region source contracts passed."
