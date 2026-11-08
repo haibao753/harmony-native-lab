@@ -329,3 +329,23 @@ export function highlightCpp(
   }
   return result;
 }
+/**
+ * ArkUI Text may collapse ordinary leading spaces in separately rendered
+ * token Text nodes. Convert visual whitespace to non-breaking spaces only
+ * at presentation time; the generated C++ source and token text stay intact.
+ */
+export function formatCppDisplayToken(source: string): string {
+  let display = '';
+  for (let i = 0; i < source.length; i++) {
+    const ch = source[i];
+    if (ch === ' ') {
+      display += '\u00A0';
+    } else if (ch === '\t') {
+      display += '\u00A0\u00A0\u00A0\u00A0';
+    } else {
+      display += ch;
+    }
+  }
+  return display;
+}
+
