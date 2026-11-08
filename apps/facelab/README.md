@@ -2,14 +2,23 @@
 
 HarmonyOS 原生三维人脸与新型交互实验应用。
 
-## 当前版本：0.5.1 — Fully GPU-rendered Face Regions
+## 当前版本：0.5.2 — Gesture Interaction Lab
 
 - 线框、实体、形变热力和部位分区全部使用 OpenGL ES 3.0 原生 GPU 渲染。
 - 使用 ArkTS XComponent SURFACE / EGL / NativeWindow；C++ 侧使用 VBO / EBO 绘制。
 - Node-API 直接接收 AR 回调 TypedArray，GPU 模式不再转换为 ArkUI 普通数组。
 - 原生线程目标约 30 Hz 重绘，AR Mesh 数据仍约 5 Hz 更新；实际帧率待 MatePad 实测。
 - 部位分区通过 AR Engine 三角面标签为每个三角面分配颜色，使用 GPU 三角形绘制，不再进入 ArkUI Canvas。
-- 0.5.0 真机已验证前三种 GPU 模式流畅；0.5.1 区域 GPU 改造仍待 DevEco 构建和真机验收。
+- 0.5.1 四种 GPU 模式已在 MatePad Pro 13.2（2023）真机验证流畅，部位分区卡顿问题已解决。
+
+## 0.5.2 — Gesture Interaction Lab
+
+- 增加约 30 Hz 的轻量姿态 / BlendShapes 采样；Mesh / GPU 数据仍维持约 5 Hz 发布，不增加几何数据复制频率。
+- 增加单眼眨眼边沿识别：闭合阈值 0.72、对侧眼开放阈值 0.35、单侧闭合持续 80 ms、650 ms 冷却；双眼同时闭合按自然眨眼处理，不触发单眼动作。
+- 增加张嘴确认：权重达到 0.72 并保持 350 ms 才触发，回落到 0.40 后重新待命，并设置 1000 ms 冷却。
+- 新增本地交互演示：左 / 右单眨切换 A/B/C 焦点，持续张嘴确认当前选项；触控和 M-Pencil 仍可直接选择。
+- 手势输入默认关闭；需用户显式启用。演示不注入系统级输入、不控制其他应用。
+- 所有识别在设备本地内存完成，不保存、不上传面部数据。
 
 ## 0.4.3 — Live Deformation Heatmap & Lite Rendering
 
@@ -64,7 +73,7 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 
 ## 测试步骤
 
-1. 安装 0.5.1。
+1. 安装 0.5.2。
 2. 点击“开始追踪”。
 3. 在系统弹窗中允许 FaceLab 使用摄像头。
 4. 将脸放在前置摄像头画面内，观察人脸计数、Mesh、Pose 和 BlendShapes 指标。
@@ -160,3 +169,16 @@ After pulling this change, synchronize OHPM dependencies in DevEco Studio before
 - 用户已确认 0.5.1 成功构建并部署到 MatePad Pro 13.2（2023）。
 - 该版本作为稳定基线冻结；后续功能和性能改动应从新分支开始，不直接改写此发布快照。
 - 当前没有分模式 FPS、温升或功耗的量化基准；不得将目标帧率写成实测结果。
+
+
+## 0.5.2 手势交互验收
+
+1. 在 DevEco Studio 使用 SDK 26.0.0 构建并安装 0.5.2。
+2. 启动追踪并校准当前姿态为零点。
+3. 确认 Gesture Interaction Lab 默认关闭；未启用时只显示姿态 / BlendShapes 数值，不触发演示动作。
+4. 启用手势输入，依次尝试左眼单眨、右眼单眨，确认焦点在 A / B / C 之间切换。
+5. 正常双眼眨眼，确认不会触发单眼切换。
+6. 张嘴并保持至少约 350 ms，确认当前选项计数增加；短暂张嘴不应触发。
+7. 关闭手势输入，确认手势不再改变焦点；使用触控 / M-Pencil 仍可直接选择选项。
+8. 停止追踪并重新启动，确认手势状态、计数和检测器锁存状态正确重置。
+9. 连续运行至少 5 分钟，观察 GPU 四模式是否仍然流畅，且高频手势采样没有引入明显卡顿。

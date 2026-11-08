@@ -10,6 +10,7 @@ on:
       - "scripts/check-facelab-0.4.2.sh"
       - "scripts/check-facelab-0.4.3.sh"
       - "scripts/check-facelab-0.5.0.sh"
+      - "scripts/check-facelab-0.5.2.sh"
       - ".github/workflows/facelab-source-check.yml"
   push:
     branches:
@@ -21,6 +22,7 @@ on:
       - "scripts/check-facelab-0.4.2.sh"
       - "scripts/check-facelab-0.4.3.sh"
       - "scripts/check-facelab-0.5.0.sh"
+      - "scripts/check-facelab-0.5.2.sh"
       - ".github/workflows/facelab-source-check.yml"
 
 permissions:
@@ -28,12 +30,12 @@ permissions:
 
 jobs:
   source-check:
-    name: Validate FaceLab 0.5.1 fully GPU-rendered regions
+    name: Validate FaceLab 0.5.2 gesture interaction and GPU baseline
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Check shell syntax
-        run: bash -n scripts/check-facelab-0.5.0.sh
-      - name: Check FaceLab 0.5.1 native region renderer source contracts
-        run: bash scripts/check-facelab-0.5.0.sh
+        run: bash -n scripts/check-facelab-0.5.2.sh
+      - name: Check FaceLab 0.5.2 gesture and GPU source contracts
+        run: bash scripts/check-facelab-0.5.2.sh

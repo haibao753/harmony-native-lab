@@ -129,3 +129,38 @@
 - Main merge commit: `beceadcb871543d943c28cd482c1ded8680fd71c`.
 - A release snapshot branch `release/facelab-0.5.1` pins this release.
 - No numerical per-mode FPS, thermal or battery benchmark was supplied; do not infer a 30 FPS guarantee or quantify performance from the successful deployment alone.
+
+
+## 0.5.1 GPU region mode acceptance (2026-11-08)
+- User confirms the 0.5.1 region mode no longer lags on MatePad Pro 13.2 (2023).
+- All four visualization modes are considered smooth in the user's target-device test.
+- This is a qualitative user acceptance result; no numerical FPS / thermal / battery benchmark is recorded.
+
+## 0.5.2 Gesture Interaction Lab — pending device acceptance
+| Test | Expected result | Status |
+|---|---|---|
+| SDK 26 ArkTS + NDK build | HAP packages successfully | **Pass — user confirmed HAP build** |
+| 30 Hz pose / BlendShapes sampling | Gesture inputs update without increasing mesh publication cadence | Pending device |
+| Gesture recognition overall | Wink / jaw gestures respond consistently in the interaction demo | **Pass — user reports stable recognition** |
+| Left / right wink discrimination | Correct direction and one action per closure | Pending detailed confirmation |
+| Natural bilateral blink | No unilateral-wink action | Pending detailed confirmation |
+| Sustained jaw open | Confirms selected option after 350 ms threshold hold | Pending detailed confirmation |
+| Gesture input disabled | No demo action is triggered | Pending device |
+| Touch / M-Pencil fallback | Direct option selection still works | Pending device |
+| GPU rendering regression | All four visualization modes remain smooth | **Pass — user confirmed all four remain smooth with gesture input enabled** |
+| Stop / restart | Camera, gesture latches and counters reset cleanly | Pending device |
+
+
+### 0.5.2 partial user acceptance update (2026-11-08)
+- User confirmed the 0.5.2 HAP builds successfully after the ArkTS typing fix.
+- User reports that gesture recognition is stable during initial device testing.
+- This is qualitative acceptance of overall recognition behavior; separate false-trigger rate, latency, and per-gesture measurements were not supplied.
+- GPU regression across all four visualization modes, touch / M-Pencil fallback, gesture-off behavior, and stop / restart lifecycle still require explicit confirmation.
+
+
+### 0.5.2 release acceptance update (2026-11-08)
+- User confirms the ArkTS-fixed 0.5.2 HAP builds successfully in DevEco Studio.
+- User reports gesture recognition is stable during device use.
+- User confirms all four GPU visualization modes remain smooth with gesture input enabled.
+- These are qualitative user acceptance results; no numeric FPS, latency, false-positive, thermal, or battery benchmark was collected.
+- Stop / restart lifecycle and separate touch / M-Pencil fallback checks were not explicitly reported and remain unverified.

@@ -2,7 +2,7 @@ import { abilityAccessCtrl, common, Permissions } from '@kit.AbilityKit';
 import { ARView, arEngine, arViewController } from '@kit.AREngine';
 import { Scene } from '@kit.ArkGraphics3D';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { FaceMetrics, FaceTrackingCallback } from '../common/FaceTrackingCallback';
+import { FaceGestureMetrics, FaceMetrics, FaceTrackingCallback } from '../common/FaceTrackingCallback';
 import { FaceGpuSurface, FaceGpuSurfaceController } from '../components/FaceGpuSurface';
 
 @Entry
@@ -32,10 +32,19 @@ struct Index {
   @State meshViewMode: string = 'wireframe';
   @State meshLabelsAvailable: boolean = false;
   @State errorMessage: string = '';
+  @State gestureLabEnabled: boolean = false;
+  @State gestureAxisSummary: string = '等待人脸姿态';
+  @State gestureLeftBlink: string = '—';
+  @State gestureRightBlink: string = '—';
+  @State gestureJawOpen: string = '—';
+  @State gestureLastEvent: string = '尚无手势事件';
+  @State gestureSelectionIndex: number = 0;
+  @State gestureConfirmCount: number = 0;
 
   private faceCallback: FaceTrackingCallback | undefined = undefined;
   private gpuSurfaceController: FaceGpuSurfaceController = new FaceGpuSurfaceController();
   private lastTextMetricsUpdate: number = 0;
+  private lastGestureUiUpdate: number = 0;
 
   private setMeshViewMode(mode: string): void {
     this.meshViewMode = mode;
@@ -97,6 +106,63 @@ struct Index {
     if (this.status !== nextStatus) {
       this.status = nextStatus;
     }
+  }
+
+  private onFaceGesture(metrics: FaceGestureMetrics): void {
+    if (!metrics.faceDetected) {
+      this.gestureAxisSummary = '等待人脸姿态';
+      this.gestureLeftBlink = '—';
+      this.gestureRightBlink = '—';
+      this.gestureJawOpen = '—';
+      return;
+    }
+
+    const now = Date.now();
+    if (now - this.lastGestureUiUpdate >= 100) {
+      this.gestureAxisSummary = 'Pitch X ' + (metrics.pitch >= 0 ? '+' : '') +
+        metrics.pitch.toFixed(1) + '° · Yaw Y ' + (metrics.yaw >= 0 ? '+' : '') +
+        metrics.yaw.toFixed(1) + '° · Roll Z ' + (metrics.roll >= 0 ? '+' : '') +
+        metrics.roll.toFixed(1) + '°';
+      this.gestureLeftBlink = metrics.leftBlinkWeight.toFixed(2);
+      this.gestureRightBlink = metrics.rightBlinkWeight.toFixed(2);
+      this.gestureJawOpen = metrics.jawOpenWeight.toFixed(2);
+      this.lastGestureUiUpdate = now;
+    }
+
+    if (!this.gestureLabEnabled) {
+      return;
+    }
+    if (metrics.leftWink) {
+      this.gestureSelectionIndex = (this.gestureSelectionIndex + 2) % 3;
+      this.gestureLastEvent = '左眼单眨 · 焦点切换到选项 ' +
+        String.fromCharCode(65 + this.gestureSelectionIndex);
+    }
+    if (metrics.rightWink) {
+      this.gestureSelectionIndex = (this.gestureSelectionIndex + 1) % 3;
+      this.gestureLastEvent = '右眼单眨 · 焦点切换到选项 ' +
+        String.fromCharCode(65 + this.gestureSelectionIndex);
+    }
+    if (metrics.jawConfirm) {
+      this.gestureConfirmCount++;
+      this.gestureLastEvent = '张嘴保持 · 已确认选项 ' +
+        String.fromCharCode(65 + this.gestureSelectionIndex) +
+        '（累计 ' + this.gestureConfirmCount.toString() + ' 次）';
+    }
+  }
+
+  private toggleGestureLab(): void {
+    if (!this.gestureLabEnabled && (this.faceCount === 0 || this.arContext === undefined)) {
+      this.errorMessage = '请先启动追踪并检测到人脸，再启用手势输入。';
+      return;
+    }
+    this.gestureLabEnabled = !this.gestureLabEnabled;
+    this.gestureLastEvent = this.gestureLabEnabled ? '手势输入已启用' : '手势输入已关闭';
+  }
+
+  private resetGestureDemo(): void {
+    this.gestureSelectionIndex = 0;
+    this.gestureConfirmCount = 0;
+    this.gestureLastEvent = '演示状态已重置';
   }
 
   private calibratePose(): void {
@@ -164,6 +230,9 @@ struct Index {
         },
         (message: string) => {
           this.errorMessage = message;
+        },
+        (gesture: FaceGestureMetrics) => {
+          this.onFaceGesture(gesture);
         }
       );
       context.callback = this.faceCallback;
@@ -242,6 +311,14 @@ struct Index {
       this.trackingStabilitySummary = '已停止';
       this.poseCalibrated = false;
       this.meshLabelsAvailable = false;
+      this.gestureLabEnabled = false;
+      this.gestureAxisSummary = '等待人脸姿态';
+      this.gestureLeftBlink = '—';
+      this.gestureRightBlink = '—';
+      this.gestureJawOpen = '—';
+      this.gestureLastEvent = '追踪已停止';
+      this.gestureSelectionIndex = 0;
+      this.gestureConfirmCount = 0;
       this.gpuSurfaceController.clear();
     }
   }
@@ -258,7 +335,7 @@ struct Index {
             .fontSize(32)
             .fontWeight(FontWeight.Bold)
             .fontColor('#F4F7FB')
-          Text('AR Face Tracking Lab · 0.5.1')
+          Text('AR Face Tracking Lab · 0.5.2')
             .fontSize(13)
             .fontColor('#9AA9BC')
         }
@@ -510,6 +587,125 @@ struct Index {
             .layoutWeight(1)
           }
           .width('100%')
+        }
+        .alignItems(HorizontalAlign.Start)
+        .width('100%')
+        .padding(15)
+        .backgroundColor('#172235')
+        .borderRadius(15)
+
+        Column({ space: 10 }) {
+          Row() {
+            Column({ space: 4 }) {
+              Text('GESTURE INTERACTION LAB')
+                .fontSize(11)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#8DA2BC')
+              Text(this.gestureLabEnabled ? '手势输入已启用' : '手势输入关闭 · 原始数据监测中')
+                .fontSize(12)
+                .fontColor(this.gestureLabEnabled ? '#63D6A5' : '#AAB8C8')
+            }
+            .layoutWeight(1)
+            Button(this.gestureLabEnabled ? '关闭输入' : '启用输入')
+              .height(36)
+              .fontSize(12)
+              .enabled(this.gestureLabEnabled || (this.faceCount > 0 && this.arContext !== undefined))
+              .backgroundColor(this.gestureLabEnabled ? '#7A4A4A' : '#285B55')
+              .onClick(() => {
+                this.toggleGestureLab();
+              })
+          }
+          .width('100%')
+          Text('HEAD POSE INPUT')
+            .fontSize(10)
+            .fontColor('#9AA9BC')
+          Text(this.gestureAxisSummary)
+            .fontSize(14)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#F4F7FB')
+          Row() {
+            Column({ space: 3 }) {
+              Text('LEFT BLINK')
+                .fontSize(9)
+                .fontColor('#9AA9BC')
+              Text(this.gestureLeftBlink)
+                .fontSize(18)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#63D6A5')
+            }
+            .layoutWeight(1)
+            Column({ space: 3 }) {
+              Text('RIGHT BLINK')
+                .fontSize(9)
+                .fontColor('#9AA9BC')
+              Text(this.gestureRightBlink)
+                .fontSize(18)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#63D6A5')
+            }
+            .layoutWeight(1)
+            Column({ space: 3 }) {
+              Text('JAW OPEN')
+                .fontSize(9)
+                .fontColor('#9AA9BC')
+              Text(this.gestureJawOpen)
+                .fontSize(18)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#63D6A5')
+            }
+            .layoutWeight(1)
+          }
+          .width('100%')
+          Divider()
+          Text('交互演示 · 眼部单眨切换焦点，张嘴保持确认')
+            .fontSize(12)
+            .fontColor('#D2DCE8')
+          Row({ space: 8 }) {
+            Button('选项 A')
+              .layoutWeight(1)
+              .height(48)
+              .fontSize(12)
+              .backgroundColor(this.gestureSelectionIndex === 0 ? '#285B55' : '#34445D')
+              .onClick(() => {
+                this.gestureSelectionIndex = 0;
+              })
+            Button('选项 B')
+              .layoutWeight(1)
+              .height(48)
+              .fontSize(12)
+              .backgroundColor(this.gestureSelectionIndex === 1 ? '#285B55' : '#34445D')
+              .onClick(() => {
+                this.gestureSelectionIndex = 1;
+              })
+            Button('选项 C')
+              .layoutWeight(1)
+              .height(48)
+              .fontSize(12)
+              .backgroundColor(this.gestureSelectionIndex === 2 ? '#285B55' : '#34445D')
+              .onClick(() => {
+                this.gestureSelectionIndex = 2;
+              })
+          }
+          .width('100%')
+          Text('当前焦点：选项 ' + String.fromCharCode(65 + this.gestureSelectionIndex) +
+            ' · 已确认 ' + this.gestureConfirmCount.toString() + ' 次')
+            .fontSize(13)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#63D6A5')
+          Text(this.gestureLastEvent)
+            .fontSize(12)
+            .fontColor('#F4F7FB')
+          Button('重置演示')
+            .width('100%')
+            .height(36)
+            .backgroundColor('#34445D')
+            .onClick(() => {
+              this.resetGestureDemo();
+            })
+          Text('识别规则：单眼权重 ≥ 0.72 触发，回落至 ≤ 0.35 后重新待命；自然双眼眨眼不触发。张嘴权重 ≥ 0.72 并保持 350 ms 触发确认，回落到 ≤ 0.40 后重新待命。演示动作只改变本卡片内的焦点和计数，不控制系统或其他应用。触控与 M-Pencil 仍可直接操作选项。')
+            .fontSize(11)
+            .fontColor('#8190A5')
+            .lineHeight(17)
         }
         .alignItems(HorizontalAlign.Start)
         .width('100%')

@@ -2,6 +2,9 @@ import { arEngine, arViewController } from '@kit.AREngine';
 import { Node } from '@kit.ArkGraphics3D';
 import { BusinessError } from '@kit.BasicServicesKit';
 
+const GESTURE_SAMPLE_INTERVAL_US = 33333;
+const MESH_PUBLISH_INTERVAL_US = 200000;
+
 export interface FaceMetrics {
   faceCount: number;
   meshSummary: string;
@@ -32,6 +35,25 @@ export interface FaceMetrics {
   posePitch: number;
   poseYaw: number;
   poseRoll: number;
+}
+
+export interface FaceGestureMetrics {
+  faceDetected: boolean;
+  pitch: number;
+  yaw: number;
+  roll: number;
+  leftBlinkWeight: number;
+  rightBlinkWeight: number;
+  jawOpenWeight: number;
+  leftWink: boolean;
+  rightWink: boolean;
+  jawConfirm: boolean;
+}
+
+interface GestureEventResult {
+  leftWink: boolean;
+  rightWink: boolean;
+  jawConfirm: boolean;
 }
 
 interface QuaternionValues {
@@ -145,6 +167,16 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
   private active: boolean = true;
   private processing: boolean = false;
   private lastPublishedTimestamp: number = 0;
+  private lastGestureTimestamp: number = 0;
+  private leftEyeLatched: boolean = false;
+  private rightEyeLatched: boolean = false;
+  private leftWinkCandidateSince: number = 0;
+  private rightWinkCandidateSince: number = 0;
+  private jawOpenStartedAt: number = 0;
+  private jawConfirmLatched: boolean = false;
+  private lastLeftWinkAt: number = 0;
+  private lastRightWinkAt: number = 0;
+  private lastJawConfirmAt: number = 0;
   private meshTopologyRevision: number = 0;
   private cachedMeshLabelsAttempted: boolean = false;
   private cachedMeshLabelsAvailable: boolean = false;
@@ -152,6 +184,7 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
   private cachedMeshDeformation: Float32Array = new Float32Array(0);
   private lastErrorMessage: string = '';
   private onMetrics: (metrics: FaceMetrics) => void;
+  private onGesture: (metrics: FaceGestureMetrics) => void;
   private onError: (message: string) => void;
 
   private poseBaseline: QuaternionValues | undefined = undefined;
@@ -176,11 +209,13 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
 
   constructor(
     onMetrics: (metrics: FaceMetrics) => void,
-    onError: (message: string) => void
+    onError: (message: string) => void,
+    onGesture: (metrics: FaceGestureMetrics) => void
   ) {
     super();
     this.onMetrics = onMetrics;
     this.onError = onError;
+    this.onGesture = onGesture;
   }
 
   stop(): void {
@@ -202,6 +237,7 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
     this.cachedMeshDeformation = new Float32Array(0);
     this.poseBaseline = undefined;
     this.translationBaseline = undefined;
+    this.resetGestureDetector();
   }
 
   /** Capture the next valid face pose as the relative zero point. */
@@ -228,17 +264,19 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
   }
 
   async onFrameUpdate(ctx: arViewController.ARViewContext, sysBootTs: number): Promise<void> {
-    if (!this.active || this.processing || sysBootTs - this.lastPublishedTimestamp < 200000) {
+    const shouldPublishMetrics = sysBootTs - this.lastPublishedTimestamp >= MESH_PUBLISH_INTERVAL_US;
+    if (!this.active || this.processing ||
+      (sysBootTs - this.lastGestureTimestamp < GESTURE_SAMPLE_INTERVAL_US && !shouldPublishMetrics)) {
       return;
     }
 
+    this.lastGestureTimestamp = sysBootTs;
     const session = ctx.session;
     if (session === undefined) {
       this.reportError('AR 会话尚未就绪。');
       return;
     }
     this.processing = true;
-    this.lastPublishedTimestamp = sysBootTs;
 
     let frame: arEngine.ARFrame | undefined = undefined;
     let geometry: arEngine.ARGeometry | undefined = undefined;
@@ -288,37 +326,53 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
         this.smoothedTranslationX = undefined;
         this.smoothedTranslationY = undefined;
         this.smoothedTranslationZ = undefined;
-        this.onMetrics({
-          faceCount: 0,
-          meshSummary: '未检测到人脸',
-          poseSummary: '—',
-          blendSummary: '—',
-          leftBlink: '—',
-          rightBlink: '—',
-          jawOpen: '—',
-          rotationX: '—',
-          rotationY: '—',
-          rotationZ: '—',
-          quaternionSummary: '—',
-          translationSummary: '—',
-          meshMotionSummary: '等待人脸',
-          neutralDeformationSummary: '等待采集中性表情',
-          neutralCalibrated: false,
-          trackingStabilityLabel: '—',
-          trackingStabilitySummary: '等待姿态数据',
-          poseCalibrated: false,
-          meshFrameAvailable: false,
-          meshVertices: new Float32Array(0),
-          meshTriangles: new Uint32Array(0),
-          meshEdges: new Uint32Array(0),
-          meshDeformation: new Float32Array(0),
-          meshLabels: new Int32Array(0),
-          meshLabelsAvailable: false,
-          meshTopologyRevision: this.meshTopologyRevision,
-          posePitch: 0,
-          poseYaw: 0,
-          poseRoll: 0
+        this.resetGestureDetector();
+        this.onGesture({
+          faceDetected: false,
+          pitch: 0,
+          yaw: 0,
+          roll: 0,
+          leftBlinkWeight: 0,
+          rightBlinkWeight: 0,
+          jawOpenWeight: 0,
+          leftWink: false,
+          rightWink: false,
+          jawConfirm: false
         });
+        if (shouldPublishMetrics) {
+          this.lastPublishedTimestamp = sysBootTs;
+          this.onMetrics({
+            faceCount: 0,
+            meshSummary: '未检测到人脸',
+            poseSummary: '—',
+            blendSummary: '—',
+            leftBlink: '—',
+            rightBlink: '—',
+            jawOpen: '—',
+            rotationX: '—',
+            rotationY: '—',
+            rotationZ: '—',
+            quaternionSummary: '—',
+            translationSummary: '—',
+            meshMotionSummary: '等待人脸',
+            neutralDeformationSummary: '等待采集中性表情',
+            neutralCalibrated: false,
+            trackingStabilityLabel: '—',
+            trackingStabilitySummary: '等待姿态数据',
+            poseCalibrated: false,
+            meshFrameAvailable: false,
+            meshVertices: new Float32Array(0),
+            meshTriangles: new Uint32Array(0),
+            meshEdges: new Uint32Array(0),
+            meshDeformation: new Float32Array(0),
+            meshLabels: new Int32Array(0),
+            meshLabelsAvailable: false,
+            meshTopologyRevision: this.meshTopologyRevision,
+            posePitch: 0,
+            poseYaw: 0,
+            poseRoll: 0
+          });
+        }
         this.lastErrorMessage = '';
         return;
       }
@@ -395,33 +449,35 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
           poseYaw = euler.y;
           poseRoll = euler.z;
 
-          // Estimate short-term pose continuity from consecutive raw Euler samples.
-          // This is a local motion heuristic, not an AR Engine confidence score.
-          if (this.previousRawEuler !== undefined) {
-            const stepX = shortestAngleDelta(this.previousRawEuler.x, euler.x);
-            const stepY = shortestAngleDelta(this.previousRawEuler.y, euler.y);
-            const stepZ = shortestAngleDelta(this.previousRawEuler.z, euler.z);
-            const poseStep = Math.sqrt(stepX * stepX + stepY * stepY + stepZ * stepZ);
-            this.poseStepSamples.push(poseStep);
-            if (this.poseStepSamples.length > 8) {
-              this.poseStepSamples.shift();
+          if (shouldPublishMetrics) {
+            // Estimate short-term pose continuity from consecutive raw Euler samples.
+            // This is a local motion heuristic, not an AR Engine confidence score.
+            if (this.previousRawEuler !== undefined) {
+              const stepX = shortestAngleDelta(this.previousRawEuler.x, euler.x);
+              const stepY = shortestAngleDelta(this.previousRawEuler.y, euler.y);
+              const stepZ = shortestAngleDelta(this.previousRawEuler.z, euler.z);
+              const poseStep = Math.sqrt(stepX * stepX + stepY * stepY + stepZ * stepZ);
+              this.poseStepSamples.push(poseStep);
+              if (this.poseStepSamples.length > 8) {
+                this.poseStepSamples.shift();
+              }
+              let stepTotal = 0;
+              for (let i = 0; i < this.poseStepSamples.length; i++) {
+                stepTotal += this.poseStepSamples[i];
+              }
+              const averageStep = stepTotal / this.poseStepSamples.length;
+              trackingStabilitySummary = '近 ' + this.poseStepSamples.length.toString() +
+                ' 次更新平均变化 ' + averageStep.toFixed(2) + '°';
+              if (averageStep <= 0.8) {
+                trackingStabilityLabel = '较平稳';
+              } else if (averageStep <= 2.5) {
+                trackingStabilityLabel = '轻微变化';
+              } else {
+                trackingStabilityLabel = '头部运动中';
+              }
             }
-            let stepTotal = 0;
-            for (let i = 0; i < this.poseStepSamples.length; i++) {
-              stepTotal += this.poseStepSamples[i];
-            }
-            const averageStep = stepTotal / this.poseStepSamples.length;
-            trackingStabilitySummary = '近 ' + this.poseStepSamples.length.toString() +
-              ' 次更新平均变化 ' + averageStep.toFixed(2) + '°';
-            if (averageStep <= 0.8) {
-              trackingStabilityLabel = '较平稳';
-            } else if (averageStep <= 2.5) {
-              trackingStabilityLabel = '轻微变化';
-            } else {
-              trackingStabilityLabel = '头部运动中';
-            }
+            this.previousRawEuler = { x: euler.x, y: euler.y, z: euler.z };
           }
-          this.previousRawEuler = { x: euler.x, y: euler.y, z: euler.z };
 
           const alpha = 0.35;
 
@@ -461,180 +517,185 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
         poseSummary = describeError(error as Object);
       }
 
-      try {
-        geometry = firstFace.getGeometry();
-        const verticesBuffer = geometry.getVertices();
-        const indicesBuffer = geometry.getIndices();
-        // The target device's observed buffer layout is XYZ Float32 per vertex.
-        // Keep a strict length guard instead of silently interpreting unknown layouts.
-        if (verticesBuffer.byteLength % 12 !== 0) {
-          throw new Error('顶点缓冲区长度不是 12 字节的整数倍，无法按 XYZ Float32 解析。');
-        }
-        const currentVertices = new Float32Array(verticesBuffer);
-        const currentIndices = new Uint32Array(indicesBuffer);
-        const vertexCount = Math.floor(currentVertices.length / 3);
-        const indexCount = currentIndices.length;
-        const triangleCount = Math.floor(indexCount / 3);
-        meshSummary = vertexCount.toString() + ' 顶点 · ' + triangleCount.toString() + ' 三角面';
-
-        // Face topology is stable across frames on the target device. Build a
-        // unique edge list only when the vertex/index counts change.
-        if (this.cachedMeshVertexCount !== vertexCount ||
-          this.cachedMeshIndexCount !== indexCount) {
-          this.meshTopologyRevision++;
-          this.cachedMeshLabels = new Int32Array(0);
-          this.cachedMeshLabelsAttempted = false;
-          this.cachedMeshLabelsAvailable = false;
-          const edgeKeys = new Set<number>();
-          for (let i = 0; i + 2 < currentIndices.length; i += 3) {
-            const a = currentIndices[i];
-            const b = currentIndices[i + 1];
-            const c = currentIndices[i + 2];
-            if (a < vertexCount && b < vertexCount && a !== b) {
-              const lowAB = Math.min(a, b);
-              const highAB = Math.max(a, b);
-              edgeKeys.add(lowAB * vertexCount + highAB);
-            }
-            if (b < vertexCount && c < vertexCount && b !== c) {
-              const lowBC = Math.min(b, c);
-              const highBC = Math.max(b, c);
-              edgeKeys.add(lowBC * vertexCount + highBC);
-            }
-            if (c < vertexCount && a < vertexCount && c !== a) {
-              const lowCA = Math.min(c, a);
-              const highCA = Math.max(c, a);
-              edgeKeys.add(lowCA * vertexCount + highCA);
-            }
+      if (shouldPublishMetrics) {
+        try {
+          geometry = firstFace.getGeometry();
+          const verticesBuffer = geometry.getVertices();
+          const indicesBuffer = geometry.getIndices();
+          // The target device's observed buffer layout is XYZ Float32 per vertex.
+          // Keep a strict length guard instead of silently interpreting unknown layouts.
+          if (verticesBuffer.byteLength % 12 !== 0) {
+            throw new Error('顶点缓冲区长度不是 12 字节的整数倍，无法按 XYZ Float32 解析。');
           }
-          const edgeValues: number[] = [];
-          edgeKeys.forEach((key: number) => {
-            edgeValues.push(Math.floor(key / vertexCount));
-            edgeValues.push(key % vertexCount);
-          });
-          this.cachedMeshEdges = new Uint32Array(edgeValues.length);
-          this.cachedMeshEdges.set(edgeValues);
-          this.cachedMeshTriangles = new Uint32Array(currentIndices.length);
-          this.cachedMeshTriangles.set(currentIndices);
-          this.cachedMeshVertexCount = vertexCount;
-          this.cachedMeshIndexCount = indexCount;
-        }
-
-        if (this.cachedMeshVertices.length !== currentVertices.length) {
-          this.cachedMeshVertices = new Float32Array(currentVertices.length);
-        }
-        this.cachedMeshVertices.set(currentVertices);
-        meshVertices = this.cachedMeshVertices;
-        meshTriangles = this.cachedMeshTriangles;
-        meshEdges = this.cachedMeshEdges;
-        if (this.cachedMeshDeformation.length !== vertexCount) {
-          this.cachedMeshDeformation = new Float32Array(vertexCount);
-        }
-        for (let i = 0; i < this.cachedMeshDeformation.length; i++) {
-          this.cachedMeshDeformation[i] = 0;
-        }
-        meshDeformation = this.cachedMeshDeformation;
-
-        // Triangle labels are optional on a device-by-device basis. Keep the
-        // geometry viewer functional if the runtime does not expose this API.
-        if (!this.cachedMeshLabelsAttempted) {
-          this.cachedMeshLabelsAttempted = true;
-          try {
-            const labelBuffer = geometry.getTriangleLabels();
-            const currentLabels = new Int32Array(labelBuffer);
-            if (currentLabels.length === triangleCount) {
-              this.cachedMeshLabels = new Int32Array(currentLabels.length);
-              this.cachedMeshLabels.set(currentLabels);
-              this.cachedMeshLabelsAvailable = true;
-            }
-          } catch (_) {
+          const currentVertices = new Float32Array(verticesBuffer);
+          const currentIndices = new Uint32Array(indicesBuffer);
+          const vertexCount = Math.floor(currentVertices.length / 3);
+          const indexCount = currentIndices.length;
+          const triangleCount = Math.floor(indexCount / 3);
+          meshSummary = vertexCount.toString() + ' 顶点 · ' + triangleCount.toString() + ' 三角面';
+  
+          // Face topology is stable across frames on the target device. Build a
+          // unique edge list only when the vertex/index counts change.
+          if (this.cachedMeshVertexCount !== vertexCount ||
+            this.cachedMeshIndexCount !== indexCount) {
+            this.meshTopologyRevision++;
             this.cachedMeshLabels = new Int32Array(0);
+            this.cachedMeshLabelsAttempted = false;
             this.cachedMeshLabelsAvailable = false;
-          }
-        }
-        meshLabels = this.cachedMeshLabels;
-        meshLabelsAvailable = this.cachedMeshLabelsAvailable;
-
-        if (this.neutralCaptureRequested) {
-          const neutralSnapshot = new Float32Array(currentVertices.length);
-          neutralSnapshot.set(currentVertices);
-          this.neutralVertices = neutralSnapshot;
-          this.neutralCaptureRequested = false;
-          neutralCalibrated = true;
-          neutralDeformationSummary = '中性基准已采集 · RMS 0.00000 · MAX 0.00000';
-        } else if (this.neutralVertices !== undefined) {
-          if (this.neutralVertices.length !== currentVertices.length) {
-            this.neutralVertices = undefined;
-            neutralCalibrated = false;
-            neutralDeformationSummary = '网格结构发生变化，请重新采集中性基准';
-          } else {
-            let neutralSumSquared = 0;
-            let neutralMaxDisplacement = 0;
-            for (let i = 0; i + 2 < currentVertices.length; i += 3) {
-              const dx = currentVertices[i] - this.neutralVertices[i];
-              const dy = currentVertices[i + 1] - this.neutralVertices[i + 1];
-              const dz = currentVertices[i + 2] - this.neutralVertices[i + 2];
-              const displacement = Math.sqrt(dx * dx + dy * dy + dz * dz);
-              meshDeformation[Math.floor(i / 3)] = displacement;
-              neutralSumSquared += displacement * displacement;
-              if (displacement > neutralMaxDisplacement) {
-                neutralMaxDisplacement = displacement;
+            const edgeKeys = new Set<number>();
+            for (let i = 0; i + 2 < currentIndices.length; i += 3) {
+              const a = currentIndices[i];
+              const b = currentIndices[i + 1];
+              const c = currentIndices[i + 2];
+              if (a < vertexCount && b < vertexCount && a !== b) {
+                const lowAB = Math.min(a, b);
+                const highAB = Math.max(a, b);
+                edgeKeys.add(lowAB * vertexCount + highAB);
+              }
+              if (b < vertexCount && c < vertexCount && b !== c) {
+                const lowBC = Math.min(b, c);
+                const highBC = Math.max(b, c);
+                edgeKeys.add(lowBC * vertexCount + highBC);
+              }
+              if (c < vertexCount && a < vertexCount && c !== a) {
+                const lowCA = Math.min(c, a);
+                const highCA = Math.max(c, a);
+                edgeKeys.add(lowCA * vertexCount + highCA);
               }
             }
-            const neutralRms = vertexCount > 0 ? Math.sqrt(neutralSumSquared / vertexCount) : 0;
-            neutralDeformationSummary = 'RMS ' + neutralRms.toFixed(5) +
-              ' · MAX ' + neutralMaxDisplacement.toFixed(5);
+            const edgeValues: number[] = [];
+            edgeKeys.forEach((key: number) => {
+              edgeValues.push(Math.floor(key / vertexCount));
+              edgeValues.push(key % vertexCount);
+            });
+            this.cachedMeshEdges = new Uint32Array(edgeValues.length);
+            this.cachedMeshEdges.set(edgeValues);
+            this.cachedMeshTriangles = new Uint32Array(currentIndices.length);
+            this.cachedMeshTriangles.set(currentIndices);
+            this.cachedMeshVertexCount = vertexCount;
+            this.cachedMeshIndexCount = indexCount;
+          }
+  
+          if (this.cachedMeshVertices.length !== currentVertices.length) {
+            this.cachedMeshVertices = new Float32Array(currentVertices.length);
+          }
+          this.cachedMeshVertices.set(currentVertices);
+          meshVertices = this.cachedMeshVertices;
+          meshTriangles = this.cachedMeshTriangles;
+          meshEdges = this.cachedMeshEdges;
+          if (this.cachedMeshDeformation.length !== vertexCount) {
+            this.cachedMeshDeformation = new Float32Array(vertexCount);
+          }
+          for (let i = 0; i < this.cachedMeshDeformation.length; i++) {
+            this.cachedMeshDeformation[i] = 0;
+          }
+          meshDeformation = this.cachedMeshDeformation;
+  
+          // Triangle labels are optional on a device-by-device basis. Keep the
+          // geometry viewer functional if the runtime does not expose this API.
+          if (!this.cachedMeshLabelsAttempted) {
+            this.cachedMeshLabelsAttempted = true;
+            try {
+              const labelBuffer = geometry.getTriangleLabels();
+              const currentLabels = new Int32Array(labelBuffer);
+              if (currentLabels.length === triangleCount) {
+                this.cachedMeshLabels = new Int32Array(currentLabels.length);
+                this.cachedMeshLabels.set(currentLabels);
+                this.cachedMeshLabelsAvailable = true;
+              }
+            } catch (_) {
+              this.cachedMeshLabels = new Int32Array(0);
+              this.cachedMeshLabelsAvailable = false;
+            }
+          }
+          meshLabels = this.cachedMeshLabels;
+          meshLabelsAvailable = this.cachedMeshLabelsAvailable;
+  
+          if (this.neutralCaptureRequested) {
+            const neutralSnapshot = new Float32Array(currentVertices.length);
+            neutralSnapshot.set(currentVertices);
+            this.neutralVertices = neutralSnapshot;
+            this.neutralCaptureRequested = false;
             neutralCalibrated = true;
+            neutralDeformationSummary = '中性基准已采集 · RMS 0.00000 · MAX 0.00000';
+          } else if (this.neutralVertices !== undefined) {
+            if (this.neutralVertices.length !== currentVertices.length) {
+              this.neutralVertices = undefined;
+              neutralCalibrated = false;
+              neutralDeformationSummary = '网格结构发生变化，请重新采集中性基准';
+            } else {
+              let neutralSumSquared = 0;
+              let neutralMaxDisplacement = 0;
+              for (let i = 0; i + 2 < currentVertices.length; i += 3) {
+                const dx = currentVertices[i] - this.neutralVertices[i];
+                const dy = currentVertices[i + 1] - this.neutralVertices[i + 1];
+                const dz = currentVertices[i + 2] - this.neutralVertices[i + 2];
+                const displacement = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                meshDeformation[Math.floor(i / 3)] = displacement;
+                neutralSumSquared += displacement * displacement;
+                if (displacement > neutralMaxDisplacement) {
+                  neutralMaxDisplacement = displacement;
+                }
+              }
+              const neutralRms = vertexCount > 0 ? Math.sqrt(neutralSumSquared / vertexCount) : 0;
+              neutralDeformationSummary = 'RMS ' + neutralRms.toFixed(5) +
+                ' · MAX ' + neutralMaxDisplacement.toFixed(5);
+              neutralCalibrated = true;
+            }
+          } else {
+            neutralCalibrated = false;
+            neutralDeformationSummary = '未采集中性基准 · 暂以相邻帧动态位移显示';
           }
-        } else {
-          neutralCalibrated = false;
-          neutralDeformationSummary = '未采集中性基准 · 暂以相邻帧动态位移显示';
-        }
-
-        if (this.previousVertices === undefined ||
-          this.previousVertices.length !== currentVertices.length) {
-          meshMotionSummary = '已建立基准，等待下一帧';
-        } else {
-          let sumSquaredDisplacement = 0;
-          let maxDisplacement = 0;
-          for (let i = 0; i + 2 < currentVertices.length; i += 3) {
-            const dx = currentVertices[i] - this.previousVertices[i];
-            const dy = currentVertices[i + 1] - this.previousVertices[i + 1];
-            const dz = currentVertices[i + 2] - this.previousVertices[i + 2];
-            const displacement = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  
+          if (this.previousVertices === undefined ||
+            this.previousVertices.length !== currentVertices.length) {
+            meshMotionSummary = '已建立基准，等待下一帧';
+          } else {
+            let sumSquaredDisplacement = 0;
+            let maxDisplacement = 0;
+            for (let i = 0; i + 2 < currentVertices.length; i += 3) {
+              const dx = currentVertices[i] - this.previousVertices[i];
+              const dy = currentVertices[i + 1] - this.previousVertices[i + 1];
+              const dz = currentVertices[i + 2] - this.previousVertices[i + 2];
+              const displacement = Math.sqrt(dx * dx + dy * dy + dz * dz);
+              if (this.neutralVertices === undefined) {
+                meshDeformation[Math.floor(i / 3)] = displacement;
+              }
+              sumSquaredDisplacement += displacement * displacement;
+              if (displacement > maxDisplacement) {
+                maxDisplacement = displacement;
+              }
+            }
+            const rms = vertexCount > 0 ? Math.sqrt(sumSquaredDisplacement / vertexCount) : 0;
+            meshMotionSummary = 'RMS ' + rms.toFixed(5) + ' · MAX ' + maxDisplacement.toFixed(5);
             if (this.neutralVertices === undefined) {
-              meshDeformation[Math.floor(i / 3)] = displacement;
-            }
-            sumSquaredDisplacement += displacement * displacement;
-            if (displacement > maxDisplacement) {
-              maxDisplacement = displacement;
+              neutralDeformationSummary = '动态位移 RMS ' + rms.toFixed(5) + ' · MAX ' + maxDisplacement.toFixed(5);
             }
           }
-          const rms = vertexCount > 0 ? Math.sqrt(sumSquaredDisplacement / vertexCount) : 0;
-          meshMotionSummary = 'RMS ' + rms.toFixed(5) + ' · MAX ' + maxDisplacement.toFixed(5);
-          if (this.neutralVertices === undefined) {
-            neutralDeformationSummary = '动态位移 RMS ' + rms.toFixed(5) + ' · MAX ' + maxDisplacement.toFixed(5);
+  
+          if (this.previousVertices === undefined || this.previousVertices.length !== currentVertices.length) {
+            this.previousVertices = new Float32Array(currentVertices.length);
           }
+          this.previousVertices.set(currentVertices);
+          meshFrameAvailable = vertexCount > 0 && meshTriangles.length >= 3 && meshEdges.length >= 2;
+        } catch (error) {
+          this.previousVertices = undefined;
+          meshSummary = describeError(error as Object);
+          meshMotionSummary = '无法计算网格位移';
+          neutralDeformationSummary = '无法计算中性基准形变';
+          meshFrameAvailable = false;
+          meshVertices = new Float32Array(0);
+          meshTriangles = new Uint32Array(0);
+          meshEdges = new Uint32Array(0);
+          meshDeformation = new Float32Array(0);
+          meshLabels = new Int32Array(0);
+          meshLabelsAvailable = false;
         }
-
-        if (this.previousVertices === undefined || this.previousVertices.length !== currentVertices.length) {
-          this.previousVertices = new Float32Array(currentVertices.length);
-        }
-        this.previousVertices.set(currentVertices);
-        meshFrameAvailable = vertexCount > 0 && meshTriangles.length >= 3 && meshEdges.length >= 2;
-      } catch (error) {
-        this.previousVertices = undefined;
-        meshSummary = describeError(error as Object);
-        meshMotionSummary = '无法计算网格位移';
-        neutralDeformationSummary = '无法计算中性基准形变';
-        meshFrameAvailable = false;
-        meshVertices = new Float32Array(0);
-        meshTriangles = new Uint32Array(0);
-        meshEdges = new Uint32Array(0);
-        meshDeformation = new Float32Array(0);
-        meshLabels = new Int32Array(0);
-        meshLabelsAvailable = false;
       }
 
+      let leftBlinkWeight = 0;
+      let rightBlinkWeight = 0;
+      let jawOpenWeight = 0;
       try {
         blendShapes = firstFace.getBlendShapes();
         const types = blendShapes.getTypes();
@@ -646,6 +707,9 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
         const rightIndex = types.indexOf(arEngine.ARBlendShapeType.EYE_BLINK_RIGHT);
         const jawIndex = types.indexOf(arEngine.ARBlendShapeType.JAW_OPEN);
 
+        leftBlinkWeight = leftIndex >= 0 && leftIndex < values.length ? values[leftIndex] : 0;
+        rightBlinkWeight = rightIndex >= 0 && rightIndex < values.length ? values[rightIndex] : 0;
+        jawOpenWeight = jawIndex >= 0 && jawIndex < values.length ? values[jawIndex] : 0;
         leftBlink = formatWeight(values, leftIndex);
         rightBlink = formatWeight(values, rightIndex);
         jawOpen = formatWeight(values, jawIndex);
@@ -653,7 +717,23 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
         blendSummary = describeError(error as Object);
       }
 
-      this.onMetrics({
+      const gestureEvents = this.detectGestureEvents(leftBlinkWeight, rightBlinkWeight, jawOpenWeight, Date.now());
+      this.onGesture({
+        faceDetected: true,
+        pitch: posePitch,
+        yaw: poseYaw,
+        roll: poseRoll,
+        leftBlinkWeight: leftBlinkWeight,
+        rightBlinkWeight: rightBlinkWeight,
+        jawOpenWeight: jawOpenWeight,
+        leftWink: gestureEvents.leftWink,
+        rightWink: gestureEvents.rightWink,
+        jawConfirm: gestureEvents.jawConfirm
+      });
+
+      if (shouldPublishMetrics) {
+        this.lastPublishedTimestamp = sysBootTs;
+        this.onMetrics({
         faceCount: faceCount,
         meshSummary: meshSummary,
         poseSummary: poseSummary,
@@ -683,7 +763,8 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
         posePitch: posePitch,
         poseYaw: poseYaw,
         poseRoll: poseRoll
-      });
+        });
+      }
       this.lastErrorMessage = '';
     } catch (error) {
       this.reportError('读取人脸帧失败：' + describeError(error as Object));
@@ -718,6 +799,88 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
       }
       this.processing = false;
     }
+  }
+
+  private resetGestureDetector(): void {
+    this.leftEyeLatched = false;
+    this.rightEyeLatched = false;
+    this.leftWinkCandidateSince = 0;
+    this.rightWinkCandidateSince = 0;
+    this.jawOpenStartedAt = 0;
+    this.jawConfirmLatched = false;
+    this.lastLeftWinkAt = 0;
+    this.lastRightWinkAt = 0;
+    this.lastJawConfirmAt = 0;
+  }
+
+  private detectGestureEvents(
+    leftBlink: number,
+    rightBlink: number,
+    jawOpen: number,
+    now: number
+  ): GestureEventResult {
+    let leftWink = false;
+    let rightWink = false;
+    let jawConfirm = false;
+    const leftClosed = leftBlink >= 0.72;
+    const rightClosed = rightBlink >= 0.72;
+
+    // Bilateral closure is a natural blink. Require a unilateral closure to
+    // persist for 80 ms before firing, filtering one-frame eye-timing differences.
+    if (leftClosed && rightBlink <= 0.35) {
+      if (this.leftWinkCandidateSince === 0) {
+        this.leftWinkCandidateSince = now;
+      }
+      if (!this.leftEyeLatched && now - this.leftWinkCandidateSince >= 80 &&
+        now - this.lastLeftWinkAt >= 650) {
+        leftWink = true;
+        this.leftEyeLatched = true;
+        this.lastLeftWinkAt = now;
+      }
+    } else {
+      this.leftWinkCandidateSince = 0;
+      if (leftBlink <= 0.35) {
+        this.leftEyeLatched = false;
+      }
+    }
+    if (rightClosed && leftBlink <= 0.35) {
+      if (this.rightWinkCandidateSince === 0) {
+        this.rightWinkCandidateSince = now;
+      }
+      if (!this.rightEyeLatched && now - this.rightWinkCandidateSince >= 80 &&
+        now - this.lastRightWinkAt >= 650) {
+        rightWink = true;
+        this.rightEyeLatched = true;
+        this.lastRightWinkAt = now;
+      }
+    } else {
+      this.rightWinkCandidateSince = 0;
+      if (rightBlink <= 0.35) {
+        this.rightEyeLatched = false;
+      }
+    }
+
+    if (jawOpen >= 0.72) {
+      if (this.jawOpenStartedAt === 0) {
+        this.jawOpenStartedAt = now;
+      }
+      if (!this.jawConfirmLatched && now - this.jawOpenStartedAt >= 350 &&
+        now - this.lastJawConfirmAt >= 1000) {
+        jawConfirm = true;
+        this.jawConfirmLatched = true;
+        this.lastJawConfirmAt = now;
+      }
+    } else if (jawOpen <= 0.40) {
+      this.jawOpenStartedAt = 0;
+      this.jawConfirmLatched = false;
+    }
+
+    const result: GestureEventResult = {
+      leftWink: leftWink,
+      rightWink: rightWink,
+      jawConfirm: jawConfirm
+    };
+    return result;
   }
 
   private reportError(message: string): void {
