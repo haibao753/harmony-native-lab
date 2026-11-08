@@ -103,7 +103,10 @@ jobs:
         run: |
           grep -Fq 'classifyInputSource(Number(event.sourceTool))' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'event.sourceTool !== SourceTool.Finger' apps/algolab/entry/src/main/ets/pages/Index.ets
-          grep -Fq 'InkLayer({ document: this.inkDocument })' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'InkLayer({' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'renderMode: this.inkRenderMode' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'this.penContactActive = true' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'this.fingerGestureAllowed = event !== undefined' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'private handleCanvasTouch' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'private undoInk' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'private redoInk' apps/algolab/entry/src/main/ets/pages/Index.ets
