@@ -237,3 +237,12 @@ The UI only uses these labels when the returned buffer length matches the triang
 - Region labels are optional and device-dependent. If unavailable, wireframe, surface, and deformation modes remain usable.
 - Face region coloring is based on Huawei's explicit per-triangle labels, not guessed facial landmark coordinates.
 - All vertex, index, label, and deformation arrays remain in memory and are cleared when tracking stops or is lost.
+
+
+## 14. 0.4.1 — ArkUI TypedArray boundary fix
+
+The 2026-11-08 MatePad Pro JSCrash report identified `FaceMeshViewer.ets:158:40` with `TypeError: This value does not have a [[TypedArrayName]] internal slot`. The stack shows the failure during `@Prop` state-variable reset and the first `draw()` triggered by a mesh update, not during camera or AR session initialization.
+
+ArkUI observation may proxy object-valued `@Prop` values. TypedArray accessors such as `.length` require a genuine TypedArray receiver and cannot be invoked on the proxy. The AR callback therefore retains efficient `Float32Array` / `Uint32Array` / `Int32Array` buffers for calculations, while `Index.ets` converts them with `Array.from()` at the UI boundary. `FaceMeshViewer` accepts ordinary `number[]` props and only reads their length and indexed values. This avoids exposing TypedArrays to ArkUI's object observation while keeping the AR data-processing layer unchanged.
+
+The fix is source-level only until DevEco compilation and on-device acceptance are completed. Verify first-frame rendering, all four display modes, gestures, and stop / restart cleanup on the MatePad Pro.
