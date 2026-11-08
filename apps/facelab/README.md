@@ -4,7 +4,7 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 
 ## 稳定基线：0.5.2 — Gesture Interaction Lab
 
-当前开发版本：`0.7.0-alpha.1` — Split-Screen Camera Continuity Probe（分屏持续感知实验，待 MatePad 真机验收）。
+当前开发版本：`0.8.0-alpha.1` — FaceLab Art 0.1 / FORM BEYOND（液态雕塑交互原型，待 MatePad 真机验收）。
 
 - 线框、实体、形变热力和部位分区全部使用 OpenGL ES 3.0 原生 GPU 渲染。
 - 使用 ArkTS XComponent SURFACE / EGL / NativeWindow；C++ 侧使用 VBO / EBO 绘制。
@@ -209,3 +209,16 @@ After pulling this change, synchronize OHPM dependencies in DevEco Studio before
 - FacePen 画布独立于 GPU 人脸 Surface，不修改现有 GPU 渲染路径或 AR 会话生命周期。
 - 当前仅控制 FaceLab 自己的画布，不控制华为笔记或其他第三方应用。
 - DevEco SDK 26 构建、M-Pencil 输入识别、压感映射、连续书写性能和眨眼误触率仍需 MatePad 真机验收。
+
+
+## 0.8.0-alpha.1 — FaceLab Art 0.1 / FORM BEYOND
+
+- 新增独立的全屏艺术体验：FORM BEYOND。
+- 使用现有 XComponent / EGL / OpenGL ES 3.0 GPU 渲染链路，不改变原有四种人脸网格模式。
+- 以程序化 UV 球面网格生成连续液态雕塑；面部动作驱动顶点形变。
+- 左眼单眨使形体生长，右眼单眨形成侵蚀凹陷，张嘴确认触发形变脉冲。
+- Roll（左右歪头）改变形变场的重力方向；Pitch / Yaw 控制观察角度。
+- 新增 Chrome 风格的程序化反射着色与纯黑 Void 背景。
+- 触控拖动和双指缩放保留为手动观察后备方式。
+- FaceLab 仍只在本机内存处理面部数据；不保存、不上传、不控制第三方应用。
+- 本版本是艺术原型；设备构建、帧率、误触率和持续运行表现仍需 MatePad 真机验收。

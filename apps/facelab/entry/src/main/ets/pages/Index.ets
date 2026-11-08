@@ -5,6 +5,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { FaceFrameDiagnostics, FaceGestureMetrics, FaceMetrics, FaceTrackingCallback } from '../common/FaceTrackingCallback';
 import { FaceGpuSurface, FaceGpuSurfaceController } from '../components/FaceGpuSurface';
 import { FACE_PEN_PALETTE, FacePenCanvas } from '../components/FacePenCanvas';
+import { SculptureExperience, SculptureGpuSurfaceController } from '../components/SculptureExperience';
 
 @Entry
 @Component
@@ -60,9 +61,11 @@ struct Index {
   @State facePenStrokeActive: boolean = false;
   @State facePenStatus: string = '等待 M-Pencil 输入';
   @State facePenLastCommand: string = '面部控制关闭';
+  @State showSculptureExperience: boolean = false;
 
   private faceCallback: FaceTrackingCallback | undefined = undefined;
   private gpuSurfaceController: FaceGpuSurfaceController = new FaceGpuSurfaceController();
+  private sculptureController: SculptureGpuSurfaceController = new SculptureGpuSurfaceController();
   private lastTextMetricsUpdate: number = 0;
   private lastGestureUiUpdate: number = 0;
   private frameAgeTimerId: number = -1;
@@ -201,11 +204,18 @@ struct Index {
       this.gestureLeftBlink = '—';
       this.gestureRightBlink = '—';
       this.gestureJawOpen = '—';
+      if (this.showSculptureExperience) {
+        this.sculptureController.pauseFaceInput();
+      }
       if (this.facePenControlEnabled) {
         this.facePenControlEnabled = false;
         this.facePenLastCommand = '人脸丢失 · 面部颜色控制已暂停，请重新启用';
       }
       return;
+    }
+
+    if (this.showSculptureExperience) {
+      this.sculptureController.update(metrics);
     }
 
     const now = Date.now();
@@ -346,6 +356,21 @@ struct Index {
     }
     this.faceCallback.captureNeutralBaseline();
     this.neutralDeformationSummary = '正在采集下一帧，请保持自然放松表情…';
+  }
+
+  private enterSculptureExperience(): void {
+    if (this.arContext === undefined || this.faceCount <= 0) {
+      this.errorMessage = '请先启动人脸追踪并检测到人脸，再进入 FORM BEYOND。';
+      return;
+    }
+    this.gestureLabEnabled = false;
+    this.facePenControlEnabled = false;
+    this.sculptureController.reset();
+    this.showSculptureExperience = true;
+  }
+
+  private exitSculptureExperience(): void {
+    this.showSculptureExperience = false;
   }
 
   private async startTracking(): Promise<void> {
@@ -541,6 +566,16 @@ struct Index {
   }
 
   build() {
+    if (this.showSculptureExperience) {
+      SculptureExperience({
+        controller: this.sculptureController,
+        trackingActive: this.arContext !== undefined,
+        faceDetected: this.faceCount > 0,
+        onExit: () => {
+          this.exitSculptureExperience();
+        }
+      })
+    } else {
     Scroll() {
       Column({ space: 16 }) {
         Column({ space: 5 }) {
@@ -548,12 +583,24 @@ struct Index {
             .fontSize(32)
             .fontWeight(FontWeight.Bold)
             .fontColor('#F4F7FB')
-          Text('AR Face Tracking Lab · 0.7.0-alpha.1')
+          Text('AR Face Tracking Lab · 0.8.0-alpha.1')
             .fontSize(13)
             .fontColor('#9AA9BC')
         }
         .alignItems(HorizontalAlign.Start)
         .width('100%')
+
+        Button('进入 FORM BEYOND · 液态雕塑')
+          .width('100%')
+          .height(48)
+          .fontSize(14)
+          .fontWeight(FontWeight.Bold)
+          .enabled(this.faceCount > 0 && this.arContext !== undefined)
+          .backgroundColor('#243B43')
+          .fontColor('#E8F5F7')
+          .onClick(() => {
+            this.enterSculptureExperience();
+          })
 
         Column({ space: 6 }) {
           Text('TARGET DEVICE')
@@ -1309,5 +1356,6 @@ struct Index {
     .width('100%')
     .height('100%')
     .backgroundColor('#0C1422')
+    }
   }
 }

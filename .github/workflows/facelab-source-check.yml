@@ -13,6 +13,7 @@ on:
       - "scripts/check-facelab-0.5.2.sh"
       - "scripts/check-facelab-0.6.0.sh"
       - "scripts/check-facelab-0.7.0.sh"
+      - "scripts/check-facelab-art-0.1.sh"
       - ".github/workflows/facelab-source-check.yml"
   push:
     branches:
@@ -27,6 +28,7 @@ on:
       - "scripts/check-facelab-0.5.2.sh"
       - "scripts/check-facelab-0.6.0.sh"
       - "scripts/check-facelab-0.7.0.sh"
+      - "scripts/check-facelab-art-0.1.sh"
       - ".github/workflows/facelab-source-check.yml"
 
 permissions:
@@ -44,9 +46,12 @@ jobs:
           bash -n scripts/check-facelab-0.5.2.sh
           bash -n scripts/check-facelab-0.6.0.sh
           bash -n scripts/check-facelab-0.7.0.sh
+          bash -n scripts/check-facelab-art-0.1.sh
       - name: Check FaceLab 0.5.2 gesture and GPU source contracts
         run: bash scripts/check-facelab-0.5.2.sh
       - name: Check FaceLab 0.6.0 FacePen source contracts
         run: bash scripts/check-facelab-0.6.0.sh
       - name: Check FaceLab 0.7.0 split-screen probe contracts
         run: bash scripts/check-facelab-0.7.0.sh
+      - name: Check FaceLab Art 0.1 liquid sculpture contracts
+        run: bash scripts/check-facelab-art-0.1.sh
