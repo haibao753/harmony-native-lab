@@ -4,16 +4,6 @@ import { Scene } from '@kit.ArkGraphics3D';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { FaceMetrics, FaceTrackingCallback } from '../common/FaceTrackingCallback';
 
-// AR Engine enum values are documented by Huawei. Use their numeric values at runtime
-// so this page does not dereference the arEngine namespace object for enum members.
-const FACE_FEATURE_TYPE: arEngine.ARFeatureType = 6 as arEngine.ARFeatureType;
-const FACE_AR_TYPE: arEngine.ARType = 0x10 as arEngine.ARType;
-const FACE_PLANE_MODE: arEngine.ARPlaneFindingMode = 0 as arEngine.ARPlaneFindingMode;
-const FACE_POWER_MODE: arEngine.ARPowerMode = 0 as arEngine.ARPowerMode;
-const FACE_FOCUS_MODE: arEngine.ARFocusMode = 1 as arEngine.ARFocusMode;
-const FRONT_CAMERA: arEngine.ARCameraLensFacing = 1 as arEngine.ARCameraLensFacing;
-const MULTI_FACE_MODE: arEngine.ARMultiFaceMode = 0x800 as arEngine.ARMultiFaceMode;
-
 @Entry
 @Component
 struct Index {
@@ -84,14 +74,9 @@ struct Index {
         return;
       }
 
-      stage = '检查 FACE 能力';
-      const supported = arViewController.isARTypeSupported(FACE_FEATURE_TYPE);
-      if (!supported) {
-        this.status = '设备不支持人脸追踪';
-        this.errorMessage = '当前设备没有报告支持 AR Engine FACE 特性。';
-        return;
-      }
-
+      // FaceLab 0.1.0 already confirmed FACE support on this exact device.
+      // Skip a second capability probe here: it throws in this 0.2.x runtime path
+      // before the AR session can be created. Let context.init() be the definitive test.
       stage = '加载 AR 场景';
       this.status = '正在加载 AR 场景…';
       const scene = await Scene.load();
@@ -112,12 +97,12 @@ struct Index {
 
       stage = '配置 FACE 会话';
       context.config = {
-        type: FACE_AR_TYPE,
-        planeFindingMode: FACE_PLANE_MODE,
-        powerMode: FACE_POWER_MODE,
-        focusMode: FACE_FOCUS_MODE,
-        cameraLensFacing: FRONT_CAMERA,
-        multiFaceMode: MULTI_FACE_MODE
+        type: arEngine.ARType.FACE,
+        planeFindingMode: arEngine.ARPlaneFindingMode.DISABLED,
+        powerMode: arEngine.ARPowerMode.NORMAL,
+        focusMode: arEngine.ARFocusMode.AUTO,
+        cameraLensFacing: arEngine.ARCameraLensFacing.FRONT,
+        multiFaceMode: arEngine.ARMultiFaceMode.MULTIFACE_ENABLE
       };
 
       stage = '初始化 AR 会话';
