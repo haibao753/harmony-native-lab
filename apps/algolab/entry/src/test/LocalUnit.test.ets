@@ -99,9 +99,13 @@ export default function localUnitTest() {
       const plainWidth = measureCppLineWidth(plainLine, 14);
       const indentedWidth = measureCppLineWidth(indentedLine, 14);
       const largeFontWidth = measureCppLineWidth(plainLine, 17);
+      const shortLine = highlightCpp('#include <iostream>', [])[0];
+      const viewportWidth = 420;
+      const shortLineWidth = measureCppLineWidth(shortLine, 14, viewportWidth);
 
       expect(indentedWidth > plainWidth).assertTrue();
       expect(largeFontWidth > plainWidth).assertTrue();
+      expect(shortLineWidth >= viewportWidth).assertTrue();
     });
 
     it('keeps digit separators inside numeric tokens', 0, () => {
