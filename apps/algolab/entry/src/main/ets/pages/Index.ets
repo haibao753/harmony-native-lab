@@ -112,6 +112,8 @@ struct Index {
   @State codeLines: CppDisplayLine[] = [];
   // 11 is the original compact size; font controls affect only C++ source tokens.
   @State codeFontSize: number = 14;
+  @State showAnnotations: boolean = true;
+  @State showCodeSettings: boolean = false;
   @State warnings: string[] = [];
   @State message: string = '先添加一个节点。拖动节点只改变位置，不会改变指针关系。';
   @State statusText: string = '空画布';
@@ -610,43 +612,61 @@ struct Index {
           .width('100%')
           .height(20)
 
-          Row({ space: 6 }) {
-            Text('代码字号')
-              .fontSize(10)
-              .fontColor('#52616B')
-            Button('A−')
-              .type(ButtonType.Normal)
+          // Keep frequently used display options in one compact toolbar.
+          Row({ space: 8 }) {
+            Button(this.showAnnotations ? '注释：开' : '注释：关')
+              .type(ButtonType.Capsule)
               .onClick(() => {
-                this.codeFontSize = Math.max(10, this.codeFontSize - 1);
+                this.showAnnotations = !this.showAnnotations;
               })
-            Text(this.codeFontSize.toString() + ' vp')
-              .fontSize(10)
-              .fontColor('#52616B')
-              .width(42)
-              .textAlign(TextAlign.Center)
-            Button('A+')
-              .type(ButtonType.Normal)
+            Button(this.showCodeSettings
+              ? '字号 ' + this.codeFontSize.toString() + ' ▴'
+              : '字号 ' + this.codeFontSize.toString() + ' ▾')
+              .type(ButtonType.Capsule)
               .onClick(() => {
-                this.codeFontSize = Math.min(22, this.codeFontSize + 1);
-              })
-            Button('小')
-              .type(ButtonType.Normal)
-              .onClick(() => {
-                this.codeFontSize = 11;
-              })
-            Button('中')
-              .type(ButtonType.Normal)
-              .onClick(() => {
-                this.codeFontSize = 14;
-              })
-            Button('大')
-              .type(ButtonType.Normal)
-              .onClick(() => {
-                this.codeFontSize = 17;
+                this.showCodeSettings = !this.showCodeSettings;
               })
           }
           .width('100%')
-          .height(30)
+          .height(32)
+
+          // Advanced font controls are shown only on demand.
+          if (this.showCodeSettings) {
+            Row({ space: 6 }) {
+              Button('A−')
+                .type(ButtonType.Normal)
+                .onClick(() => {
+                  this.codeFontSize = Math.max(10, this.codeFontSize - 1);
+                })
+              Text(this.codeFontSize.toString() + ' vp')
+                .fontSize(10)
+                .fontColor('#52616B')
+                .width(42)
+                .textAlign(TextAlign.Center)
+              Button('A+')
+                .type(ButtonType.Normal)
+                .onClick(() => {
+                  this.codeFontSize = Math.min(22, this.codeFontSize + 1);
+                })
+              Button('小')
+                .type(this.codeFontSize === 11 ? ButtonType.Capsule : ButtonType.Normal)
+                .onClick(() => {
+                  this.codeFontSize = 11;
+                })
+              Button('中')
+                .type(this.codeFontSize === 14 ? ButtonType.Capsule : ButtonType.Normal)
+                .onClick(() => {
+                  this.codeFontSize = 14;
+                })
+              Button('大')
+                .type(this.codeFontSize === 17 ? ButtonType.Capsule : ButtonType.Normal)
+                .onClick(() => {
+                  this.codeFontSize = 17;
+                })
+            }
+            .width('100%')
+            .height(30)
+          }
 
           Scroll() {
             Column({ space: 2 }) {
@@ -686,7 +706,7 @@ struct Index {
                     }
                   })
 
-                  if (line.annotationText !== '') {
+                  if (this.showAnnotations && line.annotationText !== '') {
                     Row({ space: 3 }) {
                       Text('▏')
                         .fontSize(12)
@@ -699,9 +719,6 @@ struct Index {
                     }
                     .width(198)
                     .height(46)
-                  } else {
-                    Blank()
-                      .width(198)
                   }
                 }
                 .width('100%')
