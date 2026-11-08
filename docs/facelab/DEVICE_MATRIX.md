@@ -164,3 +164,30 @@
 - User confirms all four GPU visualization modes remain smooth with gesture input enabled.
 - These are qualitative user acceptance results; no numeric FPS, latency, false-positive, thermal, or battery benchmark was collected.
 - Stop / restart lifecycle and separate touch / M-Pencil fallback checks were not explicitly reported and remain unverified.
+
+
+## 0.7.0-alpha.1 分屏持续感知探针（2026-11-08）
+
+| 项目 | 目标 / 观察方式 | 状态 |
+|---|---|---|
+| 目标设备 | MatePad Pro 13.2（2023） | 已知目标 |
+| Compile SDK | 26.0.0 | 已知环境 |
+| 多窗口声明 | fullscreen / split / floating | 已加入源码，待 DevEco 构建 |
+| WindowStage 生命周期 | API 20+ windowStageLifecycleEvent | 已加入源码，待构建 |
+| 主窗口焦点 | windowEvent ACTIVE / INACTIVE | 已加入源码，待构建 |
+| 窗口模式与可见性 | windowStatusDidChange / windowVisibilityChange | 已加入源码，待构建 |
+| AR 帧监测 | onFrameUpdate 调用次数、回调率、间隔 | 已加入源码，待构建 |
+| 分屏失焦持续感知 | 可见 + SPLIT_SCREEN + INACTIVE，观察至少 10 秒 | 待 MatePad 真机 |
+| 后台行为 | HIDDEN 时停止 AR 会话；系统相机后台断流不绕过 | 待 MatePad 真机 |
+| DevEco ArkTS / NDK 构建 | SDK 26 HAP 构建 | 待用户本地构建 |
+
+### 0.7.0 设备验收标准
+
+1. 全屏启动 FaceLab，允许摄像头权限，启动 AR 追踪并确认人脸数大于 0。
+2. 将 FaceLab 与华为笔记设置为分屏，点击华为笔记使 FaceLab 失焦。
+3. 面板应显示 `SPLIT_SCREEN`、`INACTIVE`、可见。
+4. 保持至少 10 秒；初步通过需要失焦期间累计至少 50 次 AR 帧回调、估算回调率至少 5 Hz、最近帧距今小于 1.5 秒且人脸仍被检测。
+5. 再切回 FaceLab，确认窗口恢复 ACTIVE，计数复位逻辑正常。
+6. 将 FaceLab 完全切到后台，确认进入 HIDDEN 后 AR 会话被清理；返回后手动重新启动追踪。
+
+说明：回调率是 ARViewCallback 的调用频率估算，不等同于摄像头传感器原始 FPS；自动化源码检查不构成真机通过证据。
