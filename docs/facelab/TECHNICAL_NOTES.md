@@ -314,3 +314,14 @@ The current implementation requests an OpenGL ES 3.x context with `EGL_CONTEXT_C
 - Huawei's Node-API reference documents that HarmonyOS's exported `napi_get_typedarray_info` returns the TypedArray byte length, unlike the standard native symbol which returns element count. Both Float32Array and Uint32Array readers now divide by `sizeof(element)` before copying.
 - The native type declarations were moved to the documented `src/main/cpp/types/libfacelab_native` package layout, with matching local dependency and runtimeOnly registration.
 - The module-level package version is set to 1.0.0 (SemVer) independently of the app's user-facing version 0.5.0.
+
+
+## 19. 0.5.1 — Native GPU triangle-region rendering
+
+- Huawei AR Engine exposes one semantic `ARAnimojiTriangleLabel` per face-mesh triangle. Values are: -1 non-face, 0 face-other, 1 lower lip, 2 upper lip, 3 left eye, 4 right eye, 5 left brow, 6 right brow, 7 brow center, 8 nose.
+- FaceTrackingCallback already caches the label array as Int32Array alongside stable topology. The GPU path now forwards this typed array through Node-API without ArkUI observation or number[] conversion.
+- NAPI validates `napi_int32_array` and converts the HarmonyOS-reported byte length to element count before copying.
+- The renderer expands each indexed triangle into three GPU vertices only in region mode. All three vertices receive the same region ID, so the fragment shader uses a flat varying and preserves hard semantic boundaries despite the source mesh's shared vertices.
+- GLSL ES region palette mirrors the existing ten Canvas colors. The expanded VBO is drawn with `glDrawArrays(GL_TRIANGLES)`; wireframe, surface, and deformation continue using their indexed paths.
+- Region labels are topology metadata and are cached until topology revision changes; positions are refreshed at the existing AR mesh publication cadence.
+- Source implementation is committed. Shader compilation, color correctness, region availability and performance remain pending SDK 26 / MatePad validation.
