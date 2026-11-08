@@ -35,7 +35,7 @@ The active stroke color is snapshotted at pointer DOWN. Palette changes received
 
 - GitHub source-contract checks are added for FacePen event routing, color freezing, pending-color commit, palette wiring, and version metadata.
 - ArkTS / DevEco SDK 26.0.0 compilation: **not yet run in this environment**.
-- MatePad Pro 13.2 (2023) M-Pencil hardware validation: **pending**.
+- MatePad Pro 13.2 (2023) M-Pencil 真机硬件验证：**pending**。
 - Pressure range and SourceTool.Pen behavior must be confirmed on the target tablet.
 - No runtime accuracy, latency, or sustained-performance claims are made before device testing.
 
