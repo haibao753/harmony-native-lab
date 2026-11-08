@@ -9,7 +9,7 @@
 - `src/main/ets/codegen/CppSyntaxHighlighter.ets`：原生 ArkTS C++ 词法着色，将关键字、类型、函数、字符串、数字、注释、预处理指令和运算符拆分为彩色 Token。
 - `src/main/ets/interaction/InputRouter.ets`：将 ArkUI SourceTool 输入源映射为 finger / pen / other。
 - `src/main/ets/interaction/CoordinateMapper.ets`：画布坐标逆变换、缩放锚点和缩放范围约束。
-- `src/main/ets/ink/InkStrokeModel.ets`：与链表模型完全独立的笔迹文档、笔划和点数据，提供不可变更新、追加和清除。
+- `src/main/ets/ink/InkStrokeModel.ets`：与链表模型完全独立的笔迹文档、笔划和点数据，提供深拷贝历史快照、增量追加和清除；实时追加采用浅层文档包装，避免每个触控采样点都深拷贝整段笔迹。
 - `src/main/ets/components/InkLayer.ets`：使用 ArkUI Canvas 绘制独立笔迹，不参与命中测试。
 - `src/main/ets/pages/Index.ets`：ArkUI 工作台页面，包含节点创建/拖动、通过选择起点/目标建立 next、断开连接、设置 head、删除节点、撤销/重做，以及 1.2 Alpha 1 的 M-Pencil 输入路由、笔迹历史和双指画布手势。页面采用 Soft Precision 视觉语言：暖灰白背景、石墨文字、陶土橙强调与低对比哑光表面；链表画布作为主工作区，内存检查器和 C++ 检查器按需停靠在右侧，不再以浮窗遮挡画布。C++ 源码采用语法高亮和行号，每行可点击定位节点或高亮 next 连接；逐行中文注释显示在源码下方，使用 12vp 字号并可隐藏。C++ 源码默认 14vp，支持 A−/A+ 连续调整（10–22vp）以及小/中/大预设（11/14/17vp）。每一行源码使用单个 Text 段落与多个彩色 Span；通过 onAreaChange 读取代码 Scroll 的实际视口宽度，并将 Text 宽度设为视口宽度与整行测量宽度的较大值，确保短行从最左侧开始、长行仍可横向滚动；保留缩进，不修改实际生成源码。字号入口默认紧凑，点击后才展开调节项。页面另提供教学内存视图，展示 head、data、next、可达性、环入口和共享后继，并与画布选中状态同步。
 
