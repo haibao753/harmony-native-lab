@@ -73,7 +73,7 @@ FaceLab 是一个 HarmonyOS 原生视觉与交互实验应用，优先研究 Mat
 - 保留 Canvas 四模式方案，但明确它仍有 CPU / Canvas 性能上限。
 
 ### 0.5.0 — GPU Native Face Renderer
-- 将线框、实体表面和形变热力三种高频模式迁移到 OpenGL ES 3.2 原生 GPU 渲染。
+- 将线框、实体表面和形变热力三种高频模式迁移到 OpenGL ES 3.0 原生 GPU 渲染。
 - 使用 ArkTS XComponent SURFACE + NativeWindow + EGL 建立原生渲染表面。
 - 通过 Node-API 将 AR 回调的 Float32Array / Uint32Array 直接交给 C++，不再为 GPU 模式转换为 ArkUI 普通数组。
 - C++ 侧缓存顶点与拓扑，使用 VBO / EBO 绘制；实体模式加入顶点法线光照，热力模式按顶点位移着色。
