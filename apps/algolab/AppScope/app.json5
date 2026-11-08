@@ -2,8 +2,8 @@
   "app": {
     "bundleName": "com.haibao.algolab",
     "vendor": "example",
-    "versionCode": 1200003,
-    "versionName": "1.2.0-alpha.3",
+    "versionCode": 1200004,
+    "versionName": "1.2.0-alpha.4",
     "buildVersion": "1",
     "icon": "$media:layered_image",
     "label": "$string:app_name"
