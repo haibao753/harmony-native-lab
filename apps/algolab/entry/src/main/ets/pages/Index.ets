@@ -13,7 +13,7 @@ import {
   setNodeValue
 } from '../domain/LinkedListModel';
 import { generateCpp } from '../codegen/CppLinkedListGenerator';
-import { highlightCpp, CppDisplayLine, CppToken } from '../codegen/CppSyntaxHighlighter';
+import { highlightCpp, formatCppDisplayToken, CppDisplayLine, CppToken } from '../codegen/CppSyntaxHighlighter';
 
 @Component
 struct NodeCard {
@@ -107,6 +107,8 @@ struct Index {
   @State viewportHeight: number = 0;
   @State generatedCode: string = '';
   @State codeLines: CppDisplayLine[] = [];
+  // 11 is the original compact size; font controls affect only C++ source tokens.
+  @State codeFontSize: number = 11;
   @State warnings: string[] = [];
   @State message: string = '先添加一个节点。拖动节点只改变位置，不会改变指针关系。';
   @State statusText: string = '空画布';
@@ -605,6 +607,44 @@ struct Index {
           .width('100%')
           .height(20)
 
+          Row({ space: 6 }) {
+            Text('代码字号')
+              .fontSize(10)
+              .fontColor('#52616B')
+            Button('A−')
+              .type(ButtonType.Normal)
+              .onClick(() => {
+                this.codeFontSize = Math.max(10, this.codeFontSize - 1);
+              })
+            Text(this.codeFontSize.toString() + ' px')
+              .fontSize(10)
+              .fontColor('#52616B')
+              .width(42)
+              .textAlign(TextAlign.Center)
+            Button('A+')
+              .type(ButtonType.Normal)
+              .onClick(() => {
+                this.codeFontSize = Math.min(22, this.codeFontSize + 1);
+              })
+            Button('小')
+              .type(ButtonType.Normal)
+              .onClick(() => {
+                this.codeFontSize = 11;
+              })
+            Button('中')
+              .type(ButtonType.Normal)
+              .onClick(() => {
+                this.codeFontSize = 14;
+              })
+            Button('大')
+              .type(ButtonType.Normal)
+              .onClick(() => {
+                this.codeFontSize = 17;
+              })
+          }
+          .width('100%')
+          .height(30)
+
           Scroll() {
             Column({ space: 2 }) {
               ForEach(this.codeLines, (line: CppDisplayLine) => {
@@ -619,17 +659,17 @@ struct Index {
                   Scroll() {
                     Row({ space: 0 }) {
                       ForEach(line.tokens, (token: CppToken) => {
-                        Text(token.text)
-                          .fontSize(11)
+                        Text(formatCppDisplayToken(token.text))
+                          .fontSize(this.codeFontSize)
                           .fontColor(token.color)
                           .fontFamily('monospace')
                       }, (token: CppToken) => token.id)
                     }
-                    .height(22)
+                    .height(this.codeFontSize + 11)
                   }
                   .scrollable(ScrollDirection.Horizontal)
                   .layoutWeight(1)
-                  .height(22)
+                  .height(this.codeFontSize + 11)
 
                   if (line.annotationText !== '') {
                     Row({ space: 3 }) {
@@ -650,7 +690,7 @@ struct Index {
                   }
                 }
                 .width('100%')
-                .height(30)
+                .height(this.codeFontSize + 19)
                 .padding({ top: 1, bottom: 1 })
                 .backgroundColor(line.lineNumber % 2 === 0 ? '#1B2733' : '#17212B')
                 .borderRadius(3)
