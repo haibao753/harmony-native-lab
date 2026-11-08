@@ -83,7 +83,7 @@ export default function localUnitTest() {
 
     it('highlights C++ keywords, literals, comments and preprocessor lines', 0, () => {
       const lines = highlightCpp(
-        'int main() { return 42; } // demo\\n#include <iostream>',
+        'int main() { return 42; } // demo\n#include <iostream>',
         []
       );
       let hasKeyword = false;
