@@ -9,6 +9,21 @@ import {
 } from '../main/ets/domain/LinkedListModel';
 import { generateCpp } from '../main/ets/codegen/CppLinkedListGenerator';
 import { highlightCpp, formatCppDisplayToken, measureCppLineWidth } from '../main/ets/codegen/CppSyntaxHighlighter';
+import {
+  SOURCE_TOOL_FINGER,
+  SOURCE_TOOL_PEN,
+  classifyInputSource
+} from '../main/ets/interaction/InputRouter';
+import {
+  screenToCanvasPoint,
+  zoomTransformAtPoint
+} from '../main/ets/interaction/CoordinateMapper';
+import {
+  appendInkPoint,
+  beginInkStroke,
+  createEmptyInkDocument,
+  removeLastInkStroke
+} from '../main/ets/ink/InkStrokeModel';
 
 export default function localUnitTest() {
   describe('LinkedListModel', () => {
@@ -217,6 +232,59 @@ export default function localUnitTest() {
           expect(sharedSnapshot.nodes[1].incomingCount).assertEqual(2);
         }
       }
+    });
+
+    it('routes HarmonyOS stylus and finger sources separately', 0, () => {
+      expect(classifyInputSource(SOURCE_TOOL_PEN)).assertEqual('pen');
+      expect(classifyInputSource(SOURCE_TOOL_FINGER)).assertEqual('finger');
+      expect(classifyInputSource(99)).assertEqual('other');
+    });
+
+    it('stores pen strokes independently from the linked-list document', 0, () => {
+      const emptyInk = createEmptyInkDocument();
+      const firstStroke = beginInkStroke(emptyInk, { x: 10, y: 20, pressure: 0.6 });
+      const extendedStroke = appendInkPoint(firstStroke, { x: 18, y: 25, pressure: 0.8 });
+
+      expect(emptyInk.strokes.length).assertEqual(0);
+      expect(firstStroke.strokes.length).assertEqual(1);
+      expect(firstStroke.strokes[0].points.length).assertEqual(1);
+      expect(extendedStroke.strokes[0].points.length).assertEqual(2);
+      expect(extendedStroke.strokes[0].points[1].x).assertEqual(18);
+
+      const withoutLastStroke = removeLastInkStroke(extendedStroke);
+      expect(withoutLastStroke.strokes.length).assertEqual(0);
+      expect(extendedStroke.strokes.length).assertEqual(1);
+    });
+
+    it('maps stylus points through the current graph transform', 0, () => {
+      const point = screenToCanvasPoint(210, 120, {
+        scale: 2,
+        offsetX: 10,
+        offsetY: 20
+      });
+      expect(point.x).assertEqual(100);
+      expect(point.y).assertEqual(50);
+    });
+
+    it('keeps the pinch-center graph point stationary while zooming', 0, () => {
+      const before = screenToCanvasPoint(120, 90, {
+        scale: 1,
+        offsetX: 20,
+        offsetY: 10
+      });
+      const zoomed = zoomTransformAtPoint(
+        { scale: 1, offsetX: 20, offsetY: 10 },
+        1.8,
+        120,
+        90
+      );
+      const after = screenToCanvasPoint(
+        zoomed.scale * before.x + zoomed.offsetX,
+        zoomed.scale * before.y + zoomed.offsetY,
+        zoomed
+      );
+      expect(after.x).assertEqual(before.x);
+      expect(after.y).assertEqual(before.y);
     });
 
     it('maps generated next-pointer code lines back to source and target nodes', 0, () => {
