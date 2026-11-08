@@ -141,13 +141,13 @@
 |---|---|---|
 | SDK 26 ArkTS + NDK build | HAP packages successfully | **Pass — user confirmed HAP build** |
 | 30 Hz pose / BlendShapes sampling | Gesture inputs update without increasing mesh publication cadence | Pending device |
-| Gesture recognition overall | Wink / jaw gestures respond consistently in the interaction demo | **User reports recognition is stable** |
+| Gesture recognition overall | Wink / jaw gestures respond consistently in the interaction demo | **Pass — user reports stable recognition** |
 | Left / right wink discrimination | Correct direction and one action per closure | Pending detailed confirmation |
 | Natural bilateral blink | No unilateral-wink action | Pending detailed confirmation |
 | Sustained jaw open | Confirms selected option after 350 ms threshold hold | Pending detailed confirmation |
 | Gesture input disabled | No demo action is triggered | Pending device |
 | Touch / M-Pencil fallback | Direct option selection still works | Pending device |
-| GPU rendering regression | All four visualization modes remain smooth | Pending device |
+| GPU rendering regression | All four visualization modes remain smooth | **Pass — user confirmed all four remain smooth with gesture input enabled** |
 | Stop / restart | Camera, gesture latches and counters reset cleanly | Pending device |
 
 
@@ -156,3 +156,11 @@
 - User reports that gesture recognition is stable during initial device testing.
 - This is qualitative acceptance of overall recognition behavior; separate false-trigger rate, latency, and per-gesture measurements were not supplied.
 - GPU regression across all four visualization modes, touch / M-Pencil fallback, gesture-off behavior, and stop / restart lifecycle still require explicit confirmation.
+
+
+### 0.5.2 release acceptance update (2026-11-08)
+- User confirms the ArkTS-fixed 0.5.2 HAP builds successfully in DevEco Studio.
+- User reports gesture recognition is stable during device use.
+- User confirms all four GPU visualization modes remain smooth with gesture input enabled.
+- These are qualitative user acceptance results; no numeric FPS, latency, false-positive, thermal, or battery benchmark was collected.
+- Stop / restart lifecycle and separate touch / M-Pencil fallback checks were not explicitly reported and remain unverified.
