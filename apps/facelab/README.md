@@ -2,14 +2,14 @@
 
 HarmonyOS 原生三维人脸与新型交互实验应用。
 
-## 当前版本：0.5.0 — OpenGL ES Native Face Renderer
+## 当前版本：0.5.1 — Fully GPU-rendered Face Regions
 
-- 线框、实体和形变热力迁移到 OpenGL ES 3.0 原生 GPU 渲染。
+- 线框、实体、形变热力和部位分区全部使用 OpenGL ES 3.0 原生 GPU 渲染。
 - 使用 ArkTS XComponent SURFACE / EGL / NativeWindow；C++ 侧使用 VBO / EBO 绘制。
 - Node-API 直接接收 AR 回调 TypedArray，GPU 模式不再转换为 ArkUI 普通数组。
 - 原生线程目标约 30 Hz 重绘，AR Mesh 数据仍约 5 Hz 更新；实际帧率待 MatePad 实测。
-- 保留单指旋转、双指缩放和视角重置；部位分区暂保留 Canvas 兼容路径。
-- DevEco 构建和真机验收尚未完成，不宣称性能问题已解决。
+- 部位分区通过 AR Engine 三角面标签为每个三角面分配颜色，使用 GPU 三角形绘制，不再进入 ArkUI Canvas。
+- 0.5.0 真机已验证前三种 GPU 模式流畅；0.5.1 区域 GPU 改造仍待 DevEco 构建和真机验收。
 
 ## 0.4.3 — Live Deformation Heatmap & Lite Rendering
 
@@ -64,7 +64,7 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 
 ## 测试步骤
 
-1. 安装 0.5.0。
+1. 安装 0.5.1。
 2. 点击“开始追踪”。
 3. 在系统弹窗中允许 FaceLab 使用摄像头。
 4. 将脸放在前置摄像头画面内，观察人脸计数、Mesh、Pose 和 BlendShapes 指标。
@@ -118,7 +118,7 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 5. 确认 XComponent Surface 创建成功，能显示原生 GPU 人脸网格。
 6. 依次检查线框、实体和形变热力；与 0.4.3 对比可见帧率和卡顿。
 7. 单指拖动旋转、双指捏合缩放，点击“重置视角”。
-8. 切换部位分区，确认 Canvas 兼容路径仍能显示设备返回的区域标签。
+8. 切换部位分区，确认 GPU 着色正确区分非脸部、脸部、嘴唇、左右眼、左右眉、眉心和鼻子。
 9. 停止追踪并离开页面，确认相机关闭、渲染线程退出、Surface 销毁后可重新进入。
 10. 回填 DevEco 完整构建日志、设备截图和性能数据至 docs/facelab/DEVICE_MATRIX.md。
 
@@ -139,3 +139,13 @@ The native library's ArkTS declaration package follows the HarmonyOS project lay
 - `entry/build-profile.json5` lists the module under `arkOptions.runtimeOnly.packages`.
 
 After pulling this change, synchronize OHPM dependencies in DevEco Studio before rebuilding.
+
+
+## 0.5.1 — GPU Region Rendering
+
+- 将 AR Engine 的 Int32Array 三角面标签通过 Node-API 直接传入 C++。
+- 在 C++ 原生渲染器中按三角面展开顶点，并为该三角形的三个顶点写入相同区域 ID，避免共享顶点跨区域造成颜色插值混合。
+- GLSL ES 使用 flat region varying 选择与旧版一致的十种区域色板；通过 glDrawArrays(GL_TRIANGLES) 在 GPU 上绘制。
+- 移除 Index.ets 中部位分区专用的普通 number[] 复制和 FaceMeshViewer Canvas 分支。
+- 其他三种 GPU 模式保持原有索引绘制路径；所有面部数据仍只在本机内存处理。
+- 代码实现已提交，DevEco 编译与 MatePad 真机性能回归待验证。
