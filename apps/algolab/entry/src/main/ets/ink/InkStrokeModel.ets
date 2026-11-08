@@ -95,6 +95,36 @@ export function appendInkPoint(document: InkDocument, point: InkPoint): InkDocum
   return next;
 }
 
+/**
+ * Fast path for live pointer movement. The active stroke point array is
+ * appended in place while the document wrapper and stroke list are replaced,
+ * so ArkUI observes a new document reference without copying every historical
+ * point on every input frame. Undo snapshots are deep-cloned at stroke start.
+ */
+export function appendInkPointInPlace(document: InkDocument, point: InkPoint): InkDocument {
+  if (document.strokes.length === 0) {
+    return document;
+  }
+  const active = document.strokes[document.strokes.length - 1];
+  const last = active.points.length > 0 ? active.points[active.points.length - 1] : null;
+  if (last !== null) {
+    const dx = point.x - last.x;
+    const dy = point.y - last.y;
+    if (dx * dx + dy * dy < 0.25) {
+      return document;
+    }
+  }
+  active.points.push({
+    x: point.x,
+    y: point.y,
+    pressure: clampPressure(point.pressure)
+  });
+  return {
+    nextStrokeNumber: document.nextStrokeNumber,
+    strokes: document.strokes.slice()
+  };
+}
+
 export function removeLastInkStroke(document: InkDocument): InkDocument {
   const next = cloneInkDocument(document);
   if (next.strokes.length > 0) {
