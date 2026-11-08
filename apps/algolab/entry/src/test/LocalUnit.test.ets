@@ -278,13 +278,10 @@ export default function localUnitTest() {
         120,
         90
       );
-      const after = screenToCanvasPoint(
-        zoomed.scale * before.x + zoomed.offsetX,
-        zoomed.scale * before.y + zoomed.offsetY,
-        zoomed
-      );
-      expect(after.x).assertEqual(before.x);
-      expect(after.y).assertEqual(before.y);
+      const screenXAfterZoom = zoomed.scale * before.x + zoomed.offsetX;
+      const screenYAfterZoom = zoomed.scale * before.y + zoomed.offsetY;
+      expect(Math.abs(screenXAfterZoom - 120) < 0.0001).assertTrue();
+      expect(Math.abs(screenYAfterZoom - 90) < 0.0001).assertTrue();
     });
 
     it('maps generated next-pointer code lines back to source and target nodes', 0, () => {
