@@ -44,7 +44,7 @@ grep -Fq '张嘴保持' "$page"
 grep -Fq '选项 A' "$page"
 grep -Fq '选项 B' "$page"
 grep -Fq '选项 C' "$page"
-grep -Eq '0\\.5\\.2|0\\.6\\.0-alpha\\.1' "$page"
+grep -Eq '0\.5\.2|0\.6\.0-alpha\.1' "$page"
 
 grep -Fq 'XComponentType.SURFACE' "$surface"
 grep -Fq 'OH_NativeWindow_CreateNativeWindowFromSurfaceId' "$renderer"

@@ -8,6 +8,10 @@ Connect the existing 0.5.2 unilateral-wink event pipeline to a local M-Pencil dr
 
 ## Implemented
 
+## Stroke Transaction
+
+The active stroke color is snapshotted at pointer DOWN. Palette changes received while the pen is down remain pending and are applied only after pointer UP or CANCEL.
+
 - Added a dedicated ArkUI Canvas drawing component using CanvasRenderingContext2D.
 - Accept only `TouchEvent.sourceTool === SourceTool.Pen`; finger input does not create strokes.
 - Process `Down`, `Move`, `Up`, and `Cancel`; consume stylus events to prevent them from bubbling into the outer Scroll or the 3D face surface.
