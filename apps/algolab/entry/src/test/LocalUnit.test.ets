@@ -7,7 +7,7 @@ import {
   setNodeValue
 } from '../main/ets/domain/LinkedListModel';
 import { generateCpp } from '../main/ets/codegen/CppLinkedListGenerator';
-import { highlightCpp, formatCppDisplayToken } from '../main/ets/codegen/CppSyntaxHighlighter';
+import { highlightCpp, formatCppDisplayToken, measureCppLineWidth } from '../main/ets/codegen/CppSyntaxHighlighter';
 
 export default function localUnitTest() {
   describe('LinkedListModel', () => {
@@ -91,6 +91,17 @@ export default function localUnitTest() {
       const lines = highlightCpp(sourceLine, []);
       expect(lines[0].tokens[0].text).assertEqual('    ');
       expect(lines[0].tokens[0].text).assertEqual(sourceLine.slice(0, 4));
+    });
+
+    it('measures C++ source line width for left-aligned horizontal scrolling', 0, () => {
+      const plainLine = highlightCpp('int value = 12345678901234567890;', [])[0];
+      const indentedLine = highlightCpp('    int value = 12345678901234567890;', [])[0];
+      const plainWidth = measureCppLineWidth(plainLine, 14);
+      const indentedWidth = measureCppLineWidth(indentedLine, 14);
+      const largeFontWidth = measureCppLineWidth(plainLine, 17);
+
+      expect(indentedWidth > plainWidth).assertTrue();
+      expect(largeFontWidth > plainWidth).assertTrue();
     });
 
     it('keeps digit separators inside numeric tokens', 0, () => {
