@@ -663,8 +663,14 @@ struct Index {
                           .fontSize(this.codeFontSize)
                           .fontColor(token.color)
                           .fontFamily('monospace')
+                          .textAlign(TextAlign.Start)
                       }, (token: CppToken) => token.id)
                     }
+                    // Explicit start alignment is essential: otherwise the
+                    // token row can appear centered in the horizontal Scroll viewport.
+                    .width('100%')
+                    .justifyContent(FlexAlign.Start)
+                    .alignItems(VerticalAlign.Center)
                     .height(this.codeFontSize + 11)
                   }
                   .scrollable(ScrollDirection.Horizontal)
