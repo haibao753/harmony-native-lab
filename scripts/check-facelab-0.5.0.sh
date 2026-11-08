@@ -9,7 +9,7 @@ typepkg="apps/facelab/entry/src/main/cpp/types/libfacelab_native/oh-package.json
 build="apps/facelab/entry/build-profile.json5"
 manifest="apps/facelab/AppScope/app.json5"
 readme="apps/facelab/README.md"
-release="docs/facelab/RELEASE_NOTES_0.5.0.md"
+release="docs/facelab/RELEASE_NOTES_0.5.1.md"
 
 for file in \
   "$cpp/CMakeLists.txt" "$cpp/FaceGpuRenderer.h" "$cpp/FaceGpuRenderer.cpp" \
@@ -37,6 +37,15 @@ fi
 grep -Fq 'napi_get_typedarray_info' "$cpp/napi_init.cpp"
 grep -Fq 'length / sizeof(float)' "$cpp/napi_init.cpp"
 grep -Fq 'length / sizeof(uint32_t)' "$cpp/napi_init.cpp"
+grep -Fq 'napi_int32_array' "$cpp/napi_init.cpp"
+grep -Fq 'length / sizeof(int32_t)' "$cpp/napi_init.cpp"
+grep -Fq 'ReadInt32Array(env, args[5], labels)' "$cpp/napi_init.cpp"
+grep -Fq 'labels: Int32Array' "$types"
+grep -Fq 'flat out float vRegion' "$cpp/FaceGpuRenderer.cpp"
+grep -Fq 'flat in float vRegion' "$cpp/FaceGpuRenderer.cpp"
+grep -Fq 'glDrawArrays(GL_TRIANGLES, 0, regionVertexCount_)' "$cpp/FaceGpuRenderer.cpp"
+grep -Fq 'regionVertexCount_' "$cpp/FaceGpuRenderer.h"
+grep -Fq 'regionColor(vRegion)' "$cpp/FaceGpuRenderer.cpp"
 grep -Fq 'napi_get_value_bigint_uint64' "$cpp/napi_init.cpp"
 grep -Fq 'nativeRender.UpdateMesh' "$gpu"
 if grep -Fq "from '@kit.ArkUI'" "$gpu" && grep -Fq 'XComponentController' "$gpu"; then
@@ -54,13 +63,18 @@ test ! -e apps/facelab/entry/src/main/ets/types/libfacelab_native.d.ts
 grep -Fq '"packages": ["libfacelab_native.so"]' "$build"
 grep -Fq 'nativeRender.SetViewTransform' "$gpu"
 grep -Fq 'this.publishViewTransform();' "$gpu"
-grep -Fq "this.meshViewMode === 'regions'" "$page"
+grep -Fq "if (mode === 'regions')" "$gpu"
+grep -Fq "metrics.meshLabels" "$gpu"
+if grep -Fq "FaceMeshViewer" "$page"; then
+  echo "All four modes must use the native GPU surface; Canvas fallback is not allowed." >&2
+  exit 1
+fi
 grep -Fq 'FaceGpuSurface({ controller: this.gpuSurfaceController })' "$page"
 grep -Fq 'externalNativeOptions' "$build"
-grep -Fq '"versionCode": 10008' "$manifest"
-grep -Fq '"versionName": "0.5.0"' "$manifest"
-grep -Fq '0.5.0' "$readme"
-grep -Fq 'FaceLab 0.5.0' "$release"
+grep -Fq '"versionCode": 10009' "$manifest"
+grep -Fq '"versionName": "0.5.1"' "$manifest"
+grep -Fq '0.5.1' "$readme"
+grep -Fq 'FaceLab 0.5.1' "$release"
 
 if grep -Fq '@Prop vertices: Float32Array' apps/facelab/entry/src/main/ets/components/FaceMeshViewer.ets; then
   echo "TypedArray must not cross the ArkUI @Prop boundary." >&2
