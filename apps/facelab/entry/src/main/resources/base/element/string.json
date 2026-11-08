@@ -1,0 +1,8 @@
+{
+  "string": [
+    { "name": "module_desc", "value": "FaceLab AR face tracking experiments" },
+    { "name": "EntryAbility_desc", "value": "FaceLab capability probe" },
+    { "name": "EntryAbility_label", "value": "FaceLab" },
+    { "name": "permission_camera", "value": "用于启动 AR 人脸追踪与相机预览实验" }
+  ]
+}
