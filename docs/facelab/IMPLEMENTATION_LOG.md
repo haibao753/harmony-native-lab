@@ -185,7 +185,7 @@
 ### 验收边界
 - 代码改动尚需 DevEco 构建和 MatePad 真机回归；5 Hz 不保证 Canvas 流畅。
 
-## 2026-11-08 — 0.5.0 OpenGL ES 3.2 Native Face Renderer
+## 2026-11-08 — 0.5.0 OpenGL ES 3.0 Native Face Renderer
 
 ### 目标
 将高频几何绘制从 ArkUI Canvas 移出，减少 ArkTS UI 边界数组转换和 CPU 绘图命令提交。
