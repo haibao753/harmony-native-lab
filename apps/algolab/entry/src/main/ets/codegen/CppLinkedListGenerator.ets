@@ -178,7 +178,7 @@ export function generateCpp(document: LinkedListDocument): GeneratedCpp {
       lines,
       annotations,
       '    delete ' + variableName(i) + ';',
-      '释放之前用 new 创建的节点 ' + document.nodes[i].id，避免动态内存泄漏。delete 释放对象，不会自动把其他指针改成 nullptr。',
+      '释放之前用 new 创建的节点 ' + document.nodes[i].id + '，避免动态内存泄漏。delete 释放对象，不会自动把其他指针改成 nullptr。',
       'memory'
     );
     lineLinks.push({
