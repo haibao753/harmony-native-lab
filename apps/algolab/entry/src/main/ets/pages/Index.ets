@@ -13,6 +13,7 @@ import {
   setNodeValue
 } from '../domain/LinkedListModel';
 import { generateCpp } from '../codegen/CppLinkedListGenerator';
+import { highlightCpp, CppDisplayLine, CppToken } from '../codegen/CppSyntaxHighlighter';
 
 @Component
 struct NodeCard {
@@ -105,6 +106,7 @@ struct Index {
   @State viewportWidth: number = 0;
   @State viewportHeight: number = 0;
   @State generatedCode: string = '';
+  @State codeLines: CppDisplayLine[] = [];
   @State warnings: string[] = [];
   @State message: string = '先添加一个节点。拖动节点只改变位置，不会改变指针关系。';
   @State statusText: string = '空画布';
@@ -135,6 +137,7 @@ struct Index {
     this.syncSelectedValueInput();
     const generated = generateCpp(this.document);
     this.generatedCode = generated.code;
+    this.codeLines = highlightCpp(generated.code, generated.annotations);
     this.warnings = generated.warnings;
     const analysis = analyzeDocument(this.document);
 
@@ -591,25 +594,83 @@ struct Index {
           .backgroundColor('#E9EEF3')
           .borderRadius(10)
 
+          Row({ space: 10 }) {
+            Text('关键字').fontSize(9).fontColor('#C792EA')
+            Text('类型/函数').fontSize(9).fontColor('#82AAFF')
+            Text('字符串').fontSize(9).fontColor('#C3E88D')
+            Text('数字').fontSize(9).fontColor('#F78C6C')
+            Text('注释').fontSize(9).fontColor('#7FAD7A')
+            Text('指针/运算符').fontSize(9).fontColor('#80CBC4')
+          }
+          .width('100%')
+          .height(20)
+
           Scroll() {
-            Column({ space: 10 }) {
-              Text(this.generatedCode)
-                .fontSize(12)
-                .fontColor('#DCE7F2')
-                .fontFamily('monospace')
+            Column({ space: 2 }) {
+              ForEach(this.codeLines, (line: CppDisplayLine) => {
+                Row({ space: 6 }) {
+                  Text(line.lineNumber.toString())
+                    .fontSize(9)
+                    .fontColor('#64748B')
+                    .fontFamily('monospace')
+                    .width(26)
+                    .textAlign(TextAlign.End)
+
+                  Scroll() {
+                    Row({ space: 0 }) {
+                      ForEach(line.tokens, (token: CppToken) => {
+                        Text(token.text)
+                          .fontSize(11)
+                          .fontColor(token.color)
+                          .fontFamily('monospace')
+                      }, (token: CppToken) => token.id)
+                    }
+                    .height(22)
+                  }
+                  .scrollable(ScrollDirection.Horizontal)
+                  .layoutWeight(1)
+                  .height(22)
+
+                  if (line.annotationText !== '') {
+                    Row({ space: 3 }) {
+                      Text('▏')
+                        .fontSize(12)
+                        .fontColor(line.annotationColor)
+                      Text(line.annotationText)
+                        .fontSize(9)
+                        .fontColor(line.annotationColor)
+                        .maxLines(2)
+                        .width(156)
+                    }
+                    .width(174)
+                    .height(28)
+                  } else {
+                    Blank()
+                      .width(174)
+                  }
+                }
                 .width('100%')
+                .height(30)
+                .padding({ top: 1, bottom: 1 })
+                .backgroundColor(line.lineNumber % 2 === 0 ? '#1B2733' : '#17212B')
+                .borderRadius(3)
+              }, (line: CppDisplayLine) => line.lineNumber.toString())
+
               ForEach(this.warnings, (warning: string) => {
-                Text('• ' + warning)
-                  .fontSize(11)
-                  .fontColor('#F4BD75')
+                Text('⚠ ' + warning)
+                  .fontSize(10)
+                  .fontColor('#FFCB6B')
                   .width('100%')
+                  .padding(6)
+                  .backgroundColor('#29313B')
+                  .borderRadius(6)
               }, (warning: string) => warning)
             }
             .width('100%')
           }
           .width('100%')
           .layoutWeight(1)
-          .padding(12)
+          .padding(10)
           .backgroundColor('#17212B')
           .borderRadius(12)
 
