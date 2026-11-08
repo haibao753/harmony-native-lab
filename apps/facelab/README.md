@@ -2,7 +2,12 @@
 
 HarmonyOS 原生三维人脸与新型交互实验应用。
 
-## 当前版本：0.4.0 — Face Visualizer
+## 当前版本：0.4.1 — Face Visualizer 稳定性修复
+
+- 修复 ArkUI `@Prop` 响应式代理与 JavaScript TypedArray 内部槽不兼容导致的首帧绘制崩溃。
+- AR 回调层继续使用 TypedArray；传入 Canvas 子组件前转换为普通 `number[]`，避免代理对象访问 TypedArray getter 时触发 TypeError。
+
+## 0.4.0 — Face Visualizer
 
 - 用户主动点击后申请相机权限。
 - 初始化 AR Engine FACE 会话，使用前置摄像头。
@@ -46,7 +51,7 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 
 ## 测试步骤
 
-1. 安装 0.4.0。
+1. 安装 0.4.1。
 2. 点击“开始追踪”。
 3. 在系统弹窗中允许 FaceLab 使用摄像头。
 4. 将脸放在前置摄像头画面内，观察人脸计数、Mesh、Pose 和 BlendShapes 指标。
@@ -64,9 +69,9 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 16. 点击“停止追踪”，确认相机预览关闭、网格清空。
 17. 将 DevEco 编译日志、截图和真机实测结果反馈到项目对话中。
 
-## 0.4.0 验证状态
+## 0.4.1 验证状态
 
-0.4.0 代码已提交到独立开发分支，尚未在 DevEco Studio / MatePad 上完成构建和真机验收。Canvas 采用三维几何投影方式，不宣称为独立 GPU 3D 场景。三角面标签是可选 API，若运行时不支持，不影响其他网格显示模式。
+0.4.1 已修复真机日志定位到的 TypedArray / ArkUI `@Prop` 代理兼容问题；仍需在 DevEco Studio 构建并在 MatePad 上验证启动追踪、首帧绘制、四种显示模式和停止清理。Canvas 采用三维几何投影方式，不宣称为独立 GPU 3D 场景。三角面标签是可选 API，若运行时不支持，不影响其他网格显示模式。
 
 ## 0.3.1 验证状态
 
