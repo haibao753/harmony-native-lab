@@ -23,21 +23,31 @@ interface TokenizeResult {
   inBlockComment: boolean;
 }
 
-const COLORS: Record<string, string> = {
-  plain: '#D6DEEB',
-  keyword: '#C792EA',
-  type: '#82AAFF',
-  standard: '#FFCB6B',
-  string: '#C3E88D',
-  number: '#F78C6C',
-  comment: '#7FAD7A',
-  preprocessor: '#89DDFF',
-  function: '#82AAFF',
-  literal: '#F78C6C',
-  operator: '#89DDFF',
-  punctuation: '#89DDFF',
-  header: '#C3E88D'
-};
+function colorFor(kind: string): string {
+  switch (kind) {
+    case 'keyword':
+      return '#C792EA';
+    case 'type':
+    case 'function':
+      return '#82AAFF';
+    case 'standard':
+      return '#FFCB6B';
+    case 'string':
+    case 'header':
+      return '#C3E88D';
+    case 'number':
+    case 'literal':
+      return '#F78C6C';
+    case 'comment':
+      return '#7FAD7A';
+    case 'preprocessor':
+    case 'operator':
+    case 'punctuation':
+      return '#89DDFF';
+    default:
+      return '#D6DEEB';
+  }
+}
 
 const KEYWORDS: string[] = [
   'alignas', 'alignof', 'asm', 'auto', 'break', 'case', 'catch', 'class',
@@ -72,10 +82,6 @@ function isDigit(ch: string): boolean {
 
 function isIdentifierPart(ch: string): boolean {
   return isLetter(ch) || isDigit(ch);
-}
-
-function colorFor(kind: string): string {
-  return COLORS[kind] === undefined ? COLORS.plain : COLORS[kind];
 }
 
 function pushToken(tokens: CppToken[], text: string, kind: string): void {
