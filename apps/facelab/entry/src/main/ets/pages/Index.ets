@@ -33,8 +33,13 @@ struct Index {
     const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
     const atManager = abilityAccessCtrl.createAtManager();
     const permissions: Permissions[] = ['ohos.permission.CAMERA'];
-    const result = await atManager.requestPermissionsFromUser(context, permissions);
-    return result.authResults.length > 0 && result.authResults[0] === 0;
+    try {
+      const result = await atManager.requestPermissionsFromUser(context, permissions);
+      return result.authResults.length > 0 && result.authResults[0] === 0;
+    } catch (error) {
+      this.errorMessage = '相机权限申请失败：' + this.describeError(error as Object);
+      return false;
+    }
   }
 
   private onFaceMetrics(metrics: FaceMetrics): void {
@@ -62,7 +67,9 @@ struct Index {
       const granted = await this.requestCameraPermission();
       if (!granted) {
         this.status = '相机权限未授予';
-        this.errorMessage = '需要相机权限才能启动前置摄像头人脸追踪。你可以在系统设置中为 FaceLab 授权。';
+        if (this.errorMessage.length === 0) {
+          this.errorMessage = '需要相机权限才能启动前置摄像头人脸追踪。你可以在系统设置中为 FaceLab 授权。';
+        }
         return;
       }
 
