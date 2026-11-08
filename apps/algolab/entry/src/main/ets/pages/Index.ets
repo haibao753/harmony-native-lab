@@ -115,14 +115,8 @@ struct Index {
   @State connectionSourceId: string = '';
   @State showCode: boolean = false;
   @State showMemory: boolean = false;
-  // Floating C++ workspace geometry is kept in page state so collapsing the
-  // panel and opening it again preserves its position and size for this session.
-  @State codePanelX: number = 340;
-  @State codePanelY: number = 220;
-  @State codePanelWidth: number = 720;
-  @State codePanelHeight: number = 500;
+  // Used to tune the docked inspector width for narrower tablet windows.
   @State viewportWidth: number = 0;
-  @State viewportHeight: number = 0;
   // Width of the actual horizontal code viewport. Short source lines must
   // occupy at least this width; otherwise Scroll may center their content.
   @State codeLineViewportWidth: number = 0;
@@ -146,10 +140,6 @@ struct Index {
   private canvasReady: boolean = false;
   private undoStack: LinkedListDocument[] = [];
   private redoStack: LinkedListDocument[] = [];
-  private panelDragStartX: number = 0;
-  private panelDragStartY: number = 0;
-  private panelResizeStartWidth: number = 720;
-  private panelResizeStartHeight: number = 500;
 
   aboutToAppear(): void {
     this.refreshDerivedState();
@@ -396,45 +386,6 @@ struct Index {
     }
   }
 
-  private clampCodePanelX(value: number): number {
-    if (this.viewportWidth <= 0) {
-      return Math.max(0, value);
-    }
-    return Math.max(0, Math.min(value, this.viewportWidth - this.codePanelWidth));
-  }
-
-  private clampCodePanelY(value: number): number {
-    if (this.viewportHeight <= 0) {
-      return Math.max(0, value);
-    }
-    return Math.max(0, Math.min(value, this.viewportHeight - this.codePanelHeight));
-  }
-
-  private clampCodePanelWidth(value: number): number {
-    const maxWidth = this.viewportWidth > 0
-      ? Math.max(360, this.viewportWidth - this.codePanelX - 12)
-      : 1200;
-    return Math.max(360, Math.min(value, maxWidth));
-  }
-
-  private clampCodePanelHeight(value: number): number {
-    const maxHeight = this.viewportHeight > 0
-      ? Math.max(280, this.viewportHeight - this.codePanelY - 12)
-      : 900;
-    return Math.max(280, Math.min(value, maxHeight));
-  }
-
-  private normalizeCodePanelBounds(): void {
-    if (this.viewportWidth > 0) {
-      this.codePanelWidth = this.clampCodePanelWidth(this.codePanelWidth);
-      this.codePanelX = this.clampCodePanelX(this.codePanelX);
-    }
-    if (this.viewportHeight > 0) {
-      this.codePanelHeight = this.clampCodePanelHeight(this.codePanelHeight);
-      this.codePanelY = this.clampCodePanelY(this.codePanelY);
-    }
-  }
-
   drawConnections(): void {
     if (!this.canvasReady) {
       return;
@@ -574,7 +525,6 @@ struct Index {
               this.showCode = !this.showCode;
               if (this.showCode) {
                 this.showMemory = false;
-                this.normalizeCodePanelBounds();
               }
             })
           Button(this.showMemory ? '关闭内存' : '内存视图')
@@ -924,7 +874,7 @@ struct Index {
                 .maxLines(2)
                 .width('100%')
             }
-            .width(360)
+            .width(this.viewportWidth > 1250 ? 360 : 320)
             .height('100%')
             .padding(14)
             .backgroundColor('#FFFEFC')
@@ -1117,7 +1067,7 @@ struct Index {
                 .fontColor('#928B80')
                 .width('100%')
             }
-            .width(440)
+            .width(this.viewportWidth > 1250 ? 440 : 380)
             .height('100%')
             .padding(14)
             .backgroundColor('#FFFEFC')
@@ -1138,8 +1088,6 @@ struct Index {
     .backgroundColor('#F4F2ED')
     .onAreaChange((oldArea: Area, newArea: Area) => {
       this.viewportWidth = Number(newArea.width);
-      this.viewportHeight = Number(newArea.height);
-      this.normalizeCodePanelBounds();
     })
   }
 }
