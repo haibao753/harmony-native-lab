@@ -279,3 +279,10 @@
 - Extended `scripts/check-facelab-0.5.2.sh` to assert the explicit interface and typed result declaration and reject the former inline object return type.
 - GitHub Actions source checks passed for both FaceLab 0.5.2 and the repository bootstrap checks.
 - DevEco Studio / SDK 26 compilation and MatePad device validation remain pending; the successful CI result is not a substitute for a local ArkTS build.
+
+
+## 2026-11-08 — FaceLab 0.5.2 initial device feedback
+- User confirmed the ArkTS-fixed 0.5.2 project successfully builds into an HAP.
+- User reports that gesture recognition is stable in initial MatePad testing.
+- Record this as qualitative gesture-recognition acceptance only; no numerical latency / false-positive metrics or individual gesture confusion matrix are available.
+- GPU performance regression, touch / M-Pencil fallback, disabled-mode behavior, and stop / restart lifecycle remain to be checked before final release.
