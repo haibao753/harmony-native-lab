@@ -4,6 +4,7 @@ import { Scene } from '@kit.ArkGraphics3D';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { FaceGestureMetrics, FaceMetrics, FaceTrackingCallback } from '../common/FaceTrackingCallback';
 import { FaceGpuSurface, FaceGpuSurfaceController } from '../components/FaceGpuSurface';
+import { FACE_PEN_PALETTE, FacePenCanvas } from '../components/FacePenCanvas';
 
 @Entry
 @Component
@@ -40,6 +41,12 @@ struct Index {
   @State gestureLastEvent: string = '尚无手势事件';
   @State gestureSelectionIndex: number = 0;
   @State gestureConfirmCount: number = 0;
+  @State facePenControlEnabled: boolean = false;
+  @State facePenSelectedColorIndex: number = 0;
+  @State facePenPendingColorIndex: number = -1;
+  @State facePenStrokeActive: boolean = false;
+  @State facePenStatus: string = '等待 M-Pencil 输入';
+  @State facePenLastCommand: string = '面部控制关闭';
 
   private faceCallback: FaceTrackingCallback | undefined = undefined;
   private gpuSurfaceController: FaceGpuSurfaceController = new FaceGpuSurfaceController();
@@ -114,6 +121,10 @@ struct Index {
       this.gestureLeftBlink = '—';
       this.gestureRightBlink = '—';
       this.gestureJawOpen = '—';
+      if (this.facePenControlEnabled) {
+        this.facePenControlEnabled = false;
+        this.facePenLastCommand = '人脸丢失 · 面部颜色控制已暂停，请重新启用';
+      }
       return;
     }
 
@@ -129,6 +140,17 @@ struct Index {
       this.lastGestureUiUpdate = now;
     }
 
+    // FacePen reuses the 0.5.2 wink edge detector and its existing cooldown.
+    // It is mutually exclusive with the A/B/C gesture demo.
+    if (this.facePenControlEnabled) {
+      if (metrics.leftWink) {
+        this.requestFacePenColorStep(-1, '左眼单眨');
+      }
+      if (metrics.rightWink) {
+        this.requestFacePenColorStep(1, '右眼单眨');
+      }
+      return;
+    }
     if (!this.gestureLabEnabled) {
       return;
     }
@@ -155,6 +177,10 @@ struct Index {
       this.errorMessage = '请先启动追踪并检测到人脸，再启用手势输入。';
       return;
     }
+    if (!this.gestureLabEnabled) {
+      this.facePenControlEnabled = false;
+      this.facePenLastCommand = '手势演示已启用 · FacePen 面部控制已暂停';
+    }
     this.gestureLabEnabled = !this.gestureLabEnabled;
     this.gestureLastEvent = this.gestureLabEnabled ? '手势输入已启用' : '手势输入已关闭';
   }
@@ -163,6 +189,56 @@ struct Index {
     this.gestureSelectionIndex = 0;
     this.gestureConfirmCount = 0;
     this.gestureLastEvent = '演示状态已重置';
+  }
+
+  private facePenTargetColorIndex(): number {
+    return this.facePenPendingColorIndex >= 0 ?
+      this.facePenPendingColorIndex : this.facePenSelectedColorIndex;
+  }
+
+  private requestFacePenColor(index: number, source: string): void {
+    const paletteSize = FACE_PEN_PALETTE.length;
+    const normalizedIndex = (index + paletteSize) % paletteSize;
+    const color = FACE_PEN_PALETTE[normalizedIndex];
+    if (this.facePenStrokeActive) {
+      this.facePenPendingColorIndex = normalizedIndex;
+      this.facePenLastCommand = source + ' · 下一笔切换为 ' + color.name;
+      return;
+    }
+    this.facePenSelectedColorIndex = normalizedIndex;
+    this.facePenPendingColorIndex = -1;
+    this.facePenLastCommand = source + ' · 当前笔色 ' + color.name;
+  }
+
+  private requestFacePenColorStep(direction: number, source: string): void {
+    const baseIndex = this.facePenPendingColorIndex >= 0 ?
+      this.facePenPendingColorIndex : this.facePenSelectedColorIndex;
+    this.requestFacePenColor(baseIndex + direction, source);
+  }
+
+  private onFacePenStrokeStateChange(active: boolean): void {
+    this.facePenStrokeActive = active;
+    if (!active && this.facePenPendingColorIndex >= 0) {
+      this.facePenSelectedColorIndex = this.facePenPendingColorIndex;
+      this.facePenPendingColorIndex = -1;
+      this.facePenLastCommand = '笔画结束 · 下一笔使用 ' +
+        FACE_PEN_PALETTE[this.facePenSelectedColorIndex].name;
+    }
+  }
+
+  private toggleFacePenControl(): void {
+    if (this.facePenControlEnabled) {
+      this.facePenControlEnabled = false;
+      this.facePenLastCommand = '面部颜色控制已暂停';
+      return;
+    }
+    if (this.faceCount === 0 || this.arContext === undefined) {
+      this.errorMessage = '请先启动人脸追踪并检测到人脸，再启用 FacePen 面部控制。';
+      return;
+    }
+    this.gestureLabEnabled = false;
+    this.facePenControlEnabled = true;
+    this.facePenLastCommand = '面部控制已启用 · 左眼上一色，右眼下一色';
   }
 
   private calibratePose(): void {
@@ -319,6 +395,9 @@ struct Index {
       this.gestureLastEvent = '追踪已停止';
       this.gestureSelectionIndex = 0;
       this.gestureConfirmCount = 0;
+      this.facePenControlEnabled = false;
+      this.facePenPendingColorIndex = -1;
+      this.facePenLastCommand = '追踪已停止 · 面部控制已关闭';
       this.gpuSurfaceController.clear();
     }
   }
@@ -335,7 +414,7 @@ struct Index {
             .fontSize(32)
             .fontWeight(FontWeight.Bold)
             .fontColor('#F4F7FB')
-          Text('AR Face Tracking Lab · 0.5.2')
+          Text('AR Face Tracking Lab · 0.6.0-alpha.1')
             .fontSize(13)
             .fontColor('#9AA9BC')
         }
@@ -703,6 +782,132 @@ struct Index {
               this.resetGestureDemo();
             })
           Text('识别规则：单眼权重 ≥ 0.72 触发，回落至 ≤ 0.35 后重新待命；自然双眼眨眼不触发。张嘴权重 ≥ 0.72 并保持 350 ms 触发确认，回落到 ≤ 0.40 后重新待命。演示动作只改变本卡片内的焦点和计数，不控制系统或其他应用。触控与 M-Pencil 仍可直接操作选项。')
+            .fontSize(11)
+            .fontColor('#8190A5')
+            .lineHeight(17)
+        }
+        .alignItems(HorizontalAlign.Start)
+        .width('100%')
+        .padding(15)
+        .backgroundColor('#172235')
+        .borderRadius(15)
+
+        Column({ space: 10 }) {
+          Row() {
+            Column({ space: 4 }) {
+              Text('FACE PEN · 0.1')
+                .fontSize(11)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#8DA2BC')
+              Text(this.facePenControlEnabled ? '面部颜色控制已启用' : 'M-Pencil 本地画布 · 面部控制默认关闭')
+                .fontSize(12)
+                .fontColor(this.facePenControlEnabled ? '#63D6A5' : '#AAB8C8')
+            }
+            .layoutWeight(1)
+            Button(this.facePenControlEnabled ? '暂停面部控制' : '启用面部控制')
+              .height(36)
+              .fontSize(12)
+              .enabled(this.facePenControlEnabled || (this.faceCount > 0 && this.arContext !== undefined))
+              .backgroundColor(this.facePenControlEnabled ? '#7A4A4A' : '#285B55')
+              .onClick(() => {
+                this.toggleFacePenControl();
+              })
+          }
+          .width('100%')
+
+          Text('手动选择笔色')
+            .fontSize(12)
+            .fontColor('#D2DCE8')
+          Row({ space: 6 }) {
+            Button('墨黑')
+              .layoutWeight(1)
+              .height(38)
+              .fontSize(11)
+              .fontColor('#FFFFFF')
+              .backgroundColor(this.facePenTargetColorIndex() === 0 ? '#285B55' : '#34445D')
+              .onClick(() => {
+                this.requestFacePenColor(0, '手动选择');
+              })
+            Button('朱红')
+              .layoutWeight(1)
+              .height(38)
+              .fontSize(11)
+              .fontColor('#FFFFFF')
+              .backgroundColor(this.facePenTargetColorIndex() === 1 ? '#285B55' : '#34445D')
+              .onClick(() => {
+                this.requestFacePenColor(1, '手动选择');
+              })
+            Button('钴蓝')
+              .layoutWeight(1)
+              .height(38)
+              .fontSize(11)
+              .fontColor('#FFFFFF')
+              .backgroundColor(this.facePenTargetColorIndex() === 2 ? '#285B55' : '#34445D')
+              .onClick(() => {
+                this.requestFacePenColor(2, '手动选择');
+              })
+          }
+          .width('100%')
+          Row({ space: 6 }) {
+            Button('松绿')
+              .layoutWeight(1)
+              .height(38)
+              .fontSize(11)
+              .fontColor('#FFFFFF')
+              .backgroundColor(this.facePenTargetColorIndex() === 3 ? '#285B55' : '#34445D')
+              .onClick(() => {
+                this.requestFacePenColor(3, '手动选择');
+              })
+            Button('琥珀')
+              .layoutWeight(1)
+              .height(38)
+              .fontSize(11)
+              .fontColor('#FFFFFF')
+              .backgroundColor(this.facePenTargetColorIndex() === 4 ? '#285B55' : '#34445D')
+              .onClick(() => {
+                this.requestFacePenColor(4, '手动选择');
+              })
+            Button('紫藤')
+              .layoutWeight(1)
+              .height(38)
+              .fontSize(11)
+              .fontColor('#FFFFFF')
+              .backgroundColor(this.facePenTargetColorIndex() === 5 ? '#285B55' : '#34445D')
+              .onClick(() => {
+                this.requestFacePenColor(5, '手动选择');
+              })
+          }
+          .width('100%')
+
+          Text(this.facePenPendingColorIndex >= 0 ?
+            '当前笔画仍使用已锁定的颜色；下一笔将使用 ' +
+              FACE_PEN_PALETTE[this.facePenPendingColorIndex].name :
+            '当前笔色：' + FACE_PEN_PALETTE[this.facePenSelectedColorIndex].name)
+            .fontSize(13)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#63D6A5')
+          FacePenCanvas({
+            selectedColor: FACE_PEN_PALETTE[this.facePenSelectedColorIndex].value,
+            selectedColorName: FACE_PEN_PALETTE[this.facePenSelectedColorIndex].name,
+            onStrokeStateChange: (active: boolean) => {
+              this.onFacePenStrokeStateChange(active);
+            },
+            onInputStatus: (message: string) => {
+              this.facePenStatus = message;
+            }
+          })
+            .width('100%')
+          Text(this.facePenStatus)
+            .fontSize(12)
+            .fontColor('#D2DCE8')
+          Text(this.facePenLastCommand)
+            .fontSize(12)
+            .fontColor('#63D6A5')
+          Text('左眼单眨：上一种颜色；右眼单眨：下一种颜色。复用 0.5.2 的 80 ms 确认与 650 ms 冷却，不重复触发第二套识别器。笔尖落下时锁定颜色；书写中收到眨眼或手动调色，只排队给下一笔。')
+            .fontSize(11)
+            .fontColor('#8190A5')
+            .lineHeight(17)
+          Text('本功能只控制 FaceLab 自己的画布，不修改华为笔记或其他应用。面部控制需要先启动追踪并手动启用；人脸丢失时自动暂停。')
             .fontSize(11)
             .fontColor('#8190A5')
             .lineHeight(17)

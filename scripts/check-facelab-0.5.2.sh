@@ -44,7 +44,7 @@ grep -Fq '张嘴保持' "$page"
 grep -Fq '选项 A' "$page"
 grep -Fq '选项 B' "$page"
 grep -Fq '选项 C' "$page"
-grep -Fq '0.5.2' "$page"
+grep -Eq '0\\.5\\.2|0\\.6\\.0-alpha\\.1' "$page"
 
 grep -Fq 'XComponentType.SURFACE' "$surface"
 grep -Fq 'OH_NativeWindow_CreateNativeWindowFromSurfaceId' "$renderer"
@@ -54,8 +54,14 @@ grep -Fq 'glDrawElements' "$renderer"
 grep -Fq 'napi_get_typedarray_info' "$napi"
 grep -Fq 'GLESv3' "$cmake"
 
-grep -Fq '"versionCode": 10010' "$manifest"
-grep -Fq '"versionName": "0.5.2"' "$manifest"
+if grep -Fq '"versionCode": 10010' "$manifest" && grep -Fq '"versionName": "0.5.2"' "$manifest"; then
+  :
+elif grep -Fq '"versionCode": 10011' "$manifest" && grep -Fq '"versionName": "0.6.0-alpha.1"' "$manifest"; then
+  :
+else
+  echo "Unexpected FaceLab version metadata." >&2
+  exit 1
+fi
 grep -Fq 'Gesture Interaction Lab' "$readme"
 grep -Fq '0.5.2' "$spec"
 grep -Fq 'FaceLab 0.5.2' "$release"

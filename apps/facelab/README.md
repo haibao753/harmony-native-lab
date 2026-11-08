@@ -2,7 +2,9 @@
 
 HarmonyOS 原生三维人脸与新型交互实验应用。
 
-## 当前版本：0.5.2 — Gesture Interaction Lab
+## 稳定基线：0.5.2 — Gesture Interaction Lab
+
+当前开发版本：`0.6.0-alpha.1` — FacePen Prototype（独立功能分支，尚未完成真机验收）。
 
 - 线框、实体、形变热力和部位分区全部使用 OpenGL ES 3.0 原生 GPU 渲染。
 - 使用 ArkTS XComponent SURFACE / EGL / NativeWindow；C++ 侧使用 VBO / EBO 绘制。
@@ -182,3 +184,16 @@ After pulling this change, synchronize OHPM dependencies in DevEco Studio before
 7. 关闭手势输入，确认手势不再改变焦点；使用触控 / M-Pencil 仍可直接选择选项。
 8. 停止追踪并重新启动，确认手势状态、计数和检测器锁存状态正确重置。
 9. 连续运行至少 5 分钟，观察 GPU 四模式是否仍然流畅，且高频手势采样没有引入明显卡顿。
+
+
+## 0.6.0-alpha.1 — FacePen Prototype
+
+- 新增 FacePen 本地手写画布，使用 ArkUI Canvas / CanvasRenderingContext2D。
+- 只接受 `SourceTool.Pen` 输入；手指仍可用于页面滚动和调色。
+- 墨黑、朱红、钴蓝、松绿、琥珀、紫藤六色可手动选择。
+- 左眼单眨选择上一色，右眼单眨选择下一色；复用 0.5.2 已有的 wink 事件和冷却逻辑。
+- 使用笔画事务：DOWN 时冻结颜色；书写中颜色指令只进入 pending；UP / CANCEL 结束后再应用待切换颜色。
+- 人脸丢失时自动暂停面部颜色控制；手动调色和 M-Pencil 书写不依赖人脸追踪。
+- FacePen 画布独立于 GPU 人脸 Surface，不修改现有 GPU 渲染路径或 AR 会话生命周期。
+- 当前仅控制 FaceLab 自己的画布，不控制华为笔记或其他第三方应用。
+- DevEco SDK 26 构建、M-Pencil 输入识别、压感映射、连续书写性能和眨眼误触率仍需 MatePad 真机验收。
