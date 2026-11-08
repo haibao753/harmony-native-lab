@@ -4,9 +4,22 @@ HarmonyOS NEXT 原生交互式数据结构实验工具。
 
 ## 产品定位
 
-让学习者先通过触控和手写笔创造、操作数据结构，再逐步理解节点、指针、内存引用与 C++ 代码之间的关系。
+让学习者通过可视化实验、预测和逐步演示，理解数据结构的逻辑关系、内存引用与 C++ 实现。
 
 AlgoLab 不替代华为笔记、系统浏览器、课程平台或通用 AI 助手。它专注于结构操作、状态观察和确定性代码生成。
+
+## v1.2.0-alpha.2（教学工作台预览）
+
+在 1.1 Memory Explorer 基础上，将产品重心从“结构编辑与信息检查”推进到“概念学习与算法过程理解”。
+
+新增：
+1. 链表学习路径：节点组成、head、next 指针、遍历、nullptr、环和可达性七个知识点；
+2. 每个知识点包含概念说明、关键结论、常见误区和动手实验；
+3. 遍历逐步演示：从当前画布结构生成只读步骤轨迹，展示 current、已访问节点、当前节点/指针边和对应 C++ 行；
+4. 操作前预测：每一步先回答问题，再查看反馈与原因，之后进入下一步；
+5. 教学、内存和 C++ 检查器按需切换，步骤高亮与 1.1 的画布/内存/代码映射共享同一状态。
+
+演示只改变教学高亮和讲解，不修改链表文档，也不执行 C++ 程序。当前版本继续只聚焦单链表，不引入其他数据结构或自由笔迹功能。
 
 ## v1.1.0（AlgoLab 1.1 开发预览）
 
@@ -43,12 +56,15 @@ AlgoLab 不替代华为笔记、系统浏览器、课程平台或通用 AI 助�
 
 - [源码入口说明](entry/README.md)
 - [单链表模型](entry/src/main/ets/domain/LinkedListModel.ets)
+- [链表课程与遍历轨迹引擎](entry/src/main/ets/domain/LinkedListLessonEngine.ets)
+- [教学工作台组件](entry/src/main/ets/components/TeachingWorkbench.ets)
 - [C++ 代码生成器](entry/src/main/ets/codegen/CppLinkedListGenerator.ets)
 - [ArkUI 页面原型](entry/src/main/ets/pages/Index.ets)
 
 ## 实现记录
 
 - [首轮实现记录与手动验收场景](../../docs/IMPLEMENTATION_LOG.md)
+- [AlgoLab 1.2.0-alpha.2 教学工作台预览说明](../../docs/releases/v1.2.0-alpha.2.md)
 - [AlgoLab 1.1.0 开发预览说明](../../docs/releases/v1.1.0.md)
 - [AlgoLab 1.0.0 基线发布说明](../../docs/releases/v1.0.0.md)
 
@@ -60,4 +76,4 @@ AlgoLab 不替代华为笔记、系统浏览器、课程平台或通用 AI 助�
 
 ## 工程状态
 
-本目录包含 DevEco Studio 官方模板生成的 Stage 工程。用户已反馈在 Windows 的 DevEco Studio 26.0.0.865、HarmonyOS SDK 26.0.0.105 下构建成功，并已在 MatePad Pro 13.2（HarmonyOS 7.0.0）运行。真机截图确认节点创建、连接、值编辑和代码同步可用；但节点卡片的 next 标签刷新异常已在当前开发分支修复，需重新构建并复验。当前连接仍采用选择起点、再选择目标的方式；直接拖拽连接端口、内存视图、本地持久化和 C++ 真正编译执行尚未实现。
+本分支基于 `feat/algolab-1.1-memory-explorer`，新增教学工作台与单链表遍历轨迹。源码提交和测试用例已写入 GitHub；尚未在 DevEco Studio 26.0.0.865 / HarmonyOS SDK 26.0.0.105 重新编译，也尚未在 MatePad Pro 13.2 真机验收。GitHub 源码更新不代表 ArkTS 编译或 HAP 构建通过。
