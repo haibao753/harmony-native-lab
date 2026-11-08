@@ -23,11 +23,9 @@ std::shared_ptr<FaceGpuRenderer> FindRenderer(uint64_t surfaceId)
 bool ReadSurfaceId(napi_env env, napi_value value, uint64_t &surfaceId)
 {
     bool lossless = false;
-    int64_t signedId = 0;
-    if (napi_get_value_bigint_int64(env, value, &signedId, &lossless) != napi_ok || !lossless || signedId < 0) {
+    if (napi_get_value_bigint_uint64(env, value, &surfaceId, &lossless) != napi_ok || !lossless) {
         return false;
     }
-    surfaceId = static_cast<uint64_t>(signedId);
     return true;
 }
 
@@ -42,6 +40,7 @@ bool ReadFloat32Array(napi_env env, napi_value value, std::vector<float> &output
         type != napi_float32_array || (length > 0 && data == nullptr)) {
         return false;
     }
+    if (length == 0) { output.clear(); return true; }
     const float *source = static_cast<const float *>(data);
     output.assign(source, source + length);
     return true;
@@ -58,6 +57,7 @@ bool ReadUint32Array(napi_env env, napi_value value, std::vector<uint32_t> &outp
         type != napi_uint32_array || (length > 0 && data == nullptr)) {
         return false;
     }
+    if (length == 0) { output.clear(); return true; }
     const uint32_t *source = static_cast<const uint32_t *>(data);
     output.assign(source, source + length);
     return true;
@@ -106,6 +106,31 @@ napi_value ResizeSurface(napi_env env, napi_callback_info info)
     auto renderer = FindRenderer(surfaceId);
     if (renderer) {
         renderer->Resize(width, height);
+    }
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+napi_value SetViewTransform(napi_env env, napi_callback_info info)
+{
+    size_t argc = 4;
+    napi_value args[4] = {nullptr, nullptr, nullptr, nullptr};
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+    uint64_t surfaceId = 0;
+    double pitch = 0.0;
+    double yaw = 0.0;
+    double zoom = 1.0;
+    if (argc < 4 || !ReadSurfaceId(env, args[0], surfaceId) ||
+        napi_get_value_double(env, args[1], &pitch) != napi_ok ||
+        napi_get_value_double(env, args[2], &yaw) != napi_ok ||
+        napi_get_value_double(env, args[3], &zoom) != napi_ok) {
+        napi_throw_type_error(env, nullptr, "SetViewTransform expects (BigInt, pitch, yaw, zoom)");
+        return nullptr;
+    }
+    auto renderer = FindRenderer(surfaceId);
+    if (renderer) {
+        renderer->SetViewTransform(static_cast<float>(pitch), static_cast<float>(yaw), static_cast<float>(zoom));
     }
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
@@ -223,6 +248,7 @@ napi_value Init(napi_env env, napi_value exports)
     napi_property_descriptor descriptors[] = {
         {"SetSurfaceId", nullptr, SetSurfaceId, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"ResizeSurface", nullptr, ResizeSurface, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"SetViewTransform", nullptr, SetViewTransform, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"UpdateMesh", nullptr, UpdateMesh, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"ClearMesh", nullptr, ClearMesh, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"DestroySurface", nullptr, DestroySurface, nullptr, nullptr, nullptr, napi_default, nullptr}
