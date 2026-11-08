@@ -421,6 +421,7 @@ void FaceGpuRenderer::UploadMeshLocked()
         target.heat = std::clamp(displacement / heatScale, 0.0f, 1.0f);
     }
 
+    glBindVertexArray(vao_);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer_);
     glBufferData(GL_ARRAY_BUFFER, gpuVertices.size() * sizeof(GpuVertex),
                  gpuVertices.data(), GL_DYNAMIC_DRAW);
@@ -430,6 +431,7 @@ void FaceGpuRenderer::UploadMeshLocked()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edgeBuffer_);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, edges_.size() * sizeof(uint32_t),
                  edges_.data(), GL_DYNAMIC_DRAW);
+    glBindVertexArray(0);
 
     triangleIndexCount_ = static_cast<GLsizei>(triangles_.size());
     edgeIndexCount_ = static_cast<GLsizei>(edges_.size());
