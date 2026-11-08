@@ -88,3 +88,22 @@ ARViewContext.init() 文档要求以上三项权限。若用户拒绝 CAMERA，�
 - [AR Engine API 参考](https://developer.huawei.com/consumer/cn/doc/harmonyos-references/arengine-api-arengine/)
 - [用户授权申请](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/request-user-authorization/)
 - [系统权限列表](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/permissions-for-all/)
+
+
+## 9. 0.2.0 runtime enum compatibility diagnostic
+
+The first 0.2.0 device run failed before AR session creation with:
+`TypeError: Cannot read property ARFeatureType of undefined`.
+
+Huawei's API reference documents the following enum numeric values:
+- `ARFeatureType.ARENGINE_FEATURE_TYPE_FACE = 6`
+- `ARType.FACE = 0x10`
+- `ARCameraLensFacing.FRONT = 1`
+- `ARMultiFaceMode.MULTIFACE_ENABLE = 0x800`
+- `ARTrackableType.FACE = 0x50000002`
+- `ARTrackingState.TRACKING = 0`
+- `ARBlendShapeType.EYE_BLINK_LEFT = 0`, `EYE_BLINK_RIGHT = 7`, `JAW_OPEN = 17`
+
+To avoid runtime property dereferences on the `arEngine` namespace object, 0.2.1 uses these documented numeric enum values with the corresponding ArkTS enum types. This is a compatibility workaround, not evidence that the device's AR Engine service is unavailable. The app now also records the exact startup stage in its diagnostic message.
+
+If the next run fails, the stage label distinguishes capability check, scene loading, callback creation, configuration, and session initialization.
