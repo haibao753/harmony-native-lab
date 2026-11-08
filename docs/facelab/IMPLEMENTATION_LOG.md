@@ -211,3 +211,12 @@
 - Keep the ArkTS XComponentOptions form with type: XComponentType.SURFACE and controller: this.controller. This uses the ArkTS-side lifecycle callbacks documented by Huawei and avoids NativeXComponentParameters, which is the separate API 19+ native-side lifecycle path and does not accept controller.
 - Updated entry module package version from 0.1.0 to 0.5.0 to align package metadata with this release. This is a SemVer version string; whether it eliminates the user's hvigor warning must be confirmed by a fresh build.
 - Next gate: rerun DevEco SDK 26 CompileArkTS, then inspect any subsequent diagnostics. Native CMake success is not a substitute for full HAP success.
+
+## 2026-11-08 — SDK 26 NAPI native build correction
+
+- User's second DevEco build confirmed ArkTS now compiles, but Ninja stopped because SDK 26 could not locate `napi/native_node_api.h`.
+- Removed that include; the required Node-API functions are declared through `napi/native_api.h`.
+- Fixed an important HarmonyOS API semantic difference: `napi_get_typedarray_info` returns byte length in HarmonyOS, not element count. Float32Array and Uint32Array copies now calculate element count from bytes to avoid out-of-bounds reads.
+- Moved native declarations into the official `src/main/cpp/types/libfacelab_native` package structure and registered the .so dependency and runtime package.
+- Changed the internal entry package version to 1.0.0 while retaining app version 0.5.0, to remove the persistent SemVer warning.
+- Full SDK 26 NDK rebuild and HAP packaging remain pending user validation.
