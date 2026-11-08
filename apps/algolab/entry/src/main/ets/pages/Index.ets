@@ -96,6 +96,14 @@ struct Index {
   @State valueInput: string = '';
   @State connectionSourceId: string = '';
   @State showCode: boolean = false;
+  // Floating C++ workspace geometry is kept in page state so collapsing the
+  // panel and opening it again preserves its position and size for this session.
+  @State codePanelX: number = 340;
+  @State codePanelY: number = 220;
+  @State codePanelWidth: number = 720;
+  @State codePanelHeight: number = 500;
+  @State viewportWidth: number = 0;
+  @State viewportHeight: number = 0;
   @State generatedCode: string = '';
   @State warnings: string[] = [];
   @State message: string = '先添加一个节点。拖动节点只改变位置，不会改变指针关系。';
@@ -109,6 +117,10 @@ struct Index {
   private canvasReady: boolean = false;
   private undoStack: LinkedListDocument[] = [];
   private redoStack: LinkedListDocument[] = [];
+  private panelDragStartX: number = 0;
+  private panelDragStartY: number = 0;
+  private panelResizeStartWidth: number = 720;
+  private panelResizeStartHeight: number = 500;
 
   aboutToAppear(): void {
     this.refreshDerivedState();
@@ -295,6 +307,45 @@ struct Index {
     }
   }
 
+  private clampCodePanelX(value: number): number {
+    if (this.viewportWidth <= 0) {
+      return Math.max(0, value);
+    }
+    return Math.max(0, Math.min(value, this.viewportWidth - this.codePanelWidth));
+  }
+
+  private clampCodePanelY(value: number): number {
+    if (this.viewportHeight <= 0) {
+      return Math.max(0, value);
+    }
+    return Math.max(0, Math.min(value, this.viewportHeight - this.codePanelHeight));
+  }
+
+  private clampCodePanelWidth(value: number): number {
+    const maxWidth = this.viewportWidth > 0
+      ? Math.max(360, this.viewportWidth - this.codePanelX - 12)
+      : 1200;
+    return Math.max(360, Math.min(value, maxWidth));
+  }
+
+  private clampCodePanelHeight(value: number): number {
+    const maxHeight = this.viewportHeight > 0
+      ? Math.max(280, this.viewportHeight - this.codePanelY - 12)
+      : 900;
+    return Math.max(280, Math.min(value, maxHeight));
+  }
+
+  private normalizeCodePanelBounds(): void {
+    if (this.viewportWidth > 0) {
+      this.codePanelWidth = this.clampCodePanelWidth(this.codePanelWidth);
+      this.codePanelX = this.clampCodePanelX(this.codePanelX);
+    }
+    if (this.viewportHeight > 0) {
+      this.codePanelHeight = this.clampCodePanelHeight(this.codePanelHeight);
+      this.codePanelY = this.clampCodePanelY(this.codePanelY);
+    }
+  }
+
   drawConnections(): void {
     if (!this.canvasReady) {
       return;
@@ -353,7 +404,8 @@ struct Index {
   }
 
   build() {
-    Column({ space: 12 }) {
+    Stack({ alignContent: Alignment.TopStart }) {
+      Column({ space: 12 }) {
       Row() {
         Column({ space: 3 }) {
           Text('AlgoLab')
@@ -415,6 +467,9 @@ struct Index {
           .type(ButtonType.Capsule)
           .onClick(() => {
             this.showCode = !this.showCode;
+            if (this.showCode) {
+              this.normalizeCodePanelBounds();
+            }
           })
       }
       .width('100%')
@@ -483,41 +538,141 @@ struct Index {
         .fontColor('#52616B')
         .width('100%')
 
+
+      }
+      .padding(16)
+      .width('100%')
+      .height('100%')
+      .backgroundColor('#FFFFFF')
+
+      // A separate overlay keeps the code workspace independent from the
+      // linked-list canvas and the page's normal vertical layout.
       if (this.showCode) {
         Column({ space: 8 }) {
-          Text('由当前结构生成的 C++')
-            .fontSize(15)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#17212B')
-          Scroll() {
-            Text(this.generatedCode)
-              .fontSize(11)
-              .fontColor('#DCE7F2')
-              .fontFamily('monospace')
-              .width('100%')
+          Row({ space: 8 }) {
+            Text('⠿')
+              .fontSize(22)
+              .fontColor('#52616B')
+              .width(34)
+              .height(36)
+              .textAlign(TextAlign.Center)
+              .gesture(
+                PanGesture({ fingers: 1, distance: 2 })
+                  .onActionStart(() => {
+                    this.panelDragStartX = this.codePanelX;
+                    this.panelDragStartY = this.codePanelY;
+                  })
+                  .onActionUpdate((event: GestureEvent | undefined) => {
+                    if (event !== undefined) {
+                      this.codePanelX = this.clampCodePanelX(this.panelDragStartX + event.offsetX);
+                      this.codePanelY = this.clampCodePanelY(this.panelDragStartY + event.offsetY);
+                    }
+                  })
+                  .onActionEnd((event: GestureEvent | undefined) => {
+                    if (event !== undefined) {
+                      this.codePanelX = this.clampCodePanelX(this.panelDragStartX + event.offsetX);
+                      this.codePanelY = this.clampCodePanelY(this.panelDragStartY + event.offsetY);
+                    }
+                  })
+              )
+            Text('由当前结构生成的 C++')
+              .fontSize(15)
+              .fontWeight(FontWeight.Medium)
+              .fontColor('#17212B')
+            Blank()
+            Button('收起')
+              .type(ButtonType.Capsule)
+              .onClick(() => {
+                this.showCode = false;
+              })
           }
           .width('100%')
-          .height(210)
+          .height(40)
+          .padding({ left: 4, right: 4 })
+          .backgroundColor('#E9EEF3')
+          .borderRadius(10)
+
+          Scroll() {
+            Column({ space: 10 }) {
+              Text(this.generatedCode)
+                .fontSize(12)
+                .fontColor('#DCE7F2')
+                .fontFamily('monospace')
+                .width('100%')
+              ForEach(this.warnings, (warning: string) => {
+                Text('• ' + warning)
+                  .fontSize(11)
+                  .fontColor('#F4BD75')
+                  .width('100%')
+              }, (warning: string) => warning)
+            }
+            .width('100%')
+          }
+          .width('100%')
+          .layoutWeight(1)
           .padding(12)
           .backgroundColor('#17212B')
           .borderRadius(12)
 
-          ForEach(this.warnings, (warning: string) => {
-            Text('• ' + warning)
-              .fontSize(11)
-              .fontColor('#A15C13')
-              .width('100%')
-          }, (warning: string) => warning)
+          Row() {
+            Text('拖动右侧手柄调整窗口大小')
+              .fontSize(10)
+              .fontColor('#718096')
+            Blank()
+            Text('◢')
+              .fontSize(24)
+              .fontColor('#2563EB')
+              .width(34)
+              .height(30)
+              .textAlign(TextAlign.Center)
+              .gesture(
+                PanGesture({ fingers: 1, distance: 2 })
+                  .onActionStart(() => {
+                    this.panelResizeStartWidth = this.codePanelWidth;
+                    this.panelResizeStartHeight = this.codePanelHeight;
+                  })
+                  .onActionUpdate((event: GestureEvent | undefined) => {
+                    if (event !== undefined) {
+                      this.codePanelWidth = this.clampCodePanelWidth(
+                        this.panelResizeStartWidth + event.offsetX
+                      );
+                      this.codePanelHeight = this.clampCodePanelHeight(
+                        this.panelResizeStartHeight + event.offsetY
+                      );
+                    }
+                  })
+                  .onActionEnd((event: GestureEvent | undefined) => {
+                    if (event !== undefined) {
+                      this.codePanelWidth = this.clampCodePanelWidth(
+                        this.panelResizeStartWidth + event.offsetX
+                      );
+                      this.codePanelHeight = this.clampCodePanelHeight(
+                        this.panelResizeStartHeight + event.offsetY
+                      );
+                    }
+                  })
+              )
+          }
+          .width('100%')
+          .height(30)
         }
-        .width('100%')
-        .padding(12)
+        .width(this.codePanelWidth)
+        .height(this.codePanelHeight)
+        .padding(10)
         .backgroundColor('#F7F8FA')
-        .borderRadius(14)
+        .border({ width: 1, color: '#D7E0E8' })
+        .borderRadius(16)
+        .position({ x: this.codePanelX, y: this.codePanelY })
+        .zIndex(10)
       }
     }
-    .padding(16)
     .width('100%')
     .height('100%')
     .backgroundColor('#FFFFFF')
+    .onAreaChange((oldArea: Area, newArea: Area) => {
+      this.viewportWidth = Number(newArea.width);
+      this.viewportHeight = Number(newArea.height);
+      this.normalizeCodePanelBounds();
+    })
   }
 }
