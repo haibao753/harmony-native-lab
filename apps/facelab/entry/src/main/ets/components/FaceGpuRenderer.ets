@@ -2,15 +2,15 @@ import nativeRenderer from 'libfacelab_renderer.so';
 
 class FaceLabGpuSurfaceController extends XComponentController {
   onSurfaceCreated(surfaceId: string): void {
-    nativeRenderer.SetSurfaceId(surfaceId);
+    nativeRenderer.SetSurfaceId(BigInt(surfaceId));
   }
 
   onSurfaceChanged(surfaceId: string, rect: SurfaceRect): void {
-    nativeRenderer.ChangeSurface(surfaceId, rect.surfaceWidth, rect.surfaceHeight);
+    nativeRenderer.ChangeSurface(BigInt(surfaceId), rect.surfaceWidth, rect.surfaceHeight);
   }
 
   onSurfaceDestroyed(surfaceId: string): void {
-    nativeRenderer.DestroySurface(surfaceId);
+    nativeRenderer.DestroySurface(BigInt(surfaceId));
   }
 }
 

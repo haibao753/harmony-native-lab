@@ -8,8 +8,6 @@
 #include <initializer_list>
 #include <cstdint>
 #include <cstring>
-#include <cstdlib>
-#include <string>
 #include <mutex>
 #include <thread>
 #include <utility>
@@ -649,20 +647,15 @@ bool ReadTypedArray(napi_env env, napi_value value, napi_typedarray_type expecte
     return true;
 }
 
-bool ReadSurfaceId(napi_env env, napi_value value, uint64_t *result)
+bool ReadBigInt(napi_env env, napi_value value, uint64_t *result)
 {
-    size_t length = 0;
-    if (napi_get_value_string_utf8(env, value, nullptr, 0, &length) != napi_ok || length == 0) {
+    int64_t signedValue = 0;
+    bool lossless = false;
+    if (napi_get_value_bigint_int64(env, value, &signedValue, &lossless) != napi_ok ||
+        !lossless || signedValue < 0) {
         return false;
     }
-    std::string text(length + 1, '\0');
-    if (napi_get_value_string_utf8(env, value, text.data(), text.size(), &length) != napi_ok) {
-        return false;
-    }
-    char *end = nullptr;
-    const unsigned long long parsed = std::strtoull(text.c_str(), &end, 10);
-    if (end == text.c_str() || *end != '\0') return false;
-    *result = static_cast<uint64_t>(parsed);
+    *result = static_cast<uint64_t>(signedValue);
     return true;
 }
 
@@ -679,7 +672,7 @@ napi_value SetSurfaceId(napi_env env, napi_callback_info info)
     napi_value args[1] = {nullptr};
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
     uint64_t surfaceId = 0;
-    if (argc < 1 || !ReadSurfaceId(env, args[0], &surfaceId)) return ReturnUndefined(env);
+    if (argc < 1 || !ReadBigInt(env, args[0], &surfaceId)) return ReturnUndefined(env);
     gRenderer.Start(surfaceId);
     return ReturnUndefined(env);
 }

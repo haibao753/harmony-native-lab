@@ -1,6 +1,6 @@
-export const SetSurfaceId: (surfaceId: string) => void;
-export const ChangeSurface: (surfaceId: string, width: number, height: number) => void;
-export const DestroySurface: (surfaceId: string) => void;
+export const SetSurfaceId: (surfaceId: BigInt) => void;
+export const ChangeSurface: (surfaceId: BigInt, width: number, height: number) => void;
+export const DestroySurface: (surfaceId: BigInt) => void;
 export const UpdateMesh: (
   vertices: Float32Array,
   triangles: Uint32Array,
