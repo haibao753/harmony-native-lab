@@ -37,3 +37,13 @@
 
 - [AR Engine 支持机型列表](https://developer.huawei.com/consumer/cn/forum/topic/0208215774177333398)
 - [AR Engine 人脸跟踪（ArkTS）](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/arengine-face/)
+
+
+## 0.3.0 真机姿态轴向验证（用户反馈）
+
+用户在 MatePad Pro 13.2（2023）上运行 FaceLab 0.3.0，并通过实际头部动作确认：
+- X：上下点头（Pitch）。
+- Y：左右转头（Yaw）。
+- Z：左右歪头（Roll）。
+
+以上记录为用户实机动作观察；各轴正负方向仍以应用实时读数为准。0.3.1 新增的中性网格比较与连续性提示仍待重新构建和真机验收。

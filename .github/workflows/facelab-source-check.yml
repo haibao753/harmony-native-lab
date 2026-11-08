@@ -1,0 +1,32 @@
+name: FaceLab source checks
+
+on:
+  pull_request:
+    paths:
+      - "apps/facelab/**"
+      - "docs/facelab/**"
+      - "scripts/check-facelab-0.3.1.sh"
+      - ".github/workflows/facelab-source-check.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/facelab/**"
+      - "docs/facelab/**"
+      - "scripts/check-facelab-0.3.1.sh"
+      - ".github/workflows/facelab-source-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  source-check:
+    name: Validate FaceLab 0.3.1 source contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Check shell syntax
+        run: bash -n scripts/check-facelab-0.3.1.sh
+      - name: Check FaceLab source contracts
+        run: bash scripts/check-facelab-0.3.1.sh

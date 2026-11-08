@@ -2,8 +2,8 @@
   "app": {
     "bundleName": "com.haibao.facelab",
     "vendor": "haibao753",
-    "versionCode": 10002,
-    "versionName": "0.3.0",
+    "versionCode": 10003,
+    "versionName": "0.3.1",
     "buildVersion": "1",
     "icon": "$media:app_icon",
     "label": "$string:app_name"

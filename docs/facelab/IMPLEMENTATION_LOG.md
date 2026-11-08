@@ -81,3 +81,22 @@
 - Official ArkGraphics 3D type reference confirms Quaternion and Vec3 x/y/z/w fields.
 - The code changes are committed to a dedicated feature branch.
 - No DevEco SDK build or MatePad hardware test has been run in this environment. The user's next build is required to validate ArkTS compatibility and confirm axis directions / mesh displacement behavior.
+
+
+## 2026-11-08 — 0.3.1 Motion Intelligence
+
+### Implemented in code
+
+- Rename the verified physical pose semantics in the UI: X = Pitch (nodding), Y = Yaw (left/right turn), Z = Roll (side tilt), based on the user's MatePad 0.3.0 action test.
+- Add user-triggered neutral-expression mesh capture. The next valid face geometry frame is copied as an in-memory baseline.
+- Compute current mesh displacement relative to the neutral baseline (RMS / MAX), separately from the existing adjacent-frame mesh displacement.
+- Add a rolling eight-sample pose-continuity heuristic based on consecutive raw Euler-angle changes.
+- Display continuity as “较平稳 / 轻微变化 / 头部运动中”; this is not an AR Engine confidence score.
+- Clear neutral mesh and temporal samples when tracking is lost or the callback stops.
+- Bump app version metadata to 0.3.1 / versionCode 10003.
+
+### Validation boundary
+
+- Source changes and documentation have been committed to a new feature branch stacked on the 0.3.0 branch.
+- Static source review only. The GitHub connector cannot run DevEco Studio, compile ArkTS, package a HAP, or test the MatePad.
+- User must build and install 0.3.1 locally. Verify neutral capture, blink / jaw deformation, head movement, continuity feedback, recalibration, and stop cleanup.

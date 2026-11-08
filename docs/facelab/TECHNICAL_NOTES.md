@@ -158,3 +158,36 @@ The displayed values are `current.translation - baseline.translation`. They are 
 
 - [AR Engine API — ARPose, ARGeometry, ARFace](https://developer.huawei.com/consumer/cn/doc/harmonyos-references/arengine-api-arengine/)
 - [ArkGraphics 3D SceneType — Quaternion and Vec3](https://developer.huawei.com/consumer/cn/doc/harmonyos-references/js-apis-inner-scene-types/)
+
+
+## 12. 0.3.1 — Motion Intelligence
+
+### Physical pose semantics
+
+The user tested the 0.3.0 build on the target MatePad and confirmed the physical action mapping:
+- X → Pitch: nodding up / down.
+- Y → Yaw: turn left / right.
+- Z → Roll: tilt left / right.
+
+The UI now uses these semantic labels. The sign of each angle is not hard-coded as a left/right or up/down direction; users should read the live positive / negative value because the physical sign convention has not been separately recorded.
+
+### Neutral-expression mesh baseline
+
+- The user can request capture of the next valid face mesh while keeping a relaxed, forward-facing neutral expression.
+- The captured XYZ Float32 vertex array is copied into an in-memory baseline.
+- Current-vs-neutral per-vertex displacement is summarized as RMS and MAX.
+- This is separate from the previous-frame mesh displacement calculation.
+- The neutral baseline is cleared when tracking is lost or the callback stops, avoiding comparison against another face-tracking session.
+- The metric is geometric displacement in raw coordinate units. It may reflect both expression and head-pose effects; it is not a pure expression coefficient.
+
+### Pose continuity heuristic
+
+- Keep the previous raw Euler sample and a rolling window of up to eight consecutive pose-step magnitudes.
+- Each step is the Euclidean norm of the shortest-path X/Y/Z angular differences.
+- Show the average step and a qualitative label: at or below 0.8° = “较平稳”; at or below 2.5° = “轻微变化”; above 2.5° = “头部运动中”.
+- These thresholds are initial heuristics at the current approximately 5 Hz UI sampling cadence. They are not official AR Engine tracking-confidence values and require device observation.
+- The label describes measured pose change, not whether movement is intentional or whether the tracker has lost confidence.
+
+### Privacy and lifecycle
+
+Neutral mesh samples and pose-step history remain in memory only. They are cleared when tracking is lost or the callback stops. No face data is persisted or uploaded.
