@@ -240,3 +240,15 @@
 ### Validation boundary
 - The three original GPU modes have user-confirmed smooth performance on the target tablet.
 - 0.5.1 region GPU code has passed static source-contract review only so far; DevEco SDK 26 compilation, label color mapping and device performance still require user verification.
+
+
+## 2026-11-08 — FaceLab 0.5.1 stable release frozen
+
+- Retargeted PR #11 from the stacked 0.4.3 feature branch to `main`; verified main was the merge base and the PR included the full FaceLab development history.
+- Marked PR ready for review after source-contract CI passed.
+- Squash-merged PR #11 into main.
+- Merge commit: `beceadcb871543d943c28cd482c1ded8680fd71c`.
+- User confirmed successful 0.5.1 build and deployment on MatePad Pro 13.2 (2023).
+- Frozen application version 0.5.1 / versionCode 10009.
+- A dedicated `release/facelab-0.5.1` branch is created as the stable source snapshot.
+- Quantitative frame-rate, thermal and battery measurements are not available; deployment success is recorded without inventing performance numbers.
