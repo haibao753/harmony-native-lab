@@ -1,0 +1,9 @@
+{
+  "name": "entry",
+  "version": "0.1.0",
+  "description": "FaceLab HarmonyOS entry module.",
+  "main": "",
+  "author": "haibao753",
+  "license": "MIT",
+  "dependencies": {}
+}
