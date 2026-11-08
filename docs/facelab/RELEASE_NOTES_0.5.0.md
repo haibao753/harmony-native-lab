@@ -4,14 +4,14 @@ Date: 2026-11-08
 
 ## Why this version exists
 
-FaceLab 0.4.3 made the heatmap visible and reduced AR mesh publication to approximately 5 Hz, but the user continued to report noticeable lag. The previous viewer used ArkUI Canvas to project and draw thousands of mesh elements. Version 0.5.0 moves the three frequently used geometry modes to a native OpenGL ES 3.2 rendering path.
+FaceLab 0.4.3 made the heatmap visible and reduced AR mesh publication to approximately 5 Hz, but the user continued to report noticeable lag. The previous viewer used ArkUI Canvas to project and draw thousands of mesh elements. Version 0.5.0 moves the three frequently used geometry modes to a native OpenGL ES 3.0 rendering path.
 
 ## Architecture
 
 - ArkTS XComponent SURFACE owns the visible native rendering surface.
 - XComponentController forwards surface creation, resize, and destruction events.
 - Node-API receives the AR callback's Float32Array / Uint32Array buffers directly.
-- C++ obtains OHNativeWindow from SurfaceId, creates EGL, and renders through OpenGL ES 3.2.
+- C++ obtains OHNativeWindow from SurfaceId, creates EGL, and renders through OpenGL ES 3.0.
 - VBO stores interleaved vertex position, normal, and heat value; separate EBOs store triangle and edge indices.
 - The native render thread targets approximately 30 Hz while AR mesh data remains updated at approximately 5 Hz.
 
