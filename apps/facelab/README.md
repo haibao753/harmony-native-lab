@@ -2,7 +2,16 @@
 
 HarmonyOS 原生三维人脸与新型交互实验应用。
 
-## 当前版本：0.4.3 — Live Deformation Heatmap & Lite Rendering
+## 当前版本：0.5.0 — OpenGL ES Native Face Renderer
+
+- 线框、实体和形变热力迁移到 OpenGL ES 3.2 原生 GPU 渲染。
+- 使用 ArkTS XComponent SURFACE / EGL / NativeWindow；C++ 侧使用 VBO / EBO 绘制。
+- Node-API 直接接收 AR 回调 TypedArray，GPU 模式不再转换为 ArkUI 普通数组。
+- 原生线程目标约 30 Hz 重绘，AR Mesh 数据仍约 5 Hz 更新；实际帧率待 MatePad 实测。
+- 保留单指旋转、双指缩放和视角重置；部位分区暂保留 Canvas 兼容路径。
+- DevEco 构建和真机验收尚未完成，不宣称性能问题已解决。
+
+## 0.4.3 — Live Deformation Heatmap & Lite Rendering
 
 - 修复 ArkUI `@Prop` 响应式代理与 JavaScript TypedArray 内部槽不兼容导致的首帧绘制崩溃。
 - AR 回调层继续使用 TypedArray；UI 边界复用稳定的普通 `number[]`，避免每帧重新分配和重复代理包装。
@@ -55,7 +64,7 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 
 ## 测试步骤
 
-1. 安装 0.4.3。
+1. 安装 0.5.0。
 2. 点击“开始追踪”。
 3. 在系统弹窗中允许 FaceLab 使用摄像头。
 4. 将脸放在前置摄像头画面内，观察人脸计数、Mesh、Pose 和 BlendShapes 指标。
@@ -98,3 +107,21 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 ## 隐私
 
 所有数据只在设备内存中用于实时展示，不保存、不上传。FaceLab 不进行身份识别，不访问系统人脸认证数据，也不读取 dToF 原始传感器帧。
+
+
+## 0.5.0 构建与验收
+
+1. 在 DevEco Studio 打开 apps/facelab，使用 HarmonyOS SDK 26.0.0。
+2. 确认 entry 模块已读取 externalNativeOptions，CMake 指向 entry/src/main/cpp/CMakeLists.txt。
+3. 构建 arm64-v8a HAP；检查 native 库 libfacelab_native.so 已打包。
+4. 安装到 MatePad Pro 13.2（2023），打开 FaceLab 并启动追踪。
+5. 确认 XComponent Surface 创建成功，能显示原生 GPU 人脸网格。
+6. 依次检查线框、实体和形变热力；与 0.4.3 对比可见帧率和卡顿。
+7. 单指拖动旋转、双指捏合缩放，点击“重置视角”。
+8. 切换部位分区，确认 Canvas 兼容路径仍能显示设备返回的区域标签。
+9. 停止追踪并离开页面，确认相机关闭、渲染线程退出、Surface 销毁后可重新进入。
+10. 回填 DevEco 完整构建日志、设备截图和性能数据至 docs/facelab/DEVICE_MATRIX.md。
+
+## 0.5.0 技术边界
+
+GPU 渲染线程目标约 30 Hz，AR Engine 网格发布仍约 5 Hz；两者不是同一帧率。当前没有设备实测数据，不能承诺达到 30 FPS，也不能预先认定卡顿已消除。所有面部数据仅在内存中处理，不保存、不上传。
