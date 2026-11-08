@@ -15,7 +15,7 @@
 ## 目标设备与开发环境
 
 - 主要体验设备：Huawei MatePad Pro 13.2（2023 款；系统版本已确认为 HarmonyOS 7.0.0，最终设备兼容性仍需 HAP 真机验证）。
-- 主工作流：Windows 本机 DevEco Studio 26.0.0 Release + HarmonyOS SDK API 26；用户已安装 DevEco Studio，具体版本和 SDK 安装情况待本机核验。
+- 主工作流：Windows 本机 DevEco Studio 26.0.0.865 + HarmonyOS SDK 26.0.0.105（API 26）；用户已在本机完成构建。
 - SDK：HarmonyOS 26.0.0 Release（API 26），对应目标设备 HarmonyOS 7.0.0。
 - 语言与 UI：ArkTS + ArkUI。
 - 应用模型：Stage 模型。
@@ -77,4 +77,4 @@ harmony-native-lab/
 
 ## 当前状态
 
-已使用 DevEco Studio 26.0.0.865 和 HarmonyOS SDK 26.0.0.105 在 Windows 构建出未签名 debug HAP。尚未完成签名、安装或 MatePad 真机验证。仓库中的 Linux CLI 生成脚本和手动自托管工作流是可选的历史路线，无需购买云主机。当前连接交互采用选择起点、再选择目标的方式；直接拖拽连接端口、内存视图和 C++ 真正编译执行仍待实现。
+用户已反馈在 Windows 本机使用 DevEco Studio 26.0.0.865 和 HarmonyOS SDK 26.0.0.105 构建成功，并已在 Huawei MatePad Pro 13.2（HarmonyOS 7.0.0）启动应用。2026-11-08 的真机截图确认了节点创建、next 连接、data 修改与 C++ 生成同步；同时发现节点卡片的 next 标签没有及时刷新。本分支已将节点字段改为独立的原始类型属性，并补充模型/代码一致性测试，仍需用户重新构建并在平板复验。当前连接交互仍采用选择起点、再选择目标的方式；直接拖拽连接端口、内存视图和 C++ 真正编译执行仍待实现。GitHub Actions 轻量检查不等同于 ArkTS 编译。

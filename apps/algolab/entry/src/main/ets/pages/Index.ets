@@ -16,12 +16,13 @@ import { generateCpp } from '../codegen/CppLinkedListGenerator';
 
 @Component
 struct NodeCard {
-  @Prop node: LinkedNode = {
-    id: 'N0',
-    value: 0,
-    nextId: null,
-    position: { x: 0, y: 0 }
-  };
+  // Keep changing fields as primitive @Prop values. Passing the whole
+  // LinkedNode object did not refresh the next label reliably on the MatePad.
+  @Prop nodeId: string = 'N0';
+  @Prop nodeValue: number = 0;
+  @Prop nextId: string | null = null;
+  @Prop positionX: number = 0;
+  @Prop positionY: number = 0;
   @Prop selected: boolean = false;
   onTap: (id: string) => void = (id: string) => {};
   onMove: (id: string, x: number, y: number) => void =
@@ -32,14 +33,14 @@ struct NodeCard {
 
   build() {
     Column({ space: 5 }) {
-      Text(this.node.id)
+      Text(this.nodeId)
         .fontSize(11)
         .fontColor('#64748B')
-      Text(this.node.value.toString())
+      Text(this.nodeValue.toString())
         .fontSize(23)
         .fontWeight(FontWeight.Bold)
         .fontColor('#17212B')
-      Text('next → ' + (this.node.nextId === null ? 'nullptr' : this.node.nextId))
+      Text('next → ' + (this.nextId === null ? 'nullptr' : this.nextId))
         .fontSize(11)
         .fontColor('#52616B')
     }
@@ -52,10 +53,10 @@ struct NodeCard {
       color: this.selected ? '#168477' : '#D9E0E7'
     })
     .borderRadius(14)
-    .position({ x: this.node.position.x, y: this.node.position.y })
+    .position({ x: this.positionX, y: this.positionY })
     .translate({ x: this.dragOffsetX, y: this.dragOffsetY })
     .onClick(() => {
-      this.onTap(this.node.id);
+      this.onTap(this.nodeId);
     })
     .gesture(
       PanGesture({ fingers: 1, distance: 4 })
@@ -72,9 +73,9 @@ struct NodeCard {
         .onActionEnd((event: GestureEvent | undefined) => {
           if (event !== undefined) {
             this.onMove(
-              this.node.id,
-              this.node.position.x + event.offsetX,
-              this.node.position.y + event.offsetY
+              this.nodeId,
+              this.positionX + event.offsetX,
+              this.positionY + event.offsetY
             );
           }
           this.dragOffsetX = 0;
@@ -87,7 +88,6 @@ struct NodeCard {
     )
   }
 }
-
 @Entry
 @Component
 struct Index {
@@ -370,6 +370,8 @@ struct Index {
       }
       .width('100%')
 
+      // Separate structure actions from value/history controls for a calmer
+      // landscape tablet toolbar.
       Row({ space: 8 }) {
         Button(this.connectionSourceId === '' ? '连接 next' : '取消连接')
           .type(ButtonType.Normal)
@@ -383,6 +385,10 @@ struct Index {
         Button('删除节点')
           .type(ButtonType.Normal)
           .onClick(() => this.deleteSelectedNode())
+      }
+      .width('100%')
+
+      Row({ space: 8 }) {
         if (this.selectedId !== '') {
           Text(this.selectedId + '.data')
             .fontSize(12)
@@ -440,7 +446,11 @@ struct Index {
           this.document.nodes,
           (node: LinkedNode) => {
             NodeCard({
-              node: node,
+              nodeId: node.id,
+              nodeValue: node.value,
+              nextId: node.nextId,
+              positionX: node.position.x,
+              positionY: node.position.y,
               selected: this.selectedId === node.id,
               onTap: (id: string) => this.handleNodeTap(id),
               onMove: (id: string, x: number, y: number) => this.moveSelectedNode(id, x, y)

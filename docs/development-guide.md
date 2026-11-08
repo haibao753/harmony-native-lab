@@ -4,8 +4,9 @@
 
 - 项目目录：仓库内的 `apps/algolab`；由 DevEco Studio 官方 Stage 模板生成，并接入原有三个 ArkTS 源文件。
 - 实际构建环境：Windows、DevEco Studio 26.0.0.865、HarmonyOS SDK 26.0.0.105（API 26）。
-- 已观察到 debug 构建成功，产物为未签名 HAP。尚未完成签名、安装和设备测试。
-- 目标平板：用户报告 HarmonyOS 7.0.0；工程的设备类型在官方模板基础上加入 tablet，设备兼容性仍需实测。
+- 用户已反馈本机构建成功，并已在 Huawei MatePad Pro 13.2（HarmonyOS 7.0.0）启动应用。
+- 2026-11-08 真机截图验证了节点创建、next 连接、data 编辑与 C++ 代码同步；截图同时暴露 NodeCard 的 next 标签未随结构变化刷新。本分支已改用独立原始类型 `@Prop`，但新改动仍需重新构建和真机复验。
+- 工程的设备类型在官方模板基础上加入 tablet。
 
 ## 在 Windows 本机继续开发
 

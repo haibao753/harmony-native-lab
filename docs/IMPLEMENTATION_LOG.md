@@ -1,6 +1,8 @@
 # AlgoLab 首轮实现记录
+> **真机反馈更新（2026-11-08）**：用户已在 MatePad Pro 13.2（HarmonyOS 7.0.0）成功构建并启动 AlgoLab。截图确认三个节点的创建、next 连接、节点 data 修改以及 C++ 代码同步；同时暴露出 NodeCard 的 next 文本仍显示 `nullptr` 的 UI 状态刷新问题。本分支将节点 ID、值、nextId 和坐标改为独立的原始类型 `@Prop`，避免把普通 interface 对象整体传入子组件，并新增模型/代码一致性回归测试。**本次源码变更尚未经过新的 DevEco 构建或真机复验。**
 
-> 状态更新（2026-11-07）：本文下方保留早期实现与云端引导记录，其中“尚未生成工程/构建”的描述反映当时状态。现在 `apps/algolab` 已包含官方 DevEco Studio 模板生成的工程，Windows DevEco Studio 26.0.0.865 与 HarmonyOS SDK 26.0.0.105 已构建未签名 debug HAP；签名和真机测试仍待完成。详见 [开发指南](development-guide.md)。
+
+> 历史说明：本文下方部分“尚未生成工程/构建”的内容记录的是早期阶段；当前状态以 2026-11-08 真机反馈更新为准。用户已在 MatePad Pro 13.2（HarmonyOS 7.0.0）启动应用，当前 UI 修复仍待重新构建和复验。详见 [开发指南](development-guide.md)。
 
 
 ## 当前分支
@@ -39,11 +41,9 @@
 ## 尚未完成
 
 - 在具备官方 Command Line Tools 26.0.0 的运行器中执行 Stage 工程生成脚本；
-- SDK/API Level 对应的 ArkTS 编译验证；
-- SDK/API Level 确认及 ArkTS 编译；
+- 本分支本次 UI 状态刷新修复的 DevEco 编译与 MatePad 真机复验；
 - MatePad Pro 13.2 真机手势、布局和性能验证；
 - 直接拖拽连接端口；
-- 节点值编辑、删除节点的 UI；
 - 内存视图；
 - 本地持久化；
 - 代码行与画布的双向定位；
@@ -59,9 +59,9 @@
 6. 设置 N3 的 next 指向 N2，确认检测到环，并检查生成代码带有访问集合。
 7. 撤销和重做上述操作，确认结构状态可恢复。
 
-## 验证声明
+## 早期阶段验证声明
 
-本轮只完成了 GitHub 源码写入与静态审阅，没有 DevEco Studio / HarmonyOS SDK 构建环境，也没有 MatePad 真机测试。不能将当前源码描述为已构建、已安装或已运行。
+以下说明仅记录最初通过 GitHub 写入源码、尚未接入本机 DevEco Studio 的阶段。2026-11-08 用户已完成首轮真机启动与交互验证；当前分支新增的 UI 状态刷新修复仍需再次构建和真机复验。
 
 
 ## 云端工具链接入准备（本轮）
@@ -70,3 +70,27 @@
 - 新增 `.github/workflows/algolab-harmonyos-hap.yml`：手动触发，要求带 `harmonyos-api-26` 标签的 Linux self-hosted runner；先验证 glibc、内存、可用磁盘和 SDK 路径，再构建并上传 HAP。
 - 新增 `docs/cloud-build-runner.md`：记录云端 VM 规格、华为工具包获取与完整性校验、GitHub Runner 注册和安全要求。
 - **尚未接通实际云端机器**：当前没有可供本次会话使用的云厂商账号或已注册 Runner，也没有可直接安装的华为 Command Line Tools 下载包。没有声称已经执行 HAP 构建。
+
+## 2026-11-08：首轮真机反馈与修复
+
+### 已由用户在 MatePad Pro 13.2 验证
+
+1. 成功构建并启动应用（HarmonyOS 7.0.0）。
+2. 创建 N1、N2、N3，并将 next 连接为 N1 → N2 → N3。
+3. 修改 N3.data 为 30，生成的 C++ 代码同步变化。
+
+### 截图发现的问题
+
+- 连线和 C++ 代码已反映 N1 → N2 → N3，但节点卡片内的 next 标签仍显示 `nullptr`。
+- 工具栏操作挤在同一行，平板横屏下视觉密度过高。
+
+### 本次源码调整
+
+- NodeCard 不再接收整个 `LinkedNode` 对象；改为接收 `nodeId`、`nodeValue`、`nextId`、`positionX`、`positionY` 等原始类型属性，降低 ForEach 子组件对普通对象嵌套字段更新的依赖。
+- 将结构编辑操作与值编辑/历史/代码操作拆分为两行工具栏，减少单行横向拥挤。
+- 增加回归测试：验证 setNext 生成的新文档保留正确的目标引用、旧文档不被修改，且 C++ 生成结果包含对应赋值语句。
+
+### 验证边界
+
+- 本次只完成 GitHub 源码更新和静态审阅；GitHub Actions 轻量工作流不执行 ArkTS 编译。
+- 新代码需要用户在 DevEco Studio 重新构建，并在平板确认 next 标签、拖动、连接、撤销和代码同步。

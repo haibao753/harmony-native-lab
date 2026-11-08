@@ -10,7 +10,7 @@
 
 ## 重要状态说明
 
-仓库 `apps/algolab` 包含由 DevEco Studio 官方模板生成的 Stage 工程；`module.json5` 补充了 tablet 设备类型。三个原型源码文件保持原内容。Windows DevEco Studio 26.0.0.865 / HarmonyOS SDK 26.0.0.105 已构建出未签名 debug HAP，尚未完成签名、安装或 MatePad 真机验证。
+仓库 `apps/algolab` 包含由 DevEco Studio 官方模板生成的 Stage 工程；`module.json5` 补充了 tablet 设备类型。用户已在 Windows DevEco Studio 26.0.0.865 / HarmonyOS SDK 26.0.0.105 构建成功，并在 MatePad Pro 13.2（HarmonyOS 7.0.0）运行应用。2026-11-08 真机截图确认节点创建、next 连接、data 编辑和 C++ 同步；当前开发分支进一步修复了节点卡片 next 标签刷新问题，仍待重新构建和真机复验。
 
 ## 首轮交互边界
 
