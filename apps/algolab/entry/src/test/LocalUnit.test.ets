@@ -20,7 +20,9 @@ import {
 } from '../main/ets/interaction/CoordinateMapper';
 import {
   appendInkPoint,
+  appendInkPointInPlace,
   beginInkStroke,
+  cloneInkDocument,
   createEmptyInkDocument,
   removeLastInkStroke
 } from '../main/ets/ink/InkStrokeModel';
@@ -254,6 +256,24 @@ export default function localUnitTest() {
       const withoutLastStroke = removeLastInkStroke(extendedStroke);
       expect(withoutLastStroke.strokes.length).assertEqual(0);
       expect(extendedStroke.strokes.length).assertEqual(1);
+    });
+
+    it('keeps a deep undo snapshot while appending live ink points efficiently', 0, () => {
+      const started = beginInkStroke(createEmptyInkDocument(), {
+        x: 5,
+        y: 8,
+        pressure: 0.5
+      });
+      const undoSnapshot = cloneInkDocument(started);
+      const liveUpdated = appendInkPointInPlace(started, {
+        x: 12,
+        y: 16,
+        pressure: 0.7
+      });
+
+      expect(liveUpdated.strokes[0].points.length).assertEqual(2);
+      expect(undoSnapshot.strokes[0].points.length).assertEqual(1);
+      expect(liveUpdated !== started).assertTrue();
     });
 
     it('maps stylus points through the current graph transform', 0, () => {
