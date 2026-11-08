@@ -1,3 +1,5 @@
+> **真机缩进问题二次修复（2026-11-08）**：用户截图表明不仅带缩进的语句，连本应从第 1 列开始的 `#include`、`struct` 也整体居中，说明上一版 NBSP 空白保留并未解决布局根因。当前修复在每个源码 token Text 上显式设置 `TextAlign.Start`，在 token Row 上显式设置 `FlexAlign.Start`，同时保留 Row 的内容自然宽度，避免固定宽度破坏横向滚动。字号控制保持不变。**此修复尚未在 MatePad 真机验证，必须重新构建观察无缩进行是否从代码列最左侧开始、四空格缩进是否显示为四列。**
+
 > **代码缩进与字号控制（2026-11-08）**：针对真机反馈，C++ token 展示层新增空白格式化：普通空格转换为不换行空格、Tab 转换为四个等宽空白，避免 ArkUI 将分段 Text 中的前导空格折叠；词法 Token 与生成的 C++ 原文保持不变。新增仅作用于源码 token 的字号状态，默认 11vp 保留为小字体版本，A−/A+ 支持 10–22vp 连续调节，并提供小/中/大 11/14/17vp 快捷档；代码行高度随字号变化，行号与右侧注释保持原有小字号。新增空白显示单元测试与 CI 源码检查。**尚未在 DevEco Studio / MatePad 对本轮修改进行编译或真机验证。**
 
 > **ArkTS 编译错误修复（2026-11-08）**：根据 MatePad/DevEco Studio 编译日志修复 C++ 词法分析器中的单引号字符判断，原代码误写成未闭合字符串，造成后续一系列级联解析错误；同时为 CppToken、TokenizeResult 和 CppDisplayLine 对象显式声明类型，符合 ArkTS 的 arkts-no-untyped-obj-literals 约束。补充 C++ 数字分隔符测试。**修复已提交 GitHub，但仍需用户重新运行 DevEco Studio 的 Assemble Hap，确认 ArkTS 编译通过；当前不能宣称真机验证通过。**
