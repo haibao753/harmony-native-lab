@@ -35,12 +35,16 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
   private active: boolean = true;
   private lastPublishedTimestamp: number = 0;
   private lastErrorMessage: string = '';
+  private onMetrics: (metrics: FaceMetrics) => void;
+  private onError: (message: string) => void;
 
   constructor(
-    private onMetrics: (metrics: FaceMetrics) => void,
-    private onError: (message: string) => void
+    onMetrics: (metrics: FaceMetrics) => void,
+    onError: (message: string) => void
   ) {
     super();
+    this.onMetrics = onMetrics;
+    this.onError = onError;
   }
 
   stop(): void {
