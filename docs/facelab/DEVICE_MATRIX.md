@@ -119,3 +119,13 @@
 - User reports region mode remains laggy; code inspection confirms it was still using the old ArkUI Canvas viewer and copying typed mesh buffers into ordinary number[] arrays.
 - FaceLab 0.5.1 moves semantic region rendering to the native GPU path using per-triangle AR Engine labels and a flat per-triangle region attribute.
 - 0.5.1 DevEco build, label rendering, and performance comparison are pending. Do not infer the region lag is solved until the user confirms on device.
+
+
+## 0.5.1 final deployment and freeze (2026-11-08)
+
+- PR #11 was retargeted to `main`, source-contract CI passed, and the complete FaceLab history from 0.1 through 0.5.1 was merged.
+- User confirmed FaceLab 0.5.1 successfully built and deployed on MatePad Pro 13.2 (2023), HarmonyOS 7.0.0.111 SP8, SDK 26.0.0.
+- Stable release version: 0.5.1 / versionCode 10009.
+- Main merge commit: `beceadcb871543d943c28cd482c1ded8680fd71c`.
+- A release snapshot branch `release/facelab-0.5.1` pins this release.
+- No numerical per-mode FPS, thermal or battery benchmark was supplied; do not infer a 30 FPS guarantee or quantify performance from the successful deployment alone.
