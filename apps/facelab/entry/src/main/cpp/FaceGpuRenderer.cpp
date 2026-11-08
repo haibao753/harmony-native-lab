@@ -19,6 +19,7 @@ precision highp float;
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec3 aNormal;
 layout(location = 2) in float aHeat;
+layout(location = 3) in float aRegion;
 
 uniform vec3 uPose;
 uniform vec3 uView;
@@ -27,6 +28,7 @@ uniform float uAspect;
 
 out vec3 vNormal;
 out float vHeat;
+flat out float vRegion;
 
 vec3 rotateEuler(vec3 value, vec3 angles) {
     float rx = radians(angles.x);
@@ -47,6 +49,7 @@ void main() {
     vec3 n = rotateEuler(rotateEuler(aNormal, uPose), uView);
     vNormal = normalize(n);
     vHeat = aHeat;
+    vRegion = aRegion;
     float safeAspect = max(uAspect, 0.55);
     gl_Position = vec4((p.x / safeAspect) * 1.28 * uZoom, p.y * 1.28 * uZoom, p.z * 0.52, 1.0);
 }
@@ -56,6 +59,7 @@ constexpr const char *FRAGMENT_SHADER = R"(#version 300 es
 precision highp float;
 in vec3 vNormal;
 in float vHeat;
+flat in float vRegion;
 uniform int uMode;
 out vec4 outColor;
 
@@ -67,6 +71,21 @@ vec3 heatColor(float value) {
     return mix(vec3(0.98, 0.84, 0.16), vec3(0.94, 0.20, 0.16), (t - 0.75) * 4.0);
 }
 
+vec3 regionColor(float value) {
+    int region = int(floor(value + 0.5));
+    if (region == 0) return vec3(0.153, 0.212, 0.290);
+    if (region == 1) return vec3(0.443, 0.518, 0.604);
+    if (region == 2) return vec3(0.839, 0.420, 0.627);
+    if (region == 3) return vec3(0.941, 0.553, 0.714);
+    if (region == 4) return vec3(0.325, 0.773, 0.851);
+    if (region == 5) return vec3(0.427, 0.620, 0.949);
+    if (region == 6) return vec3(0.898, 0.722, 0.361);
+    if (region == 7) return vec3(0.851, 0.608, 0.290);
+    if (region == 8) return vec3(0.710, 0.541, 0.878);
+    if (region == 9) return vec3(0.396, 0.788, 0.608);
+    return vec3(0.443, 0.518, 0.604);
+}
+
 void main() {
     if (uMode == 0) {
         outColor = vec4(0.30, 0.84, 0.91, 1.0);
@@ -74,6 +93,14 @@ void main() {
     }
     if (uMode == 2) {
         outColor = vec4(heatColor(vHeat), 1.0);
+        return;
+    }
+    if (uMode == 3) {
+        vec3 normal = normalize(vNormal);
+        vec3 lightDir = normalize(vec3(-0.35, 0.55, 1.0));
+        float diffuse = abs(dot(normal, lightDir));
+        vec3 base = regionColor(vRegion);
+        outColor = vec4(base * (0.82 + diffuse * 0.18), 1.0);
         return;
     }
     vec3 normal = normalize(vNormal);
@@ -129,6 +156,7 @@ void FaceGpuRenderer::UpdateMesh(const float *vertices, size_t vertexFloatCount,
                                  const uint32_t *triangles, size_t triangleIndexCount,
                                  const uint32_t *edges, size_t edgeIndexCount,
                                  const float *deformation, size_t deformationCount,
+                                 const int32_t *labels, size_t labelCount,
                                  float pitch, float yaw, float roll,
                                  uint64_t topologyRevision, int32_t mode)
 {
@@ -155,13 +183,18 @@ void FaceGpuRenderer::UpdateMesh(const float *vertices, size_t vertexFloatCount,
         } else {
             edges_.clear();
         }
+        if (labels != nullptr && labelCount == triangleIndexCount / 3) {
+            labels_.assign(labels, labels + labelCount);
+        } else {
+            labels_.clear();
+        }
         topologyRevision_ = topologyRevision;
     }
 
     pitch_ = pitch;
     yaw_ = yaw;
     roll_ = roll;
-    mode_ = std::clamp(mode, 0, 2);
+    mode_ = std::clamp(mode, 0, 3);
     hasMesh_ = vertices_.size() >= 9 && triangles_.size() >= 3;
     ++dataRevision_;
 }
@@ -181,6 +214,8 @@ void FaceGpuRenderer::ClearMesh()
     deformation_.clear();
     triangles_.clear();
     edges_.clear();
+    labels_.clear();
+    regionVertexCount_ = 0;
     topologyRevision_ = UINT64_MAX;
     hasMesh_ = false;
     ++dataRevision_;
@@ -334,6 +369,9 @@ bool FaceGpuRenderer::InitializeGl()
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(GpuVertex),
                           reinterpret_cast<void *>(offsetof(GpuVertex, heat)));
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(GpuVertex),
+                          reinterpret_cast<void *>(offsetof(GpuVertex, region)));
     glBindVertexArray(0);
     return true;
 }
@@ -422,12 +460,39 @@ void FaceGpuRenderer::UploadMeshLocked()
         }
         const float displacement = i < deformation_.size() ? deformation_[i] : 0.0f;
         target.heat = std::clamp(displacement / heatScale, 0.0f, 1.0f);
+        target.region = 1.0f;
+    }
+
+    std::vector<GpuVertex> expandedRegionVertices;
+    const GpuVertex *uploadVertices = gpuVertices.data();
+    size_t uploadVertexCount = gpuVertices.size();
+    regionVertexCount_ = 0;
+    if (mode_ == 3) {
+        expandedRegionVertices.reserve(triangles_.size());
+        for (size_t i = 0; i + 2 < triangles_.size(); i += 3) {
+            const uint32_t ia = triangles_[i];
+            const uint32_t ib = triangles_[i + 1];
+            const uint32_t ic = triangles_[i + 2];
+            if (ia >= vertexCount || ib >= vertexCount || ic >= vertexCount) {
+                continue;
+            }
+            const int32_t label = i / 3 < labels_.size() ? labels_[i / 3] : 0;
+            const int32_t region = (label >= -1 && label <= 8) ? label + 1 : 1;
+            for (uint32_t index : {ia, ib, ic}) {
+                GpuVertex vertex = gpuVertices[index];
+                vertex.region = static_cast<float>(region);
+                expandedRegionVertices.push_back(vertex);
+            }
+        }
+        uploadVertices = expandedRegionVertices.data();
+        uploadVertexCount = expandedRegionVertices.size();
+        regionVertexCount_ = static_cast<GLsizei>(uploadVertexCount);
     }
 
     glBindVertexArray(vao_);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer_);
-    glBufferData(GL_ARRAY_BUFFER, gpuVertices.size() * sizeof(GpuVertex),
-                 gpuVertices.data(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, uploadVertexCount * sizeof(GpuVertex),
+                 uploadVertices, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleBuffer_);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangles_.size() * sizeof(uint32_t),
                  triangles_.data(), GL_DYNAMIC_DRAW);
@@ -496,6 +561,8 @@ void FaceGpuRenderer::RenderFrame()
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edgeBuffer_);
             glLineWidth(1.0f);
             glDrawElements(GL_LINES, edgeIndexCount_, GL_UNSIGNED_INT, nullptr);
+        } else if (mode == 3 && regionVertexCount_ > 0) {
+            glDrawArrays(GL_TRIANGLES, 0, regionVertexCount_);
         } else if (triangleIndexCount_ > 0) {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleBuffer_);
             glDrawElements(GL_TRIANGLES, triangleIndexCount_, GL_UNSIGNED_INT, nullptr);
