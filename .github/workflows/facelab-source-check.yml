@@ -6,7 +6,7 @@ on:
       - "apps/facelab/**"
       - "docs/facelab/**"
       - "scripts/check-facelab-0.4.0.sh"
-      - "scripts/check-facelab-0.4.1.sh"
+      - "scripts/check-facelab-0.4.2.sh"
       - ".github/workflows/facelab-source-check.yml"
   push:
     branches:
@@ -15,7 +15,7 @@ on:
       - "apps/facelab/**"
       - "docs/facelab/**"
       - "scripts/check-facelab-0.4.0.sh"
-      - "scripts/check-facelab-0.4.1.sh"
+      - "scripts/check-facelab-0.4.2.sh"
       - ".github/workflows/facelab-source-check.yml"
 
 permissions:
@@ -23,12 +23,12 @@ permissions:
 
 jobs:
   source-check:
-    name: Validate FaceLab 0.4.1 stability contracts
+    name: Validate FaceLab 0.4.2 performance and visualization contracts
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Check shell syntax
-        run: bash -n scripts/check-facelab-0.4.1.sh
-      - name: Check FaceLab 0.4.1 source contracts
-        run: bash scripts/check-facelab-0.4.1.sh
+        run: bash -n scripts/check-facelab-0.4.2.sh
+      - name: Check FaceLab 0.4.2 source contracts
+        run: bash scripts/check-facelab-0.4.2.sh

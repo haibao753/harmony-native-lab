@@ -147,3 +147,26 @@
 
 - GitHub Actions run 42459080651 passed the shell syntax and FaceLab 0.4.1 source-contract steps.
 - DevEco Studio compilation and MatePad hardware retest have not yet been performed; no runtime success is claimed.
+
+## 2026-11-08 — 0.4.2 Performance & Geometry Visualization
+
+### 用户真机反馈
+
+- 0.4.1 能运行，但实时追踪明显卡顿。
+- 线框、实体、形变热力模式之间的视觉差异不明显；部位分区模式最容易辨识。
+
+### 代码改进
+
+- 将 AR 网格发布节流由 200 ms（5 Hz）调整为 100 ms（10 Hz），并用 processing guard 防止异步帧处理重入。
+- 复用回调层顶点与形变 TypedArray；只在拓扑版本变化时刷新三角索引、边和标签缓存。
+- 在 Index.ets 复用五组普通数组；逐帧只更新顶点与形变，拓扑数组仅在 meshTopologyRevision 改变时更新。
+- 文本诊断降为约 2 Hz，网格数据继续按约 10 Hz 发布。
+- FaceMeshViewer 复用投影点对象和面分组缓存，减少每次绘制的临时对象与数组分配。
+- 线框仅绘制边；实体按三维面法线分桶着色；形变热力采用 8 档高对比色阶且不叠加线框；区域模式缓存语义面分组。
+- Canvas 显示绘制调用频率与 JS 绘制提交耗时，辅助判断瓶颈。
+
+### 验收边界
+
+- 本次提交只完成代码和静态契约，不声称已通过 DevEco 构建或 MatePad 真机性能验收。
+- 10 Hz 是数据发布目标，不等于真实 Canvas 帧率，也不等于 60 FPS。
+- 若 Canvas 绘制仍占据主要耗时，下一阶段应先用设备数据确认瓶颈，再评估 ArkGraphics3D 原生 GPU 网格方案。

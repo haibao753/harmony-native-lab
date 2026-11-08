@@ -246,3 +246,28 @@ The 2026-11-08 MatePad Pro JSCrash report identified `FaceMeshViewer.ets:158:40`
 ArkUI observation may proxy object-valued `@Prop` values. TypedArray accessors such as `.length` require a genuine TypedArray receiver and cannot be invoked on the proxy. The AR callback therefore retains efficient `Float32Array` / `Uint32Array` / `Int32Array` buffers for calculations, while `Index.ets` converts them with `Array.from()` at the UI boundary. `FaceMeshViewer` accepts ordinary `number[]` props and only reads their length and indexed values. This avoids exposing TypedArrays to ArkUI's object observation while keeping the AR data-processing layer unchanged.
 
 The fix is source-level only until DevEco compilation and on-device acceptance are completed. Verify first-frame rendering, all four display modes, gestures, and stop / restart cleanup on the MatePad Pro.
+
+
+## 15. 0.4.2 — Performance & Geometry Visualization
+
+### 帧处理与数据更新
+
+- `FaceTrackingCallback.onFrameUpdate()` 以 100 ms 为最小发布间隔，目标约 10 Hz；`processing` 标志防止异步帧处理重入。
+- 回调层复用当前顶点、形变和上一帧缓冲区，避免重复创建同尺寸 TypedArray。
+- `meshTopologyRevision` 仅在顶点/索引拓扑变化或跟踪对象重置时变化；页面只在该版本变化时复制三角索引、边和标签。
+- 页面长期持有普通 `number[]`，每帧原位更新顶点与形变数据，避免 `Array.from()` 每帧生成五份新数组。
+- 文本诊断更新间隔约 500 ms；网格数据目标更新间隔约 100 ms。
+
+### Canvas 绘制
+
+- `FaceMeshViewer` 复用投影点对象，避免每次绘制重新创建顶点对象。
+- 区域模式在拓扑版本变化时预先按标签分组；实体与热力模式复用面索引分桶。
+- 线框：仅绘制去重边，不绘制三角面填充。
+- 实体：依据旋转后的三角面法线与固定方向光源计算漫反射分桶，绘制连续的实体表面。
+- 形变热力：依据相对中性网格的每顶点位移，将三角面分为八档蓝—青—绿—黄—橙—红色阶；不叠加线框。
+- 部位分区：保留 AR Engine 提供的三角面语义标签与独立区域配色。
+- 画布叠加显示绘制调用频率和 JS 绘制提交耗时。该指标是 Canvas 绘制调用间隔和 JS 提交阶段耗时，不是系统 GPU 呈现 FPS。
+
+### 性能边界
+
+Canvas 仍是 ArkUI `CanvasRenderingContext2D` 的 3D 投影绘制，并非 GPU 原生网格场景。10 Hz 是回调发布目标，不保证实际绘制频率或 60 FPS。若真机依然卡顿，应结合 Canvas 诊断数据进一步拆分 AR Engine 取数、JS 投影计算和 Canvas 命令提交成本，再决定是否迁移 ArkGraphics3D。
