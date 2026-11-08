@@ -325,6 +325,26 @@ export struct TeachingWorkbench {
       }
       .width('100%')
       .padding({ right: 2 })
+
+      Row({ space: 8 }) {
+        Button('内存视图')
+          .type(ButtonType.Normal)
+          .layoutWeight(1)
+          .height(36)
+          .backgroundColor('#F3E9DF')
+          .fontColor('#8E512F')
+          .borderRadius(8)
+          .onClick(() => this.onOpenMemory())
+        Button('C++ 代码')
+          .type(ButtonType.Normal)
+          .layoutWeight(1)
+          .height(36)
+          .backgroundColor('#292A29')
+          .fontColor('#FFFFFF')
+          .borderRadius(8)
+          .onClick(() => this.onOpenCode())
+      }
+      .width('100%')
     }
     .width(370)
     .height('100%')
