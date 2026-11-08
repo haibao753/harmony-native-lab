@@ -29,6 +29,7 @@ grep -Fq 'glDrawElements(GL_LINES' "$cpp/FaceGpuRenderer.cpp"
 grep -Fq 'std::chrono::milliseconds(33)' "$cpp/FaceGpuRenderer.cpp"
 grep -Fq 'OH_NativeWindow_CreateNativeWindowFromSurfaceId' "$cpp/FaceGpuRenderer.cpp"
 grep -Fq 'OH_NativeWindow_DestroyNativeWindow' "$cpp/FaceGpuRenderer.cpp"
+grep -Fq 'napi/native_api.h' "$cpp/napi_init.cpp"
 if grep -Fq 'napi/native_node_api.h' "$cpp/napi_init.cpp"; then
   echo "Do not include native_node_api.h; SDK Node-API surface is provided by napi/native_api.h." >&2
   exit 1
@@ -48,6 +49,8 @@ grep -Fq '"version": "1.0.0"' apps/facelab/entry/oh-package.json5
 grep -Fq '"libfacelab_native.so": "file:./src/main/cpp/types/libfacelab_native"' apps/facelab/entry/oh-package.json5
 grep -Fq '"name": "libfacelab_native.so"' "$typepkg"
 grep -Fq '"types": "./index.d.ts"' "$typepkg"
+grep -Fq 'export default nativeRender;' "$types"
+test ! -e apps/facelab/entry/src/main/ets/types/libfacelab_native.d.ts
 grep -Fq '"packages": ["libfacelab_native.so"]' "$build"
 grep -Fq 'nativeRender.SetViewTransform' "$gpu"
 grep -Fq 'this.publishViewTransform();' "$gpu"
