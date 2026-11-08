@@ -34,7 +34,7 @@ Face images, mesh geometry, and expression metrics remain in local memory. No fa
 
 ## Validation status
 
-<badge>Source implementation only</badge>
+**Status: Source implementation only**
 
 - GitHub source changes are committed to the 0.5.0 feature branch.
 - DevEco Studio / HarmonyOS SDK 26.0.0 compilation has not been run in this environment.
