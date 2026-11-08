@@ -20,7 +20,6 @@ import { classifyInputSource } from '../interaction/InputRouter';
 import { CanvasTransform, screenToCanvasPoint, zoomTransformAtPoint } from '../interaction/CoordinateMapper';
 import {
   InkDocument,
-  appendInkPoint,
   appendInkPointInPlace,
   beginInkStroke,
   clearInkDocument,
