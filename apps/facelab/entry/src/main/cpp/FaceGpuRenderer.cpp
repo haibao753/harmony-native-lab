@@ -21,15 +21,17 @@ layout(location = 1) in vec3 aNormal;
 layout(location = 2) in float aHeat;
 
 uniform vec3 uPose;
+uniform vec3 uView;
+uniform float uZoom;
 uniform float uAspect;
 
 out vec3 vNormal;
 out float vHeat;
 
-vec3 rotateFace(vec3 value) {
-    float rx = radians(uPose.x);
-    float ry = radians(uPose.y);
-    float rz = radians(uPose.z);
+vec3 rotateEuler(vec3 value, vec3 angles) {
+    float rx = radians(angles.x);
+    float ry = radians(angles.y);
+    float rz = radians(angles.z);
     float sx = sin(rx), cx = cos(rx);
     float sy = sin(ry), cy = cos(ry);
     float sz = sin(rz), cz = cos(rz);
@@ -41,11 +43,12 @@ vec3 rotateFace(vec3 value) {
 }
 
 void main() {
-    vec3 p = rotateFace(aPosition);
-    vNormal = normalize(rotateFace(aNormal));
+    vec3 p = rotateEuler(rotateEuler(aPosition, uPose), uView);
+    vec3 n = rotateEuler(rotateEuler(aNormal, uPose), uView);
+    vNormal = normalize(n);
     vHeat = aHeat;
     float safeAspect = max(uAspect, 0.55);
-    gl_Position = vec4((p.x / safeAspect) * 1.28, p.y * 1.28, p.z * 0.52, 1.0);
+    gl_Position = vec4((p.x / safeAspect) * 1.28 * uZoom, p.y * 1.28 * uZoom, p.z * 0.52, 1.0);
 }
 )";
 
@@ -161,6 +164,14 @@ void FaceGpuRenderer::UpdateMesh(const float *vertices, size_t vertexFloatCount,
     mode_ = std::clamp(mode, 0, 2);
     hasMesh_ = vertices_.size() >= 9 && triangles_.size() >= 3;
     ++dataRevision_;
+}
+
+void FaceGpuRenderer::SetViewTransform(float pitch, float yaw, float zoom)
+{
+    std::lock_guard<std::mutex> lock(dataMutex_);
+    viewPitch_ = std::clamp(pitch, -78.0f, 78.0f);
+    viewYaw_ = std::clamp(yaw, -180.0f, 180.0f);
+    viewZoom_ = std::clamp(zoom, 0.65f, 2.8f);
 }
 
 void FaceGpuRenderer::ClearMesh()
@@ -299,6 +310,8 @@ bool FaceGpuRenderer::InitializeGl()
         return false;
     }
     poseLocation_ = glGetUniformLocation(program_, "uPose");
+    viewLocation_ = glGetUniformLocation(program_, "uView");
+    zoomLocation_ = glGetUniformLocation(program_, "uZoom");
     aspectLocation_ = glGetUniformLocation(program_, "uAspect");
     modeLocation_ = glGetUniformLocation(program_, "uMode");
 
@@ -433,6 +446,9 @@ void FaceGpuRenderer::RenderFrame()
     float pitch = 0.0f;
     float yaw = 0.0f;
     float roll = 0.0f;
+    float viewPitch = 0.0f;
+    float viewYaw = 0.0f;
+    float viewZoom = 1.0f;
     bool hasMesh = false;
     int32_t width = surfaceWidth_;
     int32_t height = surfaceHeight_;
@@ -450,6 +466,9 @@ void FaceGpuRenderer::RenderFrame()
         pitch = pitch_;
         yaw = yaw_;
         roll = roll_;
+        viewPitch = viewPitch_;
+        viewYaw = viewYaw_;
+        viewZoom = viewZoom_;
         hasMesh = hasMesh_;
     }
 
@@ -463,6 +482,8 @@ void FaceGpuRenderer::RenderFrame()
     if (hasMesh && program_ != 0) {
         glUseProgram(program_);
         glUniform3f(poseLocation_, pitch, yaw, roll);
+        glUniform3f(viewLocation_, viewPitch, viewYaw, 0.0f);
+        glUniform1f(zoomLocation_, viewZoom);
         glUniform1f(aspectLocation_, static_cast<float>(width) / static_cast<float>(height));
         glUniform1i(modeLocation_, mode);
         glBindVertexArray(vao_);
