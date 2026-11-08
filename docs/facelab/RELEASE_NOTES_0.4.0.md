@@ -20,3 +20,16 @@
 ## Verification
 
 GitHub source-contract checks are included. DevEco Studio compilation and MatePad Pro 13.2 (2023) hardware acceptance remain required.
+
+
+# FaceLab 0.4.1 — Runtime stability hotfix
+
+## Fix
+
+- Fix the first-frame JSCrash on HarmonyOS 7 caused by passing `Float32Array`, `Uint32Array`, and `Int32Array` directly through ArkUI `@Prop` observation.
+- Keep typed buffers in the AR callback and convert them to ordinary `number[]` at the parent-to-child UI boundary.
+- Add source-contract checks that guard the plain-array prop boundary and version metadata.
+
+## Verification status
+
+The fix addresses the exact crash signature reported on the MatePad Pro (`FaceMeshViewer.ets:158:40`). DevEco compilation and device retest are still required; no hardware success is claimed yet.
