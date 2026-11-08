@@ -695,8 +695,11 @@ struct Index {
             .fontColor(this.showTeaching ? '#9A6038' : '#48443C')
             .borderRadius(11)
             .onClick(() => {
-              this.showTeaching = !this.showTeaching;
               if (this.showTeaching) {
+                this.pauseAutoPlay();
+                this.showTeaching = false;
+              } else {
+                this.showTeaching = true;
                 this.showMemory = false;
                 this.showCode = false;
               }
