@@ -293,3 +293,24 @@ v0.1 的“运行 C++”也需要单独决策：可先导出源码供外部编�
 - [ArkTS 单一手势事件指导](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/arkts-gesture-events-single-gesture/)
 
 本轮页面使用 Canvas 绘制指针连接线，使用 PanGesture 拖动节点。官方文档说明 Canvas 可绘制基础图形与文本，PanGesture 提供开始、更新、结束和取消等回调；但这不等于本仓库源码已通过目标 SDK 编译或真机验证。
+
+
+## 15. 1.2 Alpha 2：教学轨迹架构
+
+新增 `LinkedListLessonEngine` 作为纯领域教学层：
+
+- `LINKED_LIST_LESSONS` 保存单链表知识点目录及概念、关键点、误区和实验任务；
+- `buildTraversalTrace(document, generatedCode)` 只读取权威链表文档和生成源码，返回不可变教学步骤；
+- 每个步骤携带当前 `currentId`、活动节点、活动指针边、已访问节点、代码行号、预测题选项和解释反馈；
+- 代码行号通过生成源码中的稳定语句定位，不在 UI 中硬编码具体行号。
+
+`TeachingWorkbench` 是展示层组件，不直接修改 `LinkedListDocument`。`Index` 负责保存播放位置和预测答案，并把步骤应用到现有选中状态：
+
+- `selectedId`：当前教学节点；
+- `selectedEdgeSourceId / selectedEdgeTargetId`：当前指针边；
+- `selectedCodeLineNumber`：对应 C++ 语句；
+- 内存视图复用 `selectedId` 显示当前对象。
+
+教学轨迹与文档状态分离。任何结构变更、撤销或重做都清空轨迹；重新开始时根据最新文档重新生成。该机制避免教学回放污染撤销栈，也避免文档变化后继续播放过期快照。
+
+**执行边界：** 该轨迹是确定性的教学状态演示，不是 C++ 解释器、调试器或运行时内存快照。后续若要加入真实执行，必须单独设计执行环境与安全边界。
