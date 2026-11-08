@@ -66,6 +66,26 @@ bool ReadUint32Array(napi_env env, napi_value value, std::vector<uint32_t> &outp
     return true;
 }
 
+
+bool ReadInt32Array(napi_env env, napi_value value, std::vector<int32_t> &output)
+{
+    napi_typedarray_type type;
+    size_t length = 0;
+    void *data = nullptr;
+    napi_value arrayBuffer = nullptr;
+    size_t byteOffset = 0;
+    if (napi_get_typedarray_info(env, value, &type, &length, &data, &arrayBuffer, &byteOffset) != napi_ok ||
+        type != napi_int32_array || (length > 0 && data == nullptr) || length % sizeof(int32_t) != 0) {
+        return false;
+    }
+    // HarmonyOS reports byte length for TypedArray data.
+    const size_t elementCount = length / sizeof(int32_t);
+    if (elementCount == 0) { output.clear(); return true; }
+    const int32_t *source = static_cast<const int32_t *>(data);
+    output.assign(source, source + elementCount);
+    return true;
+}
+
 napi_value SetSurfaceId(napi_env env, napi_callback_info info)
 {
     size_t argc = 1;
@@ -142,11 +162,11 @@ napi_value SetViewTransform(napi_env env, napi_callback_info info)
 
 napi_value UpdateMesh(napi_env env, napi_callback_info info)
 {
-    size_t argc = 11;
-    napi_value args[11] = {nullptr};
+    size_t argc = 12;
+    napi_value args[12] = {nullptr};
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
     uint64_t surfaceId = 0;
-    if (argc < 11 || !ReadSurfaceId(env, args[0], surfaceId)) {
+    if (argc < 12 || !ReadSurfaceId(env, args[0], surfaceId)) {
         napi_throw_type_error(env, nullptr, "UpdateMesh received invalid arguments");
         return nullptr;
     }
@@ -155,6 +175,7 @@ napi_value UpdateMesh(napi_env env, napi_callback_info info)
     std::vector<uint32_t> triangles;
     std::vector<uint32_t> edges;
     std::vector<float> deformation;
+    std::vector<int32_t> labels;
     double pitch = 0.0;
     double yaw = 0.0;
     double roll = 0.0;
@@ -165,17 +186,18 @@ napi_value UpdateMesh(napi_env env, napi_callback_info info)
         !ReadUint32Array(env, args[2], triangles) ||
         !ReadUint32Array(env, args[3], edges) ||
         !ReadFloat32Array(env, args[4], deformation) ||
-        napi_get_value_double(env, args[5], &pitch) != napi_ok ||
-        napi_get_value_double(env, args[6], &yaw) != napi_ok ||
-        napi_get_value_double(env, args[7], &roll) != napi_ok ||
-        napi_get_value_uint32(env, args[8], &topologyRevision) != napi_ok ||
-        napi_get_value_int32(env, args[9], &mode) != napi_ok) {
-        napi_throw_type_error(env, nullptr, "UpdateMesh expects Float32Array / Uint32Array geometry buffers");
+        !ReadInt32Array(env, args[5], labels) ||
+        napi_get_value_double(env, args[6], &pitch) != napi_ok ||
+        napi_get_value_double(env, args[7], &yaw) != napi_ok ||
+        napi_get_value_double(env, args[8], &roll) != napi_ok ||
+        napi_get_value_uint32(env, args[9], &topologyRevision) != napi_ok ||
+        napi_get_value_int32(env, args[10], &mode) != napi_ok) {
+        napi_throw_type_error(env, nullptr, "UpdateMesh expects Float32Array / Uint32Array / Int32Array geometry buffers");
         return nullptr;
     }
 
     bool hasMesh = false;
-    if (napi_get_value_bool(env, args[10], &hasMesh) != napi_ok) {
+    if (napi_get_value_bool(env, args[11], &hasMesh) != napi_ok) {
         napi_throw_type_error(env, nullptr, "UpdateMesh expects a boolean hasMesh flag");
         return nullptr;
     }
@@ -187,6 +209,7 @@ napi_value UpdateMesh(napi_env env, napi_callback_info info)
                                  triangles.data(), triangles.size(),
                                  edges.data(), edges.size(),
                                  deformation.data(), deformation.size(),
+                                 labels.data(), labels.size(),
                                  static_cast<float>(pitch), static_cast<float>(yaw), static_cast<float>(roll),
                                  topologyRevision, mode);
         } else {
