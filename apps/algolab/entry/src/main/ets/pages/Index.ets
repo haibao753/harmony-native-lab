@@ -16,6 +16,17 @@ import {
   setNodeValue
 } from '../domain/LinkedListModel';
 import { CodeLineLink, generateCpp } from '../codegen/CppLinkedListGenerator';
+import { classifyInputSource } from '../interaction/InputRouter';
+import { CanvasTransform, screenToCanvasPoint, zoomTransformAtPoint } from '../interaction/CoordinateMapper';
+import {
+  InkDocument,
+  appendInkPoint,
+  beginInkStroke,
+  clearInkDocument,
+  cloneInkDocument,
+  createEmptyInkDocument
+} from '../ink/InkStrokeModel';
+import { InkLayer } from '../components/InkLayer';
 import { highlightCpp, formatCppDisplayToken, measureCppLineWidth, CppDisplayLine, CppToken } from '../codegen/CppSyntaxHighlighter';
 
 @Component
@@ -29,6 +40,7 @@ struct NodeCard {
   @Prop positionY: number = 0;
   @Prop selected: boolean = false;
   @Prop isHead: boolean = false;
+  @Prop canvasScale: number = 1;
   onTap: (id: string) => void = (id: string) => {};
   onMove: (id: string, x: number, y: number) => void =
     (id: string, x: number, y: number) => {};
@@ -75,22 +87,26 @@ struct NodeCard {
     })
     .gesture(
       PanGesture({ fingers: 1, distance: 4 })
-        .onActionStart(() => {
+        .onActionStart((event: GestureEvent | undefined) => {
+          if (event === undefined || event.sourceTool !== SourceTool.Finger) {
+            return;
+          }
           this.dragOffsetX = 0;
           this.dragOffsetY = 0;
         })
         .onActionUpdate((event: GestureEvent | undefined) => {
-          if (event !== undefined) {
+          if (event !== undefined && event.sourceTool === SourceTool.Finger) {
             this.dragOffsetX = event.offsetX;
             this.dragOffsetY = event.offsetY;
           }
         })
         .onActionEnd((event: GestureEvent | undefined) => {
-          if (event !== undefined) {
+          if (event !== undefined && event.sourceTool === SourceTool.Finger) {
+            const safeScale = this.canvasScale > 0 ? this.canvasScale : 1;
             this.onMove(
               this.nodeId,
-              this.positionX + event.offsetX,
-              this.positionY + event.offsetY
+              this.positionX + event.offsetX / safeScale,
+              this.positionY + event.offsetY / safeScale
             );
           }
           this.dragOffsetX = 0;
@@ -133,6 +149,21 @@ struct Index {
   @State statusText: string = '空画布';
   @State canUndo: boolean = false;
   @State canRedo: boolean = false;
+  @State inkDocument: InkDocument = createEmptyInkDocument();
+  @State penMode: boolean = true;
+  @State canUndoInk: boolean = false;
+  @State canRedoInk: boolean = false;
+  @State canvasScale: number = 1;
+  @State canvasOffsetX: number = 0;
+  @State canvasOffsetY: number = 0;
+  @State lastInputLabel: string = '等待输入';
+
+  private inkUndoStack: InkDocument[] = [];
+  private inkRedoStack: InkDocument[] = [];
+  private activeInkPointerId: number = -1;
+  private lastPanOffsetX: number = 0;
+  private lastPanOffsetY: number = 0;
+  private lastPinchScale: number = 1;
 
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true);
   private canvasContext: CanvasRenderingContext2D =
@@ -386,6 +417,144 @@ struct Index {
     }
   }
 
+  private pushInkUndoSnapshot(): void {
+    this.inkUndoStack.push(cloneInkDocument(this.inkDocument));
+    if (this.inkUndoStack.length > 50) {
+      this.inkUndoStack.shift();
+    }
+    this.inkRedoStack = [];
+    this.canUndoInk = this.inkUndoStack.length > 0;
+    this.canRedoInk = false;
+  }
+
+  private handleCanvasTouch(event: TouchEvent | undefined): void {
+    if (event === undefined) {
+      return;
+    }
+    const inputKind = classifyInputSource(Number(event.sourceTool));
+    if (inputKind !== 'pen') {
+      return;
+    }
+
+    this.lastInputLabel = 'M-Pencil';
+    if (!this.penMode) {
+      return;
+    }
+
+    const points = event.changedTouches.length > 0 ? event.changedTouches : event.touches;
+    if (points.length === 0) {
+      return;
+    }
+    const touch = points[0];
+    const transform: CanvasTransform = {
+      scale: this.canvasScale,
+      offsetX: this.canvasOffsetX,
+      offsetY: this.canvasOffsetY
+    };
+    const position = screenToCanvasPoint(touch.x, touch.y, transform);
+    const rawPressure = touch.pressure === undefined ? 0 : Number(touch.pressure);
+    const pressure = rawPressure > 0 ? Math.min(1, rawPressure / 65535) : 0.5;
+    const point = {
+      x: position.x,
+      y: position.y,
+      pressure: pressure
+    };
+
+    if (event.type === TouchType.Down) {
+      this.pushInkUndoSnapshot();
+      this.activeInkPointerId = touch.id;
+      this.inkDocument = beginInkStroke(this.inkDocument, point);
+      this.message = 'M-Pencil 已开始记录独立笔迹；链表数据没有改变。';
+      return;
+    }
+
+    if (touch.id !== this.activeInkPointerId) {
+      return;
+    }
+
+    if (event.type === TouchType.Move || event.type === TouchType.Up) {
+      this.inkDocument = appendInkPoint(this.inkDocument, point);
+    }
+
+    if (event.type === TouchType.Up || event.type === TouchType.Cancel) {
+      this.activeInkPointerId = -1;
+    }
+  }
+
+  private undoInk(): void {
+    if (this.inkUndoStack.length === 0) {
+      return;
+    }
+    this.inkRedoStack.push(cloneInkDocument(this.inkDocument));
+    const previous = this.inkUndoStack.pop();
+    if (previous !== undefined) {
+      this.inkDocument = previous;
+    }
+    this.canUndoInk = this.inkUndoStack.length > 0;
+    this.canRedoInk = this.inkRedoStack.length > 0;
+    this.message = '已撤销最近一笔；链表结构历史保持独立。';
+  }
+
+  private redoInk(): void {
+    if (this.inkRedoStack.length === 0) {
+      return;
+    }
+    this.inkUndoStack.push(cloneInkDocument(this.inkDocument));
+    const next = this.inkRedoStack.pop();
+    if (next !== undefined) {
+      this.inkDocument = next;
+    }
+    this.canUndoInk = this.inkUndoStack.length > 0;
+    this.canRedoInk = this.inkRedoStack.length > 0;
+    this.message = '已恢复笔迹；链表结构历史保持独立。';
+  }
+
+  private clearInk(): void {
+    if (this.inkDocument.strokes.length === 0) {
+      return;
+    }
+    this.pushInkUndoSnapshot();
+    this.inkDocument = clearInkDocument(this.inkDocument);
+    this.activeInkPointerId = -1;
+    this.message = '已清空笔迹；链表节点和指针没有改变。';
+  }
+
+  private handleCanvasPan(event: GestureEvent | undefined): void {
+    if (event === undefined || event.sourceTool !== SourceTool.Finger) {
+      return;
+    }
+    const deltaX = event.offsetX - this.lastPanOffsetX;
+    const deltaY = event.offsetY - this.lastPanOffsetY;
+    this.canvasOffsetX += deltaX;
+    this.canvasOffsetY += deltaY;
+    this.lastPanOffsetX = event.offsetX;
+    this.lastPanOffsetY = event.offsetY;
+  }
+
+  private handleCanvasPinch(event: GestureEvent | undefined): void {
+    if (event === undefined || event.sourceTool !== SourceTool.Finger) {
+      return;
+    }
+    const ratio = event.scale / this.lastPinchScale;
+    if (!Number.isFinite(ratio) || ratio <= 0) {
+      return;
+    }
+    const nextTransform = zoomTransformAtPoint(
+      {
+        scale: this.canvasScale,
+        offsetX: this.canvasOffsetX,
+        offsetY: this.canvasOffsetY
+      },
+      this.canvasScale * ratio,
+      event.pinchCenterX,
+      event.pinchCenterY
+    );
+    this.canvasScale = nextTransform.scale;
+    this.canvasOffsetX = nextTransform.offsetX;
+    this.canvasOffsetY = nextTransform.offsetY;
+    this.lastPinchScale = event.scale;
+  }
+
   drawConnections(): void {
     if (!this.canvasReady) {
       return;
@@ -514,6 +683,41 @@ struct Index {
             .fontColor('#9A5B43')
             .borderRadius(9)
             .onClick(() => this.deleteSelectedNode())
+          Button(this.penMode ? 'M-Pencil 手写开' : 'M-Pencil 手写关')
+            .type(ButtonType.Normal)
+            .height(38)
+            .backgroundColor(this.penMode ? '#F2E4D8' : '#EAE6DE')
+            .fontColor(this.penMode ? '#9A6038' : '#48443C')
+            .borderRadius(9)
+            .onClick(() => {
+              this.penMode = !this.penMode;
+              this.activeInkPointerId = -1;
+              this.message = this.penMode ? 'M-Pencil 已切换为手写输入。' : 'M-Pencil 手写已关闭。';
+            })
+          Button('撤销笔迹')
+            .type(ButtonType.Normal)
+            .height(38)
+            .enabled(this.canUndoInk)
+            .backgroundColor('#EAE6DE')
+            .fontColor('#48443C')
+            .borderRadius(9)
+            .onClick(() => this.undoInk())
+          Button('重做笔迹')
+            .type(ButtonType.Normal)
+            .height(38)
+            .enabled(this.canRedoInk)
+            .backgroundColor('#EAE6DE')
+            .fontColor('#48443C')
+            .borderRadius(9)
+            .onClick(() => this.redoInk())
+          Button('清空笔迹')
+            .type(ButtonType.Normal)
+            .height(38)
+            .enabled(this.inkDocument.strokes.length > 0)
+            .backgroundColor('#F1EAE4')
+            .fontColor('#9A5B43')
+            .borderRadius(9)
+            .onClick(() => this.clearInk())
           Blank()
           Button(this.showCode ? '关闭 C++' : 'C++ 代码')
             .type(ButtonType.Normal)
@@ -599,7 +803,7 @@ struct Index {
                   .fontSize(16)
                   .fontWeight(FontWeight.Bold)
                   .fontColor('#292720')
-                Text('点击选择 · 拖动调整位置 · 连接 next 建立引用')
+                Text('手指：选择与拖动 · 双指：平移和缩放 · M-Pencil：独立手写')
                   .fontSize(10)
                   .fontColor('#8A847A')
               }
@@ -615,64 +819,94 @@ struct Index {
             .width('100%')
 
             Stack() {
-              Canvas(this.canvasContext)
-                .width('100%')
-                .height('100%')
-                .backgroundColor('#F1EFE9')
-                .onReady(() => {
-                  this.canvasReady = true;
-                  this.drawConnections();
-                })
-
-              ForEach(
-                this.document.nodes,
-                (node: LinkedNode) => {
-                  NodeCard({
-                    nodeId: node.id,
-                    nodeValue: node.value,
-                    nextId: node.nextId,
-                    isHead: this.document.headId === node.id,
-                    positionX: node.position.x,
-                    positionY: node.position.y,
-                    selected: this.selectedId === node.id,
-                    onTap: (id: string) => this.handleNodeTap(id),
-                    onMove: (id: string, x: number, y: number) => this.moveSelectedNode(id, x, y)
+              Stack() {
+                Canvas(this.canvasContext)
+                  .width('100%')
+                  .height('100%')
+                  .backgroundColor('#F1EFE9')
+                  .onReady(() => {
+                    this.canvasReady = true;
+                    this.drawConnections();
                   })
-                },
-                (node: LinkedNode) => node.id
-              )
 
-              if (this.document.nodes.length === 0) {
-                Column({ space: 9 }) {
-                  Text('从一个节点开始')
-                    .fontSize(19)
-                    .fontWeight(FontWeight.Medium)
-                    .fontColor('#39352E')
-                  Text('创建节点，然后观察数据、指针与内存引用如何变化。')
-                    .fontSize(12)
-                    .fontColor('#898378')
-                  Button('＋ 创建第一个节点')
-                    .type(ButtonType.Normal)
-                    .height(36)
-                    .backgroundColor('#292720')
-                    .fontColor('#FFFFFF')
-                    .borderRadius(9)
-                    .onClick(() => this.addNewNode())
+                ForEach(
+                  this.document.nodes,
+                  (node: LinkedNode) => {
+                    NodeCard({
+                      nodeId: node.id,
+                      nodeValue: node.value,
+                      nextId: node.nextId,
+                      isHead: this.document.headId === node.id,
+                      positionX: node.position.x,
+                      positionY: node.position.y,
+                      selected: this.selectedId === node.id,
+                      canvasScale: this.canvasScale,
+                      onTap: (id: string) => this.handleNodeTap(id),
+                      onMove: (id: string, x: number, y: number) => this.moveSelectedNode(id, x, y)
+                    })
+                  },
+                  (node: LinkedNode) => node.id
+                )
+
+                InkLayer({ document: this.inkDocument })
+
+                if (this.document.nodes.length === 0) {
+                  Column({ space: 9 }) {
+                    Text('从一个节点开始')
+                      .fontSize(19)
+                      .fontWeight(FontWeight.Medium)
+                      .fontColor('#39352E')
+                    Text('创建节点，然后观察数据、指针与内存引用如何变化。')
+                      .fontSize(12)
+                      .fontColor('#898378')
+                    Button('＋ 创建第一个节点')
+                      .type(ButtonType.Normal)
+                      .height(36)
+                      .backgroundColor('#292720')
+                      .fontColor('#FFFFFF')
+                      .borderRadius(9)
+                      .onClick(() => this.addNewNode())
+                  }
+                  .alignItems(HorizontalAlign.Center)
+                  .position({ x: 30, y: 132 })
                 }
-                .alignItems(HorizontalAlign.Center)
-                .position({ x: 30, y: 132 })
               }
+              .width('100%')
+              .height('100%')
+              .scale({ x: this.canvasScale, y: this.canvasScale, centerX: 0, centerY: 0 })
+              .translate({ x: this.canvasOffsetX, y: this.canvasOffsetY })
             }
             .width('100%')
             .layoutWeight(1)
             .backgroundColor('#F1EFE9')
             .borderRadius(16)
             .clip(true)
+            .onTouch((event?: TouchEvent) => this.handleCanvasTouch(event))
+            .priorityGesture(
+              GestureGroup(
+                GestureMode.Parallel,
+                PinchGesture({ fingers: 2 })
+                  .onActionStart(() => {
+                    this.lastPinchScale = 1;
+                  })
+                  .onActionUpdate((event: GestureEvent | undefined) => this.handleCanvasPinch(event)),
+                PanGesture({ fingers: 2, distance: 4 })
+                  .onActionStart(() => {
+                    this.lastPanOffsetX = 0;
+                    this.lastPanOffsetY = 0;
+                  })
+                  .onActionUpdate((event: GestureEvent | undefined) => this.handleCanvasPan(event))
+              ),
+              GestureMask.Normal
+            )
 
             Row({ space: 8 }) {
               Text(this.statusText)
                 .fontSize(11)
                 .fontColor('#9A6038')
+              Text(this.penMode ? 'M-Pencil 手写开启' : 'M-Pencil 手写关闭')
+                .fontSize(10)
+                .fontColor(this.penMode ? '#9A6038' : '#928B80')
               Text('·')
                 .fontSize(11)
                 .fontColor('#B4ADA2')
