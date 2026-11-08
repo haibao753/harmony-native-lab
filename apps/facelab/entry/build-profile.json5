@@ -6,6 +6,11 @@
         "enable": false
       }
     },
+    "arkOptions": {
+      "runtimeOnly": {
+        "packages": ["libfacelab_native.so"]
+      }
+    },
     "externalNativeOptions": {
       "path": "./src/main/cpp/CMakeLists.txt",
       "arguments": "",
