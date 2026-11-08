@@ -4,6 +4,7 @@ import { Scene } from '@kit.ArkGraphics3D';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { FaceMetrics, FaceTrackingCallback } from '../common/FaceTrackingCallback';
 import { FaceMeshViewer } from '../components/FaceMeshViewer';
+import { FaceGpuSurface, FaceGpuSurfaceController } from '../components/FaceGpuSurface';
 
 @Entry
 @Component
@@ -41,6 +42,8 @@ struct Index {
   @State errorMessage: string = '';
 
   private faceCallback: FaceTrackingCallback | undefined = undefined;
+  private gpuSurfaceController: FaceGpuSurfaceController = new FaceGpuSurfaceController();
+  private canvasTopologyRevision: number = -1;
   private meshVertices: number[] = [];
   private meshTriangles: number[] = [];
   private meshEdges: number[] = [];
@@ -85,17 +88,21 @@ struct Index {
     this.poseYaw = metrics.poseYaw;
     this.poseRoll = metrics.poseRoll;
 
-    // Keep the same plain-array instances across frames. The viewer redraws when
-    // meshRevision changes, so we avoid allocating and proxy-wrapping five arrays
-    // on every AR update.
-    this.copyNumericData(this.meshVertices, metrics.meshVertices);
-    this.copyNumericData(this.meshDeformation, metrics.meshDeformation);
-    if (this.meshTopologyRevision !== metrics.meshTopologyRevision) {
-      this.copyNumericData(this.meshTriangles, metrics.meshTriangles);
-      this.copyNumericData(this.meshEdges, metrics.meshEdges);
-      this.copyNumericData(this.meshLabels, metrics.meshLabels);
-      this.meshTopologyRevision = metrics.meshTopologyRevision;
-      this.meshLabelsAvailable = metrics.meshLabelsAvailable;
+    // GPU modes send the original typed buffers directly through Node-API.
+    // Plain number[] conversion is retained only for the optional region-mode fallback.
+    this.gpuSurfaceController.update(metrics, this.meshViewMode);
+    this.meshTopologyRevision = metrics.meshTopologyRevision;
+    this.meshLabelsAvailable = metrics.meshLabelsAvailable;
+    if (this.meshViewMode === 'regions') {
+      this.copyNumericData(this.meshVertices, metrics.meshVertices);
+      this.copyNumericData(this.meshDeformation, metrics.meshDeformation);
+      if (this.canvasTopologyRevision !== metrics.meshTopologyRevision) {
+        this.copyNumericData(this.meshTriangles, metrics.meshTriangles);
+        this.copyNumericData(this.meshEdges, metrics.meshEdges);
+        this.copyNumericData(this.meshLabels, metrics.meshLabels);
+        this.canvasTopologyRevision = metrics.meshTopologyRevision;
+      }
+      this.meshRevision++;
     }
 
     // The geometry viewer updates at 10 Hz; textual diagnostics only need 2 Hz.
@@ -280,6 +287,8 @@ struct Index {
       this.poseRoll = 0;
       this.meshDataAvailable = false;
       this.meshRevision++;
+      this.canvasTopologyRevision = -1;
+      this.gpuSurfaceController.clear();
     }
   }
 
@@ -295,7 +304,7 @@ struct Index {
             .fontSize(32)
             .fontWeight(FontWeight.Bold)
             .fontColor('#F4F7FB')
-          Text('AR Face Tracking Lab · 0.4.3')
+          Text('AR Face Tracking Lab · 0.5.0')
             .fontSize(13)
             .fontColor('#9AA9BC')
         }
@@ -467,25 +476,30 @@ struct Index {
               })
           }
           .width('100%')
-          FaceMeshViewer({
-            vertices: this.meshVertices,
-            triangles: this.meshTriangles,
-            edges: this.meshEdges,
-            deformation: this.meshDeformation,
-            labels: this.meshLabels,
-            revision: this.meshRevision,
-            mode: this.meshViewMode,
-            hasNeutral: this.neutralCalibrated,
-            hasLabels: this.meshLabelsAvailable,
-            hasMesh: this.meshDataAvailable,
-            posePitch: this.posePitch,
-            poseYaw: this.poseYaw,
-            poseRoll: this.poseRoll,
-            resetKey: this.meshViewReset,
-            topologyRevision: this.meshTopologyRevision
-          })
-            .width('100%')
-          Text('单指拖动旋转 · 双指捏合缩放。热力图未采集中性基准时显示相邻帧动态位移；采集后显示相对中性网格的形变。区域分区需设备返回三角面标签。为减轻卡顿，网格更新降至约 5 Hz；当前仍使用 Canvas 投影绘制，非 GPU 原生三维场景。')
+          if (this.meshViewMode === 'regions') {
+            FaceMeshViewer({
+              vertices: this.meshVertices,
+              triangles: this.meshTriangles,
+              edges: this.meshEdges,
+              deformation: this.meshDeformation,
+              labels: this.meshLabels,
+              revision: this.meshRevision,
+              mode: this.meshViewMode,
+              hasNeutral: this.neutralCalibrated,
+              hasLabels: this.meshLabelsAvailable,
+              hasMesh: this.meshDataAvailable,
+              posePitch: this.posePitch,
+              poseYaw: this.poseYaw,
+              poseRoll: this.poseRoll,
+              resetKey: this.meshViewReset,
+              topologyRevision: this.canvasTopologyRevision
+            })
+              .width('100%')
+          } else {
+            FaceGpuSurface({ controller: this.gpuSurfaceController })
+              .width('100%')
+          }
+          Text('线框、实体与形变热力现由 OpenGL ES 3.2 原生 GPU 管线绘制，网格缓冲直接从 AR 回调传入 C++；部位分区暂保留 Canvas 兼容路径。')
             .fontSize(11)
             .fontColor('#8190A5')
             .lineHeight(17)
