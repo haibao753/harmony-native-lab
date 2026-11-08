@@ -1,6 +1,7 @@
 declare module 'libfacelab_native.so' {
   const nativeRender: {
     SetSurfaceId(surfaceId: bigint): void;
+    SetViewTransform(surfaceId: bigint, pitch: number, yaw: number, zoom: number): void;
     ResizeSurface(surfaceId: bigint, width: number, height: number): void;
     UpdateMesh(
       surfaceId: bigint,
