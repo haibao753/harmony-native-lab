@@ -110,3 +110,12 @@
 | 生命周期 | 停止追踪 / 离开页面后释放相机、线程、EGL 和 NativeWindow | 待真机 |
 
 目标设备：MatePad Pro 13.2（2023），HarmonyOS 7.0.0.111 SP8，Compile SDK 26.0.0。
+
+
+## 0.5.0 / 0.5.1 user feedback (2026-11-08)
+
+- User successfully deployed FaceLab 0.5.0 on MatePad Pro 13.2 (2023).
+- User reports wireframe, shaded surface and deformation heatmap are now very smooth.
+- User reports region mode remains laggy; code inspection confirms it was still using the old ArkUI Canvas viewer and copying typed mesh buffers into ordinary number[] arrays.
+- FaceLab 0.5.1 moves semantic region rendering to the native GPU path using per-triangle AR Engine labels and a flat per-triangle region attribute.
+- 0.5.1 DevEco build, label rendering, and performance comparison are pending. Do not infer the region lag is solved until the user confirms on device.
