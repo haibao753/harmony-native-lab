@@ -58,3 +58,26 @@
 - 0.1.0 already proved FACE support on this exact target device, so 0.2.2 removes the redundant probe from the Start flow.
 - Restored official Huawei ArkTS enum member expressions for session configuration and callback trackable / state / BlendShape types.
 - This patch has not yet been rebuilt or tested on the user's MatePad.
+
+
+## 2026-11-08 — 0.3.0 Pose & Mesh Explorer
+
+### Implemented in code
+
+- Read `ARPose.rotation` and `ARPose.translation` directly.
+- Capture an automatic first-pose baseline and expose a next-frame recalibration method.
+- Compute relative orientation with inverse-baseline quaternion multiplication.
+- Convert normalized relative quaternion to standard XYZ Euler angles.
+- Smooth Euler angles with shortest-angle interpolation and translation deltas with an exponential filter.
+- Display raw quaternion and relative translation.
+- Parse the observed XYZ Float32 face-vertex buffer with a strict byte-length guard.
+- Compare adjacent vertex snapshots and display per-vertex displacement RMS and MAX.
+- Add UI controls for pose recalibration and mesh baseline reset.
+- Preserve camera session setup, face tracking, BlendShapes reads, and resource release.
+
+### Validation status
+
+- Official Huawei AR Engine API reference confirms ARPose.rotation is Quaternion, ARPose.translation is Vec3, and ARGeometry exposes vertex and index ArrayBuffers.
+- Official ArkGraphics 3D type reference confirms Quaternion and Vec3 x/y/z/w fields.
+- The code changes are committed to a dedicated feature branch.
+- No DevEco SDK build or MatePad hardware test has been run in this environment. The user's next build is required to validate ArkTS compatibility and confirm axis directions / mesh displacement behavior.
