@@ -349,3 +349,15 @@ export function formatCppDisplayToken(source: string): string {
   return display;
 }
 
+/**
+ * Estimate the intrinsic width of a monospace source line in vp.
+ * This width is applied to one Text paragraph inside a horizontal Scroll.
+ */
+export function measureCppLineWidth(line: CppDisplayLine, fontSize: number): number {
+  let characterCount = 0;
+  for (let i = 0; i < line.tokens.length; i++) {
+    characterCount += formatCppDisplayToken(line.tokens[i].text).length;
+  }
+  return Math.max(180, characterCount * fontSize * 0.62 + 12);
+}
+
