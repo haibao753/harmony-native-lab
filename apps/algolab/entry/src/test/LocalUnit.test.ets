@@ -7,7 +7,7 @@ import {
   setNodeValue
 } from '../main/ets/domain/LinkedListModel';
 import { generateCpp } from '../main/ets/codegen/CppLinkedListGenerator';
-import { highlightCpp } from '../main/ets/codegen/CppSyntaxHighlighter';
+import { highlightCpp, formatCppDisplayToken } from '../main/ets/codegen/CppSyntaxHighlighter';
 
 export default function localUnitTest() {
   describe('LinkedListModel', () => {
@@ -79,6 +79,18 @@ export default function localUnitTest() {
         }
         expect(hasPointerExplanation).assertTrue();
       }
+    });
+
+    it('preserves leading spaces and tabs in code display without changing source tokens', 0, () => {
+      const sourceLine = '    Node* head;\\treturn head;';
+      const display = formatCppDisplayToken(sourceLine);
+      const indentation = '\\u00A0\\u00A0\\u00A0\\u00A0';
+      expect(display.indexOf(indentation) === 0).assertTrue();
+      expect(display.indexOf('\\u00A0\\u00A0\\u00A0\\u00A0return') >= 0).assertTrue();
+
+      const lines = highlightCpp(sourceLine, []);
+      expect(lines[0].tokens[0].text).assertEqual('    ');
+      expect(lines[0].tokens[0].text).assertEqual(sourceLine.slice(0, 4));
     });
 
     it('keeps digit separators inside numeric tokens', 0, () => {
