@@ -401,6 +401,9 @@ struct Index {
             .fontSize(11)
             .fontWeight(FontWeight.Bold)
             .fontColor('#8DA2BC')
+          Text(this.poseCalibrated ? '姿态基准已建立' : '等待姿态基准')
+            .fontSize(11)
+            .fontColor(this.poseCalibrated ? '#63D6A5' : '#9AA9BC')
           Row() {
             Column({ space: 4 }) {
               Text('ROTATION X')
