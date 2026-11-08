@@ -8,6 +8,27 @@ HarmonyOS NEXT 原生交互式数据结构实验工具。
 
 AlgoLab 不替代华为笔记、系统浏览器、课程平台或通用 AI 助手。它专注于结构操作、状态观察和确定性代码生成。
 
+## v1.2.0-alpha.1（AlgoLab 1.2 Alpha 1）
+
+**HarmonyOS Native Interaction：Touch + M-Pencil Dual Mode**
+
+本 Alpha 首先建立双模输入基础，不引入 Pen Kit HandwriteComponent 的独立长画布，避免与当前可平移、缩放的结构画布产生坐标和手势冲突。
+
+已实现的源码能力：
+1. 使用 ArkUI `TouchEvent.sourceTool` 区分 M-Pencil（`SourceTool.Pen`）和手指（`SourceTool.Finger`）。
+2. M-Pencil 在结构画布上绘制独立笔迹；笔迹保存在 `InkDocument`，不修改 `LinkedListDocument`。
+3. 手写笔迹拥有独立撤销、重做和清空历史，不与链表结构撤销/重做混用。
+4. 手指保留节点选择和拖动；双指支持画布平移与捏合缩放。
+5. 笔迹与结构画布共享坐标变换，平移/缩放时批注随画布移动。
+6. 笔迹模型、输入来源分类和坐标变换均有独立单元测试。
+
+### 当前边界
+
+- 这是原生 ArkUI Pointer/Touch 事件适配，不代表 Pen Kit 高级工具栏、波轮菜单或手写识别已接入。
+- 暂不支持笔迹与节点对象的语义绑定、图形识别转节点、压感曲线细分或橡皮擦套索。
+- 需要在 MatePad Pro 13.2 上确认真实 M-Pencil 的 sourceTool 上报、掌托防误触、双指手势冲突、笔迹流畅度和缩放坐标。
+- GitHub 静态检查不等于 DevEco ArkTS 编译或真机验收。
+
 ## v1.1.0（AlgoLab 1.1 开发预览）
 
 首个稳定功能基线聚焦单链表交互与 C++ 代码学习。
@@ -49,6 +70,7 @@ AlgoLab 不替代华为笔记、系统浏览器、课程平台或通用 AI 助�
 ## 实现记录
 
 - [首轮实现记录与手动验收场景](../../docs/IMPLEMENTATION_LOG.md)
+- [AlgoLab 1.2.0-alpha.1 开发说明](../../docs/releases/v1.2.0-alpha.1.md)
 - [AlgoLab 1.1.0 开发预览说明](../../docs/releases/v1.1.0.md)
 - [AlgoLab 1.0.0 基线发布说明](../../docs/releases/v1.0.0.md)
 
@@ -60,4 +82,4 @@ AlgoLab 不替代华为笔记、系统浏览器、课程平台或通用 AI 助�
 
 ## 工程状态
 
-本目录包含 DevEco Studio 官方模板生成的 Stage 工程。用户已反馈在 Windows 的 DevEco Studio 26.0.0.865、HarmonyOS SDK 26.0.0.105 下构建成功，并已在 MatePad Pro 13.2（HarmonyOS 7.0.0）运行。真机截图确认节点创建、连接、值编辑和代码同步可用；但节点卡片的 next 标签刷新异常已在当前开发分支修复，需重新构建并复验。当前连接仍采用选择起点、再选择目标的方式；直接拖拽连接端口、内存视图、本地持久化和 C++ 真正编译执行尚未实现。
+本目录包含 DevEco Studio 官方模板生成的 Stage 工程。用户已反馈在 Windows 的 DevEco Studio 26.0.0.865、HarmonyOS SDK 26.0.0.105 下构建成功，并已在 MatePad Pro 13.2（HarmonyOS 7.0.0）运行。真机截图确认节点创建、连接、值编辑和代码同步可用；但节点卡片的 next 标签刷新异常已在当前开发分支修复，需重新构建并复验。当前连接仍采用选择起点、再选择目标的方式；直接拖拽连接端口、本地持久化和 C++ 真正编译执行尚未实现。1.2 Alpha 1 的 M-Pencil 双模输入与双指画布手势已进入独立开发分支，尚待 DevEco 编译和真机验收。
