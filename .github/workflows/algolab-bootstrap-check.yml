@@ -40,3 +40,10 @@ jobs:
           grep -Fq 'devecocli create' scripts/bootstrap-algolab-stage.sh
           grep -Fq 'devecocli build --modules entry --build-mode debug' scripts/build-algolab-hap.sh
           test -s .github/workflows/algolab-harmonyos-hap.yml
+
+      - name: Verify floating C++ workspace source hooks
+        run: |
+          grep -Fq 'codePanelWidth' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'panelDragStartX' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'panelResizeStartWidth' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'onAreaChange' apps/algolab/entry/src/main/ets/pages/Index.ets
