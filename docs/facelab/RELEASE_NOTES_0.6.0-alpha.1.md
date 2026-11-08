@@ -8,10 +8,6 @@ Connect the existing 0.5.2 unilateral-wink event pipeline to a local M-Pencil dr
 
 ## Implemented
 
-## Stroke Transaction
-
-The active stroke color is snapshotted at pointer DOWN. Palette changes received while the pen is down remain pending and are applied only after pointer UP or CANCEL.
-
 - Added a dedicated ArkUI Canvas drawing component using CanvasRenderingContext2D.
 - Accept only `TouchEvent.sourceTool === SourceTool.Pen`; finger input does not create strokes.
 - Process `Down`, `Move`, `Up`, and `Cancel`; consume stylus events to prevent them from bubbling into the outer Scroll or the 3D face surface.
@@ -20,9 +16,12 @@ The active stroke color is snapshotted at pointer DOWN. Palette changes received
 - Add six manual colors: ink black, vermilion, cobalt blue, pine green, amber, and wisteria.
 - Route left wink to the previous palette color and right wink to the next palette color.
 - Reuse the existing 0.5.2 wink event detector, including its unilateral closure confirmation and 650 ms cooldown; no second wink detector is introduced.
-- Freeze the active stroke color at DOWN. Face and manual color changes received during a stroke are queued and applied only after UP or CANCEL.
 - Keep face control opt-in, mutually exclusive with the A/B/C gesture demo, and automatically pause it when face tracking is lost.
 - Keep the FacePen canvas in its own card, separate from the GPU XComponent surface.
+
+## Stroke Transaction
+
+The active stroke color is snapshotted at pointer DOWN. Palette changes received while the pen is down remain pending and are applied only after pointer UP or CANCEL. This prevents a single stroke from changing color halfway through.
 
 ## Deliberate limitations
 
