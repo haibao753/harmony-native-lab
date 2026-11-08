@@ -13,6 +13,9 @@ export struct TeachingWorkbench {
   @Prop traceReady: boolean = false;
   @Prop stepIndex: number = 0;
   @Prop stepCount: number = 0;
+  @Prop progressPercent: number = 0;
+  @Prop isPlaying: boolean = false;
+  @Prop canPlay: boolean = false;
   @Prop stepTitle: string = '';
   @Prop stepExplanation: string = '';
   @Prop currentLabel: string = 'current = nullptr';
@@ -34,6 +37,7 @@ export struct TeachingWorkbench {
   onAnswer: (option: number) => void = (option: number) => {};
   onPrevious: () => void = () => {};
   onNext: () => void = () => {};
+  onTogglePlay: () => void = () => {};
   onRestart: () => void = () => {};
   onOpenMemory: () => void = () => {};
   onOpenCode: () => void = () => {};
@@ -172,6 +176,17 @@ export struct TeachingWorkbench {
             .width('100%')
 
             if (this.traceReady) {
+              Row() {
+                Row()
+                  .width(this.progressPercent.toString() + '%')
+                  .height(5)
+                  .backgroundColor('#B96F3F')
+                  .borderRadius(5)
+              }
+              .width('100%')
+              .height(5)
+              .backgroundColor('#EEEAE2')
+              .borderRadius(5)
               Text(this.stepTitle)
                 .fontSize(14)
                 .fontWeight(FontWeight.Bold)
@@ -268,7 +283,7 @@ export struct TeachingWorkbench {
                 .borderRadius(9)
               }
 
-              Row({ space: 6 }) {
+              Row({ space: 5 }) {
                 Button('上一步')
                   .type(ButtonType.Normal)
                   .layoutWeight(1)
@@ -278,17 +293,30 @@ export struct TeachingWorkbench {
                   .fontColor('#514C44')
                   .borderRadius(8)
                   .onClick(() => this.onPrevious())
+                Button(this.isPlaying ? '暂停' : '播放')
+                  .type(ButtonType.Normal)
+                  .layoutWeight(1)
+                  .height(34)
+                  .enabled(this.canPlay || this.isPlaying)
+                  .backgroundColor(this.isPlaying ? '#F3E6DC' : '#292720')
+                  .fontColor(this.isPlaying ? '#8E512F' : '#FFFFFF')
+                  .borderRadius(8)
+                  .onClick(() => this.onTogglePlay())
                 Button('下一步')
                   .type(ButtonType.Normal)
                   .layoutWeight(1)
                   .height(34)
-                  .enabled(this.canGoNext)
-                  .backgroundColor(this.canGoNext ? '#292720' : '#E6E2DA')
-                  .fontColor(this.canGoNext ? '#FFFFFF' : '#9B958A')
+                  .enabled(this.canGoNext && !this.isPlaying)
+                  .backgroundColor(this.canGoNext && !this.isPlaying ? '#292720' : '#E6E2DA')
+                  .fontColor(this.canGoNext && !this.isPlaying ? '#FFFFFF' : '#9B958A')
                   .borderRadius(8)
                   .onClick(() => this.onNext())
               }
               .width('100%')
+              Text('连续播放用于快速观察完整流程；暂停后可逐步预测并答题。')
+                .fontSize(9)
+                .fontColor('#928B80')
+                .width('100%')
               Button('重新演示')
                 .type(ButtonType.Normal)
                 .width('100%')
