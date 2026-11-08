@@ -28,6 +28,7 @@ public:
                     float pitch, float yaw, float roll,
                     uint64_t topologyRevision, int32_t mode);
     void ClearMesh();
+    void SetViewTransform(float pitch, float yaw, float zoom);
 
 private:
     struct GpuVertex {
@@ -61,6 +62,9 @@ private:
     float pitch_{0.0f};
     float yaw_{0.0f};
     float roll_{0.0f};
+    float viewPitch_{0.0f};
+    float viewYaw_{0.0f};
+    float viewZoom_{1.0f};
     int32_t mode_{0};
     int32_t requestedWidth_{0};
     int32_t requestedHeight_{0};
@@ -78,6 +82,8 @@ private:
     GLuint triangleBuffer_{0};
     GLuint edgeBuffer_{0};
     GLint poseLocation_{-1};
+    GLint viewLocation_{-1};
+    GLint zoomLocation_{-1};
     GLint aspectLocation_{-1};
     GLint modeLocation_{-1};
     GLsizei triangleIndexCount_{0};
