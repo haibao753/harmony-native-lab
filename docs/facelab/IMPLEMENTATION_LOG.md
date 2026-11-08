@@ -97,7 +97,6 @@
 
 ### Validation boundary
 
-- User reports that 0.3.1 successfully ran on the MatePad Pro 13.2 (2023) and that no obvious issues were noticed.
-- This is recorded as an initial successful device run, not a claim that every new interaction has passed a separate acceptance test.
-- Detailed verification still to be recorded if/when individually checked: neutral baseline capture, blink / jaw deformation response, head-pose continuity feedback, recalibration, and stop / restart cleanup.
-- GitHub Actions source-contract checks passed. DevEco build and hardware smoke test were completed by the user on the target device.
+- Source changes and documentation have been committed to a new feature branch stacked on the 0.3.0 branch.
+- Static source review only. The GitHub connector cannot run DevEco Studio, compile ArkTS, package a HAP, or test the MatePad.
+- User must build and install 0.3.1 locally. Verify neutral capture, blink / jaw deformation, head movement, continuity feedback, recalibration, and stop cleanup.
