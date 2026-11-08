@@ -538,7 +538,6 @@ struct Index {
         .fontColor('#52616B')
         .width('100%')
 
-
       }
       .padding(16)
       .width('100%')
@@ -550,10 +549,10 @@ struct Index {
       if (this.showCode) {
         Column({ space: 8 }) {
           Row({ space: 8 }) {
-            Text('⠿')
-              .fontSize(22)
+            Text('⠿ 移动')
+              .fontSize(13)
               .fontColor('#52616B')
-              .width(34)
+              .width(64)
               .height(36)
               .textAlign(TextAlign.Center)
               .gesture(
@@ -622,8 +621,8 @@ struct Index {
             Text('◢')
               .fontSize(24)
               .fontColor('#2563EB')
-              .width(34)
-              .height(30)
+              .width(48)
+              .height(40)
               .textAlign(TextAlign.Center)
               .gesture(
                 PanGesture({ fingers: 1, distance: 2 })
@@ -654,7 +653,7 @@ struct Index {
               )
           }
           .width('100%')
-          .height(30)
+          .height(40)
         }
         .width(this.codePanelWidth)
         .height(this.codePanelHeight)
