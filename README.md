@@ -4,7 +4,7 @@
 
 > **开发原则：原生优先。** 使用 ArkTS、ArkUI、Stage 模型及 HarmonyOS SDK 提供的系统能力；不以 Android APK 套壳或 WebView 包装作为默认实现路线。
 
-## 首个应用：AlgoLab
+## 应用一：AlgoLab
 
 **AlgoLab 是一款让学习者通过创造和操作数据结构，逐步理解其内存表示与 C++ 实现的交互式实验工具。**
 
@@ -21,6 +21,16 @@
 - 应用模型：Stage 模型。
 
 已将 DevEco Studio 官方模板生成的 API 26 Stage 工程放在 `apps/algolab`，并接入现有 ArkTS 源码。打开工程与继续开发请看[本机开发指南](docs/development-guide.md)。
+
+## 应用二：FaceLab
+
+**FaceLab 是一个围绕 AR Engine 人脸追踪、深度估计、三维面部网格与新型交互方式的鸿蒙原生实验应用。** 当前先验证 MatePad Pro 13.2（2023）的实际能力，不把 dToF 硬件存在等同于原始深度数据开放。
+
+- [FaceLab 应用说明](apps/facelab/README.md)
+- [FaceLab 产品定义](docs/facelab/PRODUCT_SPEC.md)
+- [FaceLab 技术说明](docs/facelab/TECHNICAL_NOTES.md)
+- [FaceLab 设备兼容性矩阵](docs/facelab/DEVICE_MATRIX.md)
+- [FaceLab 实现记录](docs/facelab/IMPLEMENTATION_LOG.md)
 
 ## 仓库结构
 
@@ -42,7 +52,7 @@ harmony-native-lab/
 │   ├── README.md
 │   └── bootstrap-algolab-stage.sh
 ├── apps/
-│   └── algolab/
+│   ├── algolab/\n│   └── facelab/
 │       ├── README.md
 │       └── entry/src/main/ets/
 │           ├── domain/
@@ -65,7 +75,7 @@ harmony-native-lab/
 - [手动触发 HAP 构建工作流](.github/workflows/algolab-harmonyos-hap.yml)
 - [GitHub Actions 轻量检查](.github/workflows/algolab-bootstrap-check.yml)
 - [仓库通用架构约定](docs/architecture.md)
-- [AlgoLab 应用入口](apps/algolab/README.md)
+- [AlgoLab 应用入口](apps/algolab/README.md)\n- [FaceLab 应用入口](apps/facelab/README.md)\n- [FaceLab 产品定义](docs/facelab/PRODUCT_SPEC.md)
 
 ## 开发原则
 
