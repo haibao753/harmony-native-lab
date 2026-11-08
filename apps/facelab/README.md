@@ -109,7 +109,7 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 所有数据只在设备内存中用于实时展示，不保存、不上传。FaceLab 不进行身份识别，不访问系统人脸认证数据，也不读取 dToF 原始传感器帧。
 
 
-## 0.5.0 构建与验收
+## 0.5.1 构建与验收
 
 1. 在 DevEco Studio 打开 apps/facelab，使用 HarmonyOS SDK 26.0.0。
 2. 确认 entry 模块已读取 externalNativeOptions，CMake 指向 entry/src/main/cpp/CMakeLists.txt。
@@ -126,7 +126,7 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 
 `XComponentController` and `XComponentType` are ArkTS global declarations in the ArkUI component API; do not import them as named exports from `@kit.ArkUI`. Use the ArkTS XComponent options object with `type: XComponentType.SURFACE` and `controller`. Do not confuse it with the API 19+ `NativeXComponentParameters` overload, which is a separate native-side lifecycle API.
 
-## 0.5.0 技术边界
+## 0.5.1 技术边界
 
 GPU 渲染线程目标约 30 Hz，AR Engine 网格发布仍约 5 Hz；两者不是同一帧率。当前没有设备实测数据，不能承诺达到 30 FPS，也不能预先认定卡顿已消除。所有面部数据仅在内存中处理，不保存、不上传。
 
