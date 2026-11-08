@@ -78,7 +78,7 @@ void main() {
     }
     vec3 normal = normalize(vNormal);
     vec3 lightDir = normalize(vec3(-0.35, 0.55, 1.0));
-    float diffuse = max(dot(normal, lightDir), 0.0);
+    float diffuse = abs(dot(normal, lightDir));
     float rim = pow(1.0 - max(dot(normal, vec3(0.0, 0.0, 1.0)), 0.0), 2.0);
     vec3 base = vec3(0.16, 0.43, 0.54);
     vec3 color = base * (0.24 + diffuse * 0.76) + vec3(0.18, 0.42, 0.50) * rim * 0.22;
@@ -200,8 +200,8 @@ void FaceGpuRenderer::RenderLoop()
         RenderFrame();
         nextFrame += frameInterval;
         auto now = std::chrono::steady_clock::now();
-        if (nextFrame < now - std::chrono::milliseconds(100)) {
-            nextFrame = now;
+        if (nextFrame <= now) {
+            nextFrame = now + std::chrono::milliseconds(1);
         }
         std::this_thread::sleep_until(nextFrame);
     }
