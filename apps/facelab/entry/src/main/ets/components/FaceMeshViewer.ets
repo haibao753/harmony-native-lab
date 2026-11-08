@@ -1,7 +1,6 @@
 interface FaceMeshProjectedPoint {
   x: number;
   y: number;
-  z: number;
   rx: number;
   ry: number;
   rz: number;
@@ -59,25 +58,6 @@ export struct FaceMeshViewer {
     this.lastTouchY = -1;
     this.lastPinchDistance = 0;
     this.draw();
-  }
-
-  private heatColor(value: number): string {
-    const t = Math.max(0, Math.min(1, value));
-    let red: number = 0;
-    let green: number = 0;
-    let blue: number = 0;
-    if (t < 0.5) {
-      const k = t * 2;
-      red = Math.floor(35 + 20 * k);
-      green = Math.floor(105 + 125 * k);
-      blue = Math.floor(220 - 35 * k);
-    } else {
-      const k = (t - 0.5) * 2;
-      red = Math.floor(55 + 200 * k);
-      green = Math.floor(230 - 145 * k);
-      blue = Math.floor(185 - 105 * k);
-    }
-    return 'rgb(' + red.toString() + ',' + green.toString() + ',' + blue.toString() + ')';
   }
 
   private drawAxis(width: number, height: number): void {
@@ -255,7 +235,7 @@ export struct FaceMeshViewer {
     if (this.projectedPoints.length !== vertexCount) {
       this.projectedPoints = [];
       for (let i = 0; i < vertexCount; i++) {
-        this.projectedPoints.push({ x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 });
+        this.projectedPoints.push({ x: 0, y: 0, rx: 0, ry: 0, rz: 0 });
       }
     }
 
@@ -273,7 +253,6 @@ export struct FaceMeshViewer {
       const point = this.projectedPoints[i];
       point.x = width * 0.5 + yawX * scale * perspective;
       point.y = height * 0.52 - pitchY * scale * perspective;
-      point.z = yawZ;
       point.rx = yawX;
       point.ry = pitchY;
       point.rz = yawZ;
@@ -359,7 +338,7 @@ export struct FaceMeshViewer {
           ctx.fill();
         }
         ctx.globalAlpha = 1;
-        this.drawEdges(width, height, 0.22, '#C8D8E8', 0.35);
+        this.drawEdges(0.22, '#C8D8E8', 0.35);
       } else {
         ctx.font = '12px sans-serif';
         ctx.fillStyle = '#F2C078';
@@ -426,7 +405,7 @@ export struct FaceMeshViewer {
       }
     } else {
       // Wireframe is intentionally edge-only: no hidden face fill or surface overlay.
-      this.drawEdges(width, height, 1, '#69D9E8', 0.9);
+      this.drawEdges(1, '#69D9E8', 0.9);
     }
 
     ctx.font = '10px sans-serif';
@@ -434,7 +413,7 @@ export struct FaceMeshViewer {
     ctx.textAlign = 'right';
     ctx.fillText(vertexCount.toString() + ' vertices · ' +
       Math.floor(this.triangles.length / 3).toString() + ' triangles', width - 12, 21);
-    ctx.fillText('CANVAS ' + this.drawFps.toFixed(1) + ' FPS · ' +
+    ctx.fillText('DRAW CALL ' + this.drawFps.toFixed(1) + ' Hz · JS ' +
       this.lastDrawCostMs.toString() + ' ms', width - 12, 39);
     ctx.textAlign = 'left';
     ctx.fillStyle = '#8190A5';
@@ -444,7 +423,7 @@ export struct FaceMeshViewer {
     this.finishDraw(drawStartedAt);
   }
 
-  private drawEdges(width: number, height: number, alpha: number, color: string, lineWidth: number): void {
+  private drawEdges(alpha: number, color: string, lineWidth: number): void {
     const ctx = this.context;
     const vertexCount = this.projectedPoints.length;
     ctx.beginPath();
