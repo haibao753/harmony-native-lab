@@ -54,6 +54,13 @@ FaceLab 是一个 HarmonyOS 原生视觉与交互实验应用，优先研究 Mat
 - 缓存拓扑边，限制 UI 数据更新频率，保持本地内存处理。
 - 明确本版本 Canvas 方案是三维投影绘制，不是独立 GPU 3D 场景；后续根据真机性能评估是否迁移 ArkGraphics3D。
 
+### 0.4.1 — Runtime Stability Hotfix
+- 修复 MatePad 首帧网格绘制时 TypedArray 经 ArkUI `@Prop` 观察代理触发的运行时异常。
+- AR 回调层保留 Float32Array / Uint32Array / Int32Array；跨入 FaceMeshViewer 前将五类网格数据转换为普通 number[]。
+- FaceMeshViewer 的 @Prop 不再接收 TypedArray；增加源码契约检查防止边界回归。
+- 版本号更新为 0.4.1 / versionCode 10005。
+- DevEco 编译与 MatePad 真机回归仍是发布验收条件，源码检查通过不等于设备验收通过。
+
 ### 0.5.0 — Interaction Lab
 - 头部左右转动、点头与倾斜映射为可配置操作。
 - 探索眨眼、张嘴等 BlendShapes 触发方式。

@@ -130,3 +130,20 @@
 - Static source review and GitHub source-contract checks only.
 - No DevEco Studio build or MatePad 0.4.0 hardware test has been performed by the assistant.
 - The user must verify ArkTS compilation, Canvas rendering, region-label availability, live head-pose transform direction, expression deformation, gesture interaction, performance, and stop / restart cleanup.
+
+
+## 2026-11-08 — 0.4.1 Runtime Stability Hotfix
+
+### Root cause and fix
+
+- The MatePad first-frame JSCrash identified FaceMeshViewer.ets:158:40 and `TypeError: This value does not have a [[TypedArrayName]] internal slot`.
+- The failure was caused by TypedArray values crossing the ArkUI `@Prop` observation boundary; TypedArray accessors require a genuine TypedArray receiver.
+- Kept typed geometry buffers inside FaceTrackingCallback for processing, then converted vertices, triangles, edges, deformation, and optional labels with Array.from() in Index.ets.
+- Restricted all five FaceMeshViewer array props to ordinary number[] values.
+- Updated the visible app version and app metadata to 0.4.1 / versionCode 10005.
+- Added a dedicated release note, 0.4.1 source-contract checks, and kept the old 0.4.0 check script as a compatibility alias.
+
+### Verification boundary
+
+- GitHub Actions run 42459080651 passed the shell syntax and FaceLab 0.4.1 source-contract steps.
+- DevEco Studio compilation and MatePad hardware retest have not yet been performed; no runtime success is claimed.

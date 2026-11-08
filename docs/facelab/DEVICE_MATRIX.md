@@ -64,3 +64,12 @@
 - 设备层面：待在 MatePad Pro 13.2（2023）上使用 SDK 26.0.0 构建并验证。
 - 必测：网格可见、四种模式、单指旋转、双指缩放、真实头姿驱动、表情形变、停止后清理。
 - 三角面标签：华为公开 API 提供 getTriangleLabels() 及标签值定义，但目标设备运行时是否支持仍待真机验证。
+
+## 0.4.1 首帧崩溃修复验收状态（2026-11-08）
+
+- 崩溃证据：MatePad JSCrash 指向 FaceMeshViewer.ets:158:40，异常为 TypedArray internal slot 缺失。
+- 代码修复：AR 回调层保留类型化缓冲区；Index.ets 在组件边界将顶点、三角索引、边、形变和标签全部转换为普通 number[]。
+- 自动检查：GitHub Actions 0.4.1 stability contracts 已通过。
+- DevEco Studio / SDK 26.0.0 编译：待用户本地验证。
+- MatePad 首帧绘制、四种模式、手势、头姿驱动、表情形变、停止与重启：待真机验收。
+- TriangleLabels：可选能力，未返回标签时其余三种显示模式仍应正常工作。
