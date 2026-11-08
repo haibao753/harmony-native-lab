@@ -5,8 +5,9 @@
 ## 当前源码
 
 - `src/main/ets/domain/LinkedListModel.ets`：单链表文档模型、节点操作、可达性与环分析。
-- `src/main/ets/codegen/CppLinkedListGenerator.ets`：从结构模型确定性生成 C++ 构造/遍历/释放代码，并保留代码行映射。
-- `src/main/ets/pages/Index.ets`：ArkUI 工作台页面，包含节点创建/拖动、通过选择起点/目标建立 next、断开连接、设置 head、删除节点、撤销/重做，以及可拖动、可缩放、可滚动的浮动 C++ 代码工作区。
+- `src/main/ets/codegen/CppLinkedListGenerator.ets`：从结构模型确定性生成 C++ 构造/遍历/释放代码，并为关键语句生成逐行教学注释。
+- `src/main/ets/codegen/CppSyntaxHighlighter.ets`：原生 ArkTS C++ 词法着色，将关键字、类型、函数、字符串、数字、注释、预处理指令和运算符拆分为彩色 Token。
+- `src/main/ets/pages/Index.ets`：ArkUI 工作台页面，包含节点创建/拖动、通过选择起点/目标建立 next、断开连接、设置 head、删除节点、撤销/重做，以及可拖动、可缩放、可滚动的浮动 C++ 代码工作区；代码采用 One Dark 风格语法着色，并在每行右侧显示不同颜色的概念、指针、内存、安全性和控制流讲解。
 
 ## 重要状态说明
 
