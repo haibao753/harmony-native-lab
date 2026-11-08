@@ -48,6 +48,8 @@ struct NodeCard {
 
   @State dragOffsetX: number = 0;
   @State dragOffsetY: number = 0;
+  @State fingerGestureAllowed: boolean = false;
+  @State fingerTapAllowed: boolean = false;
 
   build() {
     Column({ space: 5 }) {
@@ -83,28 +85,37 @@ struct NodeCard {
     .borderRadius(14)
     .position({ x: this.positionX, y: this.positionY })
     .translate({ x: this.dragOffsetX, y: this.dragOffsetY })
+    .onTouch((event?: TouchEvent) => {
+      if (event !== undefined && event.type === TouchType.Down) {
+        this.fingerTapAllowed = event.sourceTool === SourceTool.Finger && !this.penContactActive;
+      }
+    })
     .onClick(() => {
-      if (!this.penContactActive) {
+      if (this.fingerTapAllowed && !this.penContactActive) {
         this.onTap(this.nodeId);
       }
+      this.fingerTapAllowed = false;
     })
     .gesture(
       PanGesture({ fingers: 1, distance: 4 })
         .onActionStart((event: GestureEvent | undefined) => {
-          if (event === undefined || event.sourceTool !== SourceTool.Finger || this.penContactActive) {
+          this.fingerGestureAllowed = event !== undefined &&
+            event.sourceTool === SourceTool.Finger && !this.penContactActive;
+          if (!this.fingerGestureAllowed) {
             return;
           }
           this.dragOffsetX = 0;
           this.dragOffsetY = 0;
         })
         .onActionUpdate((event: GestureEvent | undefined) => {
-          if (event !== undefined && event.sourceTool === SourceTool.Finger && !this.penContactActive) {
-            this.dragOffsetX = event.offsetX;
-            this.dragOffsetY = event.offsetY;
+          if (event !== undefined && this.fingerGestureAllowed) {
+            const safeScale = this.canvasScale > 0 ? this.canvasScale : 1;
+            this.dragOffsetX = event.offsetX / safeScale;
+            this.dragOffsetY = event.offsetY / safeScale;
           }
         })
         .onActionEnd((event: GestureEvent | undefined) => {
-          if (event !== undefined && event.sourceTool === SourceTool.Finger && !this.penContactActive) {
+          if (event !== undefined && this.fingerGestureAllowed) {
             const safeScale = this.canvasScale > 0 ? this.canvasScale : 1;
             this.onMove(
               this.nodeId,
@@ -112,10 +123,12 @@ struct NodeCard {
               this.positionY + event.offsetY / safeScale
             );
           }
+          this.fingerGestureAllowed = false;
           this.dragOffsetX = 0;
           this.dragOffsetY = 0;
         })
         .onActionCancel(() => {
+          this.fingerGestureAllowed = false;
           this.dragOffsetX = 0;
           this.dragOffsetY = 0;
         })
