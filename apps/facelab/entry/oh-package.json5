@@ -1,9 +1,11 @@
 {
   "name": "entry",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "FaceLab HarmonyOS entry module.",
   "main": "",
   "author": "haibao753",
   "license": "MIT",
-  "dependencies": {}
+  "dependencies": {
+    "libfacelab_native.so": "file:./src/main/cpp/types/libfacelab_native"
+  }
 }
