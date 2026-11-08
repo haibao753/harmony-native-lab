@@ -100,3 +100,13 @@
 - Source changes and documentation have been committed to a new feature branch stacked on the 0.3.0 branch.
 - Static source review only. The GitHub connector cannot run DevEco Studio, compile ArkTS, package a HAP, or test the MatePad.
 - User must build and install 0.3.1 locally. Verify neutral capture, blink / jaw deformation, head movement, continuity feedback, recalibration, and stop cleanup.
+
+
+### 0.3.1 device acceptance update
+
+- User reports that 0.3.1 successfully ran on the MatePad Pro 13.2 (2023) and that no obvious issues were noticed.
+- User specifically verified that, after capturing a neutral-expression mesh baseline, blinking and opening the mouth change the current-vs-neutral mesh RMS / MAX values.
+- This confirms that the neutral-reference geometry metric responds to at least these two expression actions on the target device.
+- No calibrated mapping from RMS / MAX to expression intensity is claimed; values remain in raw mesh coordinate units and may also reflect head-pose changes.
+- Head-pose continuity feedback, recalibration, and stop / restart cleanup have not yet been separately recorded as individually accepted tests.
+- GitHub Actions source-contract checks passed. DevEco build and hardware smoke test were completed by the user on the target device.
