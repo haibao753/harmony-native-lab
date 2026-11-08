@@ -1,3 +1,5 @@
+import { StylusFrameBoost } from '@kit.Penkit';
+
 export interface FacePenColor {
   name: string;
   value: string;
@@ -37,6 +39,33 @@ export struct FacePenCanvas {
   private activeStrokeColor: string = '#20242B';
   private lastX: number = 0;
   private lastY: number = 0;
+  private stylusFrameBoost: StylusFrameBoost | undefined = undefined;
+  private stylusFrameBoostAttempted: boolean = false;
+
+  private refreshStylusFrame(action: number): void {
+    if (!this.stylusFrameBoostAttempted) {
+      this.stylusFrameBoostAttempted = true;
+      try {
+        this.stylusFrameBoost = new StylusFrameBoost();
+      } catch (_) {
+        this.stylusFrameBoost = undefined;
+        return;
+      }
+    }
+    const boost = this.stylusFrameBoost;
+    if (boost === undefined) {
+      return;
+    }
+    try {
+      const result = boost.forceRefreshOneFrame(action);
+      if (result !== 0) {
+        this.stylusFrameBoost = undefined;
+      }
+    } catch (_) {
+      // The normal Canvas path remains usable when frame boost is unavailable.
+      this.stylusFrameBoost = undefined;
+    }
+  }
 
   private lineWidthFor(point: TouchObject): number {
     const pressure = point.pressure;
@@ -121,6 +150,7 @@ export struct FacePenCanvas {
       if (this.isStrokeActive) {
         event.stopPropagation();
         this.finishStroke(false);
+        this.refreshStylusFrame(event.type);
       }
       return;
     }
@@ -139,6 +169,7 @@ export struct FacePenCanvas {
       if (point !== undefined) {
         this.startStroke(point);
       }
+      this.refreshStylusFrame(event.type);
       return;
     }
 
@@ -157,6 +188,7 @@ export struct FacePenCanvas {
       if (point !== undefined) {
         this.drawTo(point);
       }
+      this.refreshStylusFrame(event.type);
       return;
     }
 
@@ -165,6 +197,7 @@ export struct FacePenCanvas {
         this.drawTo(point);
       }
       this.finishStroke(true);
+      this.refreshStylusFrame(event.type);
     }
   }
 

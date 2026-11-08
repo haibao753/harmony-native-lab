@@ -111,7 +111,7 @@ FaceLab 是一个 HarmonyOS 原生视觉与交互实验应用，优先研究 Mat
 - 笔画事务规则：DOWN 快照当前颜色；MOVE 始终使用快照颜色；书写期间的面部 / 手动调色更新 pending color；UP / CANCEL 结束后才提交 pending color。
 - 面部控制默认关闭、显式启用；与原 A/B/C 手势演示互斥；人脸丢失时自动暂停面部控制。
 - 画布位于独立 UI 卡片，不覆盖 FaceGpuSurface，不改变 ARViewContext 生命周期；手写笔事件通过 stopPropagation 阻止被外层滚动 / 观察器手势消费。
-- 本版本不依赖 StylusFrameBoost 或非公开接口；后续只有在确认目标 SDK 的公开签名和设备支持后才考虑加入帧同步优化。
+- 在 API 26 上按需调用公开的 `StylusFrameBoost.forceRefreshOneFrame(event.type)`；构造失败、调用异常或返回非 0 时禁用加速并继续使用普通 Canvas 绘制。该优化仍需在目标 MatePad 上验证实际收益。
 - 仅控制 FaceLab 自身画布，不尝试控制华为笔记或其他应用。
 - 源码契约检查通过不等于 ArkTS 编译通过；DevEco 构建和 MatePad Pro 13.2（2023）真机验收是下一阶段门槛。
 

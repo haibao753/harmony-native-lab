@@ -26,7 +26,7 @@ The active stroke color is snapshotted at pointer DOWN. Palette changes received
 ## Deliberate limitations
 
 - FacePen controls only its own drawing surface. It does not change the pen color in Huawei Notes or another application.
-- StylusFrameBoost is not used in this alpha because its exact public SDK signature and availability were not confirmed for this project; standard Canvas rendering remains the fallback and baseline.
+- Integrate API 26 `StylusFrameBoost` as a best-effort optimization on stylus DOWN / MOVE / UP / CANCEL. Constructor failure, exceptions, or a non-zero result disable the optimization while leaving normal Canvas drawing available.
 - The prototype does not yet implement undo, stroke persistence, export, palm rejection policy, or a full pressure/tilt brush engine.
 - Canvas contents may be cleared when the Canvas is recreated or resized; persistence is not part of this alpha.
 

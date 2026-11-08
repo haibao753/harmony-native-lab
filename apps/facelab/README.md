@@ -193,6 +193,7 @@ After pulling this change, synchronize OHPM dependencies in DevEco Studio before
 - 墨黑、朱红、钴蓝、松绿、琥珀、紫藤六色可手动选择。
 - 左眼单眨选择上一色，右眼单眨选择下一色；复用 0.5.2 已有的 wink 事件和冷却逻辑。
 - 使用笔画事务：DOWN 时冻结颜色；书写中颜色指令只进入 pending；UP / CANCEL 结束后再应用待切换颜色。
+- API 26 `StylusFrameBoost` 作为可选低延迟优化按需调用；不可用或返回失败时自动退回普通 Canvas 绘制。
 - 人脸丢失时自动暂停面部颜色控制；手动调色和 M-Pencil 书写不依赖人脸追踪。
 - FacePen 画布独立于 GPU 人脸 Surface，不修改现有 GPU 渲染路径或 AR 会话生命周期。
 - 当前仅控制 FaceLab 自己的画布，不控制华为笔记或其他第三方应用。

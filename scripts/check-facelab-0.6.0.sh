@@ -30,6 +30,8 @@ grep -Fq "this.activeStrokeColor = this.selectedColor" "$canvas"
 grep -Fq "event.getHistoricalPoints()" "$canvas"
 grep -Fq "point.pressure" "$canvas"
 grep -Fq "this.context.clearRect" "$canvas"
+grep -Fq "import { StylusFrameBoost } from '@kit.Penkit'" "$canvas"
+grep -Fq "forceRefreshOneFrame(action)" "$canvas"
 
 grep -Fq '"versionCode": 10011' "$manifest"
 grep -Fq '"versionName": "0.6.0-alpha.1"' "$manifest"
