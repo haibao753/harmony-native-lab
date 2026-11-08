@@ -402,7 +402,7 @@ export struct FaceMeshViewer {
       } else {
         ctx.font = '12px sans-serif';
         ctx.fillStyle = '#F2C078';
-        ctx.fillText('先采集中性表情基准以启用形变热力图', 14, 43);
+        ctx.fillText('形变数据暂不可用：请等待下一帧网格数据', 14, 43);
       }
     } else if (this.mode === 'wireframe') {
       // Wireframe is intentionally edge-only: no hidden face fill or surface overlay.
