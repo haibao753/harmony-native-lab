@@ -6,11 +6,11 @@ interface FaceMeshProjectedPoint {
 
 @Component
 export struct FaceMeshViewer {
-  @Prop vertices: Float32Array = new Float32Array(0);
-  @Prop triangles: Uint32Array = new Uint32Array(0);
-  @Prop edges: Uint32Array = new Uint32Array(0);
-  @Prop deformation: Float32Array = new Float32Array(0);
-  @Prop labels: Int32Array = new Int32Array(0);
+  @Prop vertices: number[] = [];
+  @Prop triangles: number[] = [];
+  @Prop edges: number[] = [];
+  @Prop deformation: number[] = [];
+  @Prop labels: number[] = [];
   @Prop @Watch('redraw') revision: number = 0;
   @Prop @Watch('redraw') mode: string = 'wireframe';
   @Prop @Watch('redraw') hasNeutral: boolean = false;
