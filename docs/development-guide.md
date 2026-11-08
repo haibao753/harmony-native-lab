@@ -1,51 +1,26 @@
 # HarmonyOS 原生开发指南
 
-## 1. 环境准备
+## 当前工程与已验证环境
 
-1. 安装 DevEco Studio。
-2. 通过 SDK Manager 安装与目标设备兼容的 HarmonyOS SDK、工具链和模拟器组件。
-3. 使用 DevEco Studio 创建 Stage 模型应用工程。
-4. 连接 MatePad Pro 13.2 或启动兼容的模拟器，开启开发者选项及 USB 调试（如采用真机调试）。
-5. 首次构建前，记录以下版本信息。
+- 项目目录：仓库内的 `apps/algolab`；由 DevEco Studio 官方 Stage 模板生成，并接入原有三个 ArkTS 源文件。
+- 实际构建环境：Windows、DevEco Studio 26.0.0.865、HarmonyOS SDK 26.0.0.105（API 26）。
+- 用户已反馈本机构建成功，并已在 Huawei MatePad Pro 13.2（HarmonyOS 7.0.0）启动应用。
+- 2026-11-08 真机截图验证了节点创建、next 连接、data 编辑与 C++ 代码同步；截图同时暴露 NodeCard 的 next 标签未随结构变化刷新。本分支已改用独立原始类型 `@Prop`，但新改动仍需重新构建和真机复验。
+- 工程的设备类型在官方模板基础上加入 tablet。
 
-| 项目 | 记录 |
-|---|---|
-| DevEco Studio | 待填写 |
-| HarmonyOS SDK / API Level | 待填写 |
-| 设备型号 | Huawei MatePad Pro 13.2 |
-| 设备系统版本 | 待填写 |
-| 构建时间与结果 | 待首次构建后填写 |
+## 在 Windows 本机继续开发
 
-## 2. 创建首个工程
+1. 在 DevEco Studio 中打开 `apps/algolab`，确认 SDK Manager 已安装 HarmonyOS API 26；按本机情况配置 SDK。
+2. 等待工程同步及依赖安装，再构建 entry 模块。具体产物和诊断以本机 IDE 输出为准。
+3. 使用 IDE 的官方签名与设备调试流程生成可安装的调试包；证书、Profile、私钥、密码和本机配置不要提交到 GitHub。
+4. 在平板验证启动、触控、拖动、连接、撤销、代码显示与横竖屏布局，记录结果和问题。
 
-在 DevEco Studio 中创建一个原生 Stage 模型应用。模板名称、向导选项会随 IDE 版本变化，选择当前 SDK 推荐的 ArkTS / ArkUI 工程模板即可。
+## 工程来源与文件
 
-将 IDE 生成的工程配置、模块配置、资源目录和源码整体提交到仓库。不要手工猜测或复制其他 API 级别的 hvigor、oh-package 或 module 配置。
+工程元数据由官方 DevEco Studio 模板生成；`entry/src/main/module.json5` 在模板设备类型中补充了 `tablet`。三个原型源码文件保留了仓库原有内容。本机 `local.properties`、构建产物、IDE 状态、依赖缓存和签名材料不纳入仓库。
 
-## 3. 推荐实现顺序
+## 可选：Linux 自托管 Runner
 
-1. 工程能在模拟器或真机启动。
-2. 建立页面导航、主题和基础布局。
-3. 建立应用状态与数据模型。
-4. 实现本地存储和导入导出。
-5. 接入设备能力（相机、传感器、文件等）时逐项验证权限和 API 兼容性。
-6. 最后接入远程 AI 服务；密钥不得硬编码进仓库或客户端。
+仓库保留历史 Bash 生成脚本、[手动 HAP 工作流](../.github/workflows/algolab-harmonyos-hap.yml)和 [Runner 接入指南](cloud-build-runner.md)，用于后续实验；它们不是打开或构建现有 Windows 工程的前提，且尚未在 API 26 环境实测。无需购买云主机。
 
-## 4. 验证要求
-
-每个功能至少记录：
-- 使用的 SDK / API Level；
-- 目标设备与系统版本；
-- 构建是否成功；
-- 真机或模拟器测试结果；
-- 权限、性能、兼容性与已知问题。
-
-未经真实构建与设备验证，不标记为“已完成”或“可运行”。
-
-## 5. Git 工作流
-
-- `main`：保持可审阅的稳定状态。
-- `feat/<topic>`：功能开发。
-- `fix/<topic>`：问题修复。
-- 提交信息使用简洁前缀，例如 `feat:`、`fix:`、`docs:`、`chore:`。
-- 大功能通过 PR 合并，并在 PR 描述中附测试证据。
+每次构建和设备验证应记录 IDE/SDK 版本、构建结果、产物路径及签名状态、设备和测试结果。不要将未执行的测试标记为通过。

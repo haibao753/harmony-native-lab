@@ -1,9 +1,9 @@
 # AlgoLab 产品需求文档（Product Specification）
 
-- 状态：产品方案 v0.1，待原型验证
+- 状态：v0.1 原型迭代中；首轮 MatePad 真机验证已完成，正在修复状态同步并准备第二轮验证
 - 产品代号：AlgoLab
 - 首发平台：HarmonyOS NEXT 原生平板应用
-- 首要体验设备：Huawei MatePad Pro 13.2（2023 款；系统版本与 API Level 待实机确认）
+- 首要体验设备：Huawei MatePad Pro 13.2（2023 款，HarmonyOS 7.0.0；本机 DevEco SDK API 26）
 
 ## 1. 产品定义
 

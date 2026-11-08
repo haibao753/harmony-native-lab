@@ -1,0 +1,83 @@
+name: AlgoLab bootstrap checks
+
+on:
+  pull_request:
+    paths:
+      - "scripts/**"
+      - "apps/algolab/entry/src/main/ets/**"
+      - "apps/algolab/entry/src/test/**"
+      - ".github/workflows/algolab-bootstrap-check.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/**"
+      - "apps/algolab/entry/src/main/ets/**"
+      - "apps/algolab/entry/src/test/**"
+      - ".github/workflows/algolab-bootstrap-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap-script:
+    name: Validate bootstrap script and source inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check Bash syntax
+        run: bash -n scripts/bootstrap-algolab-stage.sh
+
+      - name: Verify source overlay inputs
+        run: |
+          test -s apps/algolab/entry/src/main/ets/domain/LinkedListModel.ets
+          test -s apps/algolab/entry/src/main/ets/codegen/CppLinkedListGenerator.ets
+          test -s apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
+          test -s apps/algolab/entry/src/main/ets/pages/Index.ets
+
+      - name: Verify API 26 bootstrap guard
+        run: |
+          grep -Fq 'API_LEVEL:-26' scripts/bootstrap-algolab-stage.sh
+          grep -Fq 'devecocli create' scripts/bootstrap-algolab-stage.sh
+          grep -Fq 'devecocli build --modules entry --build-mode debug' scripts/build-algolab-hap.sh
+          test -s .github/workflows/algolab-harmonyos-hap.yml
+
+      - name: Verify floating C++ workspace source hooks
+        run: |
+          grep -Fq 'codePanelWidth' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'panelDragStartX' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'panelResizeStartWidth' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'onAreaChange' apps/algolab/entry/src/main/ets/pages/Index.ets
+
+      - name: Verify C++ highlighting and educational annotations
+        run: |
+          grep -Fq 'highlightCpp(generated.code, generated.annotations)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'ForEach(line.tokens' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'Span(formatCppDisplayToken(token.text))' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '.width(measureCppLineWidth(line, this.codeFontSize, this.codeLineViewportWidth))' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '@State codeLineViewportWidth: number = 0' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'this.codeLineViewportWidth = nextWidth' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'Math.max(180, viewportWidth' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
+          grep -Fq '.textAlign(TextAlign.Start)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '.fontSize(12)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '.maxLines(3)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'export function measureCppLineWidth' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
+          grep -Fq 'annotationText' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '@State showAnnotations: boolean = true' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'this.showAnnotations = !this.showAnnotations' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'if (this.showAnnotations && line.annotationText' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '@State showCodeSettings: boolean = false' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'if (this.showCodeSettings)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq "Button(this.showAnnotations ? '注释：开' : '注释：关')" apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '引入哈希集合' apps/algolab/entry/src/main/ets/codegen/CppLinkedListGenerator.ets
+          grep -Fq 'const token: CppToken' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
+          grep -Fq 'const result: TokenizeResult' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
+          grep -Fq 'formatCppDisplayToken(token.text)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '.textAlign(TextAlign.Start)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '@State codeFontSize: number = 14' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq "Button('A+')" apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'preserves leading spaces and tabs' apps/algolab/entry/src/test/LocalUnit.test.ets
+          grep -Fq 'measures C++ source line width' apps/algolab/entry/src/test/LocalUnit.test.ets
+          grep -Fq "1'000" apps/algolab/entry/src/test/LocalUnit.test.ets
