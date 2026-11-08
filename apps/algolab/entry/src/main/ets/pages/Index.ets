@@ -41,31 +41,31 @@ struct NodeCard {
       Row({ space: 6 }) {
         Text(this.nodeId)
           .fontSize(11)
-          .fontColor('#64748B')
+          .fontColor('#827D74')
         if (this.isHead) {
           Text('HEAD')
             .fontSize(9)
-            .fontColor('#147D70')
+            .fontColor('#9A6038')
             .padding({ left: 5, right: 5, top: 2, bottom: 2 })
-            .backgroundColor('#DDF3ED')
+            .backgroundColor('#F2E4D8')
             .borderRadius(5)
         }
       }
       Text(this.nodeValue.toString())
         .fontSize(23)
         .fontWeight(FontWeight.Bold)
-        .fontColor('#17212B')
+        .fontColor('#292720')
       Text('next → ' + (this.nextId === null ? 'nullptr' : this.nextId))
         .fontSize(11)
-        .fontColor('#52616B')
+        .fontColor('#716C63')
     }
     .width(136)
     .height(88)
     .padding(10)
-    .backgroundColor(this.selected ? '#E2F3EF' : '#FFFFFF')
+    .backgroundColor(this.selected ? '#F6E9DE' : '#FFFEFC')
     .border({
       width: this.selected ? 2 : 1,
-      color: this.selected ? '#168477' : '#D9E0E7'
+      color: this.selected ? '#B96F3F' : '#DED9D0'
     })
     .borderRadius(14)
     .position({ x: this.positionX, y: this.positionY })
@@ -440,7 +440,7 @@ struct Index {
       return;
     }
     this.canvasContext.clearRect(0, 0, 1800, 900);
-    this.canvasContext.strokeStyle = '#91A0AE';
+    this.canvasContext.strokeStyle = '#AAA398';
     this.canvasContext.lineWidth = 2.5;
 
     for (let i = 0; i < this.document.nodes.length; i++) {
@@ -455,7 +455,7 @@ struct Index {
 
       const isHighlighted = source.id === this.selectedEdgeSourceId &&
         source.nextId === this.selectedEdgeTargetId;
-      this.canvasContext.strokeStyle = isHighlighted ? '#E07A3A' : '#91A0AE';
+      this.canvasContext.strokeStyle = isHighlighted ? '#B96F3F' : '#AAA398';
       this.canvasContext.lineWidth = isHighlighted ? 4 : 2.5;
 
       let startX = source.position.x + 136;
@@ -499,560 +499,643 @@ struct Index {
 
   build() {
     Stack({ alignContent: Alignment.TopStart }) {
-      Column({ space: 12 }) {
-      Row() {
-        Column({ space: 3 }) {
-          Text('AlgoLab')
-            .fontSize(25)
-            .fontWeight(FontWeight.Bold)
-            .fontColor('#17212B')
-          Text('单链表 · 自由实验')
-            .fontSize(12)
-            .fontColor('#718096')
-        }
-        Blank()
-        Button('＋ 节点')
-          .onClick(() => this.addNewNode())
-      }
-      .width('100%')
-
-      // Separate structure actions from value/history controls for a calmer
-      // landscape tablet toolbar.
-      Row({ space: 8 }) {
-        Button(this.connectionSourceId === '' ? '连接 next' : '取消连接')
-          .type(ButtonType.Normal)
-          .onClick(() => this.beginConnection())
-        Button('断开')
-          .type(ButtonType.Normal)
-          .onClick(() => this.disconnectSelected())
-        Button('设为 head')
-          .type(ButtonType.Normal)
-          .onClick(() => this.setSelectedAsHead())
-        Button('删除节点')
-          .type(ButtonType.Normal)
-          .onClick(() => this.deleteSelectedNode())
-      }
-      .width('100%')
-
-      Row({ space: 8 }) {
-        if (this.selectedId !== '') {
-          Text(this.selectedId + '.data')
-            .fontSize(12)
-            .fontColor('#52616B')
-          TextInput({ text: this.valueInput, placeholder: '整数' })
-            .width(96)
-            .height(40)
-            .onChange((value: string) => {
-              this.valueInput = value;
-            })
-          Button('应用')
-            .type(ButtonType.Normal)
-            .onClick(() => this.applySelectedValue())
-        }
-        Button('撤销')
-          .enabled(this.canUndo)
-          .type(ButtonType.Normal)
-          .onClick(() => this.undo())
-        Button('重做')
-          .enabled(this.canRedo)
-          .type(ButtonType.Normal)
-          .onClick(() => this.redo())
-        Button(this.showCode ? '收起代码' : '查看 C++')
-          .type(ButtonType.Capsule)
-          .onClick(() => {
-            this.showCode = !this.showCode;
-            if (this.showCode) {
-              this.showMemory = false;
-              this.normalizeCodePanelBounds();
-            }
-          })
-        Button(this.showMemory ? '收起内存' : '内存视图')
-          .type(ButtonType.Capsule)
-          .onClick(() => {
-            this.showMemory = !this.showMemory;
-            if (this.showMemory) {
-              this.showCode = false;
-            }
-          })
-      }
-      .width('100%')
-
-      Row() {
-        Text(this.statusText)
-          .fontSize(12)
-          .fontColor('#147D70')
-        Blank()
-        if (this.selectedId !== '') {
-          Text('选中：' + this.selectedId)
-            .fontSize(12)
-            .fontColor('#52616B')
-        }
-      }
-      .width('100%')
-
-      Stack() {
-        Canvas(this.canvasContext)
-          .width('100%')
-          .height('100%')
-          .backgroundColor('#F4F7F8')
-          .onReady(() => {
-            this.canvasReady = true;
-            this.drawConnections();
-          })
-
-        ForEach(
-          this.document.nodes,
-          (node: LinkedNode) => {
-            NodeCard({
-              nodeId: node.id,
-              nodeValue: node.value,
-              nextId: node.nextId,
-              isHead: this.document.headId === node.id,
-              positionX: node.position.x,
-              positionY: node.position.y,
-              selected: this.selectedId === node.id,
-              onTap: (id: string) => this.handleNodeTap(id),
-              onMove: (id: string, x: number, y: number) => this.moveSelectedNode(id, x, y)
-            })
-          },
-          (node: LinkedNode) => node.id
-        )
-
-        if (this.document.nodes.length === 0) {
-          Column({ space: 8 }) {
-            Text('从一个节点开始')
-              .fontSize(18)
+      Column({ space: 14 }) {
+        // Brand header: quiet typography, one clear primary action.
+        Row({ space: 12 }) {
+          Column({ space: 2 }) {
+            Text('AlgoLab')
+              .fontSize(27)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#292720')
+            Text('DATA STRUCTURE LABORATORY')
+              .fontSize(9)
               .fontWeight(FontWeight.Medium)
-              .fontColor('#334155')
-            Text('点击右上角「＋ 节点」，然后尝试拖动它。')
-              .fontSize(13)
-              .fontColor('#64748B')
+              .fontColor('#928B80')
+              .letterSpacing(1.4)
           }
-          .alignItems(HorizontalAlign.Center)
-          .position({ x: 30, y: 150 })
+          Blank()
+          Text('1.1  /  MEMORY EXPLORER')
+            .fontSize(10)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#8C857A')
+            .padding({ left: 10, right: 10, top: 7, bottom: 7 })
+            .backgroundColor('#ECE8E0')
+            .borderRadius(8)
+          Button('＋ 新建节点')
+            .type(ButtonType.Normal)
+            .height(40)
+            .padding({ left: 18, right: 18 })
+            .backgroundColor('#292720')
+            .fontColor('#FFFFFF')
+            .borderRadius(11)
+            .onClick(() => this.addNewNode())
         }
-      }
-      .width('100%')
-      .height(480)
-      .borderRadius(18)
-      .clip(true)
+        .width('100%')
+        .height(54)
 
-      Text(this.message)
-        .fontSize(13)
-        .fontColor('#52616B')
+        // Primary structure actions are grouped; destructive action is visually quiet.
+        Row({ space: 8 }) {
+          Button(this.connectionSourceId === '' ? '连接 next' : '取消连接')
+            .type(ButtonType.Normal)
+            .height(38)
+            .backgroundColor(this.connectionSourceId === '' ? '#EAE6DE' : '#F3E3D5')
+            .fontColor(this.connectionSourceId === '' ? '#48443C' : '#A35F32')
+            .borderRadius(9)
+            .onClick(() => this.beginConnection())
+          Button('断开 next')
+            .type(ButtonType.Normal)
+            .height(38)
+            .backgroundColor('#EAE6DE')
+            .fontColor('#48443C')
+            .borderRadius(9)
+            .onClick(() => this.disconnectSelected())
+          Button('设为 head')
+            .type(ButtonType.Normal)
+            .height(38)
+            .backgroundColor('#EAE6DE')
+            .fontColor('#48443C')
+            .borderRadius(9)
+            .onClick(() => this.setSelectedAsHead())
+          Button('删除节点')
+            .type(ButtonType.Normal)
+            .height(38)
+            .backgroundColor('#F1EAE4')
+            .fontColor('#9A5B43')
+            .borderRadius(9)
+            .onClick(() => this.deleteSelectedNode())
+          Blank()
+          Button(this.showCode ? '关闭 C++' : 'C++ 代码')
+            .type(ButtonType.Normal)
+            .height(38)
+            .backgroundColor(this.showCode ? '#F2E4D8' : '#EAE6DE')
+            .fontColor(this.showCode ? '#9A6038' : '#48443C')
+            .borderRadius(9)
+            .onClick(() => {
+              this.showCode = !this.showCode;
+              if (this.showCode) {
+                this.showMemory = false;
+                this.normalizeCodePanelBounds();
+              }
+            })
+          Button(this.showMemory ? '关闭内存' : '内存视图')
+            .type(ButtonType.Normal)
+            .height(38)
+            .backgroundColor(this.showMemory ? '#F2E4D8' : '#EAE6DE')
+            .fontColor(this.showMemory ? '#9A6038' : '#48443C')
+            .borderRadius(9)
+            .onClick(() => {
+              this.showMemory = !this.showMemory;
+              if (this.showMemory) {
+                this.showCode = false;
+              }
+            })
+        }
         .width('100%')
 
+        // Contextual editing and history stay in a compact secondary strip.
+        Row({ space: 8 }) {
+          if (this.selectedId !== '') {
+            Text(this.selectedId + '.data')
+              .fontSize(12)
+              .fontWeight(FontWeight.Medium)
+              .fontColor('#716C63')
+            TextInput({ text: this.valueInput, placeholder: '整数' })
+              .width(92)
+              .height(36)
+              .backgroundColor('#ECE8E0')
+              .borderRadius(8)
+              .onChange((value: string) => {
+                this.valueInput = value;
+              })
+            Button('应用')
+              .type(ButtonType.Normal)
+              .height(36)
+              .backgroundColor('#DCC7B5')
+              .fontColor('#5A3925')
+              .borderRadius(8)
+              .onClick(() => this.applySelectedValue())
+          } else {
+            Text('选择节点后可编辑 data')
+              .fontSize(11)
+              .fontColor('#938C81')
+          }
+          Blank()
+          Button('撤销')
+            .enabled(this.canUndo)
+            .type(ButtonType.Normal)
+            .height(34)
+            .backgroundColor('#ECE8E0')
+            .fontColor('#514C44')
+            .borderRadius(8)
+            .onClick(() => this.undo())
+          Button('重做')
+            .enabled(this.canRedo)
+            .type(ButtonType.Normal)
+            .height(34)
+            .backgroundColor('#ECE8E0')
+            .fontColor('#514C44')
+            .borderRadius(8)
+            .onClick(() => this.redo())
+        }
+        .width('100%')
+        .height(38)
+
+        // Main work area: the canvas owns the space; inspectors dock to its side.
+        Row({ space: 14 }) {
+          Column({ space: 10 }) {
+            Row({ space: 8 }) {
+              Column({ space: 2 }) {
+                Text('链表结构')
+                  .fontSize(16)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor('#292720')
+                Text('点击选择 · 拖动调整位置 · 连接 next 建立引用')
+                  .fontSize(10)
+                  .fontColor('#8A847A')
+              }
+              Blank()
+              Text(this.document.nodes.length.toString() + ' OBJECTS')
+                .fontSize(10)
+                .fontWeight(FontWeight.Medium)
+                .fontColor('#8A847A')
+                .padding({ left: 9, right: 9, top: 6, bottom: 6 })
+                .backgroundColor('#EEEAE2')
+                .borderRadius(7)
+            }
+            .width('100%')
+
+            Stack() {
+              Canvas(this.canvasContext)
+                .width('100%')
+                .height('100%')
+                .backgroundColor('#F1EFE9')
+                .onReady(() => {
+                  this.canvasReady = true;
+                  this.drawConnections();
+                })
+
+              ForEach(
+                this.document.nodes,
+                (node: LinkedNode) => {
+                  NodeCard({
+                    nodeId: node.id,
+                    nodeValue: node.value,
+                    nextId: node.nextId,
+                    isHead: this.document.headId === node.id,
+                    positionX: node.position.x,
+                    positionY: node.position.y,
+                    selected: this.selectedId === node.id,
+                    onTap: (id: string) => this.handleNodeTap(id),
+                    onMove: (id: string, x: number, y: number) => this.moveSelectedNode(id, x, y)
+                  })
+                },
+                (node: LinkedNode) => node.id
+              )
+
+              if (this.document.nodes.length === 0) {
+                Column({ space: 9 }) {
+                  Text('从一个节点开始')
+                    .fontSize(19)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor('#39352E')
+                  Text('创建节点，然后观察数据、指针与内存引用如何变化。')
+                    .fontSize(12)
+                    .fontColor('#898378')
+                  Button('＋ 创建第一个节点')
+                    .type(ButtonType.Normal)
+                    .height(36)
+                    .backgroundColor('#292720')
+                    .fontColor('#FFFFFF')
+                    .borderRadius(9)
+                    .onClick(() => this.addNewNode())
+                }
+                .alignItems(HorizontalAlign.Center)
+                .position({ x: 30, y: 132 })
+              }
+            }
+            .width('100%')
+            .layoutWeight(1)
+            .backgroundColor('#F1EFE9')
+            .borderRadius(16)
+            .clip(true)
+
+            Row({ space: 8 }) {
+              Text(this.statusText)
+                .fontSize(11)
+                .fontColor('#9A6038')
+              Text('·')
+                .fontSize(11)
+                .fontColor('#B4ADA2')
+              Text(this.message)
+                .fontSize(11)
+                .fontColor('#777168')
+                .maxLines(1)
+                .layoutWeight(1)
+            }
+            .width('100%')
+          }
+          .layoutWeight(1)
+          .height('100%')
+          .padding(14)
+          .backgroundColor('#FFFEFC')
+          .border({ width: 1, color: '#E5E0D7' })
+          .borderRadius(18)
+
+          // Memory inspector: a docked companion to the canvas, never a floating obstruction.
+          if (this.showMemory) {
+            Column({ space: 12 }) {
+              Row({ space: 8 }) {
+                Column({ space: 2 }) {
+                  Text('内存检查器')
+                    .fontSize(16)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor('#292720')
+                  Text('SYMBOLIC MEMORY')
+                    .fontSize(9)
+                    .fontColor('#928B80')
+                    .letterSpacing(1.1)
+                }
+                Blank()
+                Button('×')
+                  .type(ButtonType.Normal)
+                  .width(32)
+                  .height(32)
+                  .backgroundColor('#EEEAE2')
+                  .fontColor('#625C52')
+                  .borderRadius(9)
+                  .onClick(() => {
+                    this.showMemory = false;
+                  })
+              }
+              .width('100%')
+
+              Column({ space: 5 }) {
+                Text('HEAD POINTER')
+                  .fontSize(9)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor('#928B80')
+                Text(this.memorySnapshot.headId === null
+                  ? 'nullptr'
+                  : '&' + this.memorySnapshot.headId)
+                  .fontSize(22)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor('#9A6038')
+                  .fontFamily('monospace')
+              }
+              .width('100%')
+              .padding(13)
+              .backgroundColor('#F3E9DF')
+              .borderRadius(11)
+
+              Row({ space: 6 }) {
+                Column({ space: 2 }) {
+                  Text(this.memorySnapshot.reachableCount.toString())
+                    .fontSize(17)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor('#4D594A')
+                  Text('可达')
+                    .fontSize(10)
+                    .fontColor('#827D74')
+                }
+                .layoutWeight(1)
+                .padding(10)
+                .backgroundColor('#F0F1EA')
+                .borderRadius(9)
+                Column({ space: 2 }) {
+                  Text(this.memorySnapshot.unreachableCount.toString())
+                    .fontSize(17)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor(this.memorySnapshot.unreachableCount > 0 ? '#A45F3D' : '#4D594A')
+                  Text('不可达')
+                    .fontSize(10)
+                    .fontColor('#827D74')
+                }
+                .layoutWeight(1)
+                .padding(10)
+                .backgroundColor('#F3EEE8')
+                .borderRadius(9)
+              }
+              .width('100%')
+
+              if (this.memorySnapshot.hasCycle || this.memorySnapshot.hasSharedSuccessor) {
+                Row({ space: 6 }) {
+                  if (this.memorySnapshot.hasCycle) {
+                    Text('检测到环')
+                      .fontSize(10)
+                      .fontColor('#A45F3D')
+                      .padding({ left: 7, right: 7, top: 5, bottom: 5 })
+                      .backgroundColor('#F3E6DC')
+                      .borderRadius(7)
+                  }
+                  if (this.memorySnapshot.hasSharedSuccessor) {
+                    Text('共享后继')
+                      .fontSize(10)
+                      .fontColor('#78634F')
+                      .padding({ left: 7, right: 7, top: 5, bottom: 5 })
+                      .backgroundColor('#EEEAE2')
+                      .borderRadius(7)
+                  }
+                }
+                .width('100%')
+              }
+
+              Scroll() {
+                Column({ space: 8 }) {
+                  if (this.memorySnapshot.nodes.length === 0) {
+                    Text('还没有节点。先在画布上创建一个节点。')
+                      .fontSize(12)
+                      .fontColor('#898378')
+                      .width('100%')
+                      .padding(12)
+                  }
+                  ForEach(this.memorySnapshot.nodes, (memoryNode: MemoryNodeSnapshot) => {
+                    Column({ space: 8 }) {
+                      Row({ space: 6 }) {
+                        Text(memoryNode.id)
+                          .fontSize(13)
+                          .fontWeight(FontWeight.Bold)
+                          .fontColor('#292720')
+                        if (memoryNode.isHead) {
+                          Text('HEAD')
+                            .fontSize(8)
+                            .fontColor('#9A6038')
+                            .padding({ left: 5, right: 5, top: 2, bottom: 2 })
+                            .backgroundColor('#F3E6DC')
+                            .borderRadius(5)
+                        }
+                        if (memoryNode.isCycleEntry) {
+                          Text('环入口')
+                            .fontSize(8)
+                            .fontColor('#A45F3D')
+                            .padding({ left: 5, right: 5, top: 2, bottom: 2 })
+                            .backgroundColor('#F5EBD9')
+                            .borderRadius(5)
+                        }
+                        Blank()
+                        Text(memoryNode.isReachable ? '可达' : '不可达')
+                          .fontSize(10)
+                          .fontColor(memoryNode.isReachable ? '#66765B' : '#A45F3D')
+                      }
+                      Row({ space: 8 }) {
+                        Text('data')
+                          .fontSize(10)
+                          .fontColor('#928B80')
+                          .width(38)
+                        Text(memoryNode.data.toString())
+                          .fontSize(13)
+                          .fontColor('#39352E')
+                          .fontFamily('monospace')
+                      }
+                      Row({ space: 8 }) {
+                        Text('next')
+                          .fontSize(10)
+                          .fontColor('#928B80')
+                          .width(38)
+                        Text(memoryNode.nextId === null ? 'nullptr' : '&' + memoryNode.nextId)
+                          .fontSize(12)
+                          .fontColor(memoryNode.nextId === null ? '#A49D92' : '#9A6038')
+                          .fontFamily('monospace')
+                      }
+                      if (memoryNode.incomingCount > 1) {
+                        Text('共享后继 · ' + memoryNode.incomingCount.toString() + ' 个引用')
+                          .fontSize(9)
+                          .fontColor('#78634F')
+                      }
+                    }
+                    .width('100%')
+                    .padding(12)
+                    .backgroundColor(this.selectedId === memoryNode.id ? '#F6E9DE' : '#F7F5F0')
+                    .border({
+                      width: this.selectedId === memoryNode.id ? 1.5 : 1,
+                      color: this.selectedId === memoryNode.id ? '#B96F3F' : '#E7E2D9'
+                    })
+                    .borderRadius(10)
+                    .onClick(() => this.handleMemoryNodeTap(memoryNode.id))
+                  }, (memoryNode: MemoryNodeSnapshot) => memoryNode.id)
+                }
+                .width('100%')
+              }
+              .layoutWeight(1)
+              .width('100%')
+
+              Text('N1 等是教学对象标识，不是真实内存地址。')
+                .fontSize(9)
+                .fontColor('#928B80')
+                .maxLines(2)
+                .width('100%')
+            }
+            .width(360)
+            .height('100%')
+            .padding(14)
+            .backgroundColor('#FFFEFC')
+            .border({ width: 1, color: '#E5E0D7' })
+            .borderRadius(18)
+          }
+
+          // C++ inspector: code, annotations and controls share one quiet surface.
+          if (this.showCode) {
+            Column({ space: 9 }) {
+              Row({ space: 8 }) {
+                Column({ space: 2 }) {
+                  Text('C++ 代码')
+                    .fontSize(16)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor('#292720')
+                  Text('GENERATED FROM CURRENT STRUCTURE')
+                    .fontSize(8)
+                    .fontColor('#928B80')
+                    .letterSpacing(0.7)
+                }
+                Blank()
+                Button('×')
+                  .type(ButtonType.Normal)
+                  .width(32)
+                  .height(32)
+                  .backgroundColor('#EEEAE2')
+                  .fontColor('#625C52')
+                  .borderRadius(9)
+                  .onClick(() => {
+                    this.showCode = false;
+                  })
+              }
+              .width('100%')
+
+              Row({ space: 7 }) {
+                Button(this.showAnnotations ? '注释开' : '注释关')
+                  .type(ButtonType.Normal)
+                  .height(30)
+                  .backgroundColor(this.showAnnotations ? '#F3E6DC' : '#EEEAE2')
+                  .fontColor(this.showAnnotations ? '#9A6038' : '#625C52')
+                  .borderRadius(8)
+                  .onClick(() => {
+                    this.showAnnotations = !this.showAnnotations;
+                  })
+                Button('字号 ' + this.codeFontSize.toString() + ' ' + (this.showCodeSettings ? '−' : '+'))
+                  .type(ButtonType.Normal)
+                  .height(30)
+                  .backgroundColor('#EEEAE2')
+                  .fontColor('#625C52')
+                  .borderRadius(8)
+                  .onClick(() => {
+                    this.showCodeSettings = !this.showCodeSettings;
+                  })
+              }
+              .width('100%')
+
+              if (this.showCodeSettings) {
+                Row({ space: 5 }) {
+                  Button('A−')
+                    .type(ButtonType.Normal)
+                    .height(28)
+                    .backgroundColor('#EEEAE2')
+                    .fontColor('#514C44')
+                    .borderRadius(7)
+                    .onClick(() => {
+                      this.codeFontSize = Math.max(10, this.codeFontSize - 1);
+                    })
+                  Text(this.codeFontSize.toString() + ' vp')
+                    .fontSize(10)
+                    .fontColor('#716C63')
+                    .width(42)
+                    .textAlign(TextAlign.Center)
+                  Button('A+')
+                    .type(ButtonType.Normal)
+                    .height(28)
+                    .backgroundColor('#EEEAE2')
+                    .fontColor('#514C44')
+                    .borderRadius(7)
+                    .onClick(() => {
+                      this.codeFontSize = Math.min(22, this.codeFontSize + 1);
+                    })
+                  Button('小')
+                    .type(ButtonType.Normal)
+                    .height(28)
+                    .backgroundColor('#EEEAE2')
+                    .fontColor('#514C44')
+                    .borderRadius(7)
+                    .onClick(() => {
+                      this.codeFontSize = 11;
+                    })
+                  Button('中')
+                    .type(ButtonType.Normal)
+                    .height(28)
+                    .backgroundColor('#EEEAE2')
+                    .fontColor('#514C44')
+                    .borderRadius(7)
+                    .onClick(() => {
+                      this.codeFontSize = 14;
+                    })
+                  Button('大')
+                    .type(ButtonType.Normal)
+                    .height(28)
+                    .backgroundColor('#EEEAE2')
+                    .fontColor('#514C44')
+                    .borderRadius(7)
+                    .onClick(() => {
+                      this.codeFontSize = 17;
+                    })
+                }
+                .width('100%')
+              }
+
+              Scroll() {
+                Column({ space: 5 }) {
+                  ForEach(this.codeLines, (line: CppDisplayLine) => {
+                    Column({ space: 4 }) {
+                      Row({ space: 5 }) {
+                        Text(line.lineNumber.toString())
+                          .fontSize(9)
+                          .fontColor('#A49D92')
+                          .fontFamily('monospace')
+                          .width(22)
+                          .textAlign(TextAlign.End)
+                        Scroll() {
+                          Text() {
+                            ForEach(line.tokens, (token: CppToken) => {
+                              Span(formatCppDisplayToken(token.text))
+                                .fontSize(this.codeFontSize)
+                                .fontColor(token.color)
+                                .fontFamily('monospace')
+                            }, (token: CppToken) => token.id)
+                          }
+                          .width(measureCppLineWidth(line, this.codeFontSize, this.codeLineViewportWidth))
+                          .textAlign(TextAlign.Start)
+                          .fontSize(this.codeFontSize)
+                          .fontFamily('monospace')
+                          .height(this.codeFontSize + 12)
+                        }
+                        .scrollable(ScrollDirection.Horizontal)
+                        .layoutWeight(1)
+                        .height(this.codeFontSize + 12)
+                        .onAreaChange((oldArea: Area, newArea: Area) => {
+                          const nextWidth = Number(newArea.width);
+                          if (Math.abs(nextWidth - this.codeLineViewportWidth) > 0.5) {
+                            this.codeLineViewportWidth = nextWidth;
+                          }
+                        })
+                      }
+                      .width('100%')
+                      .padding({ top: 4, bottom: 4, left: 5, right: 5 })
+                      .backgroundColor(line.lineNumber === this.selectedCodeLineNumber
+                        ? '#3D342D'
+                        : (line.lineNumber % 2 === 0 ? '#292A29' : '#242524'))
+                      .borderRadius(5)
+                      .onClick(() => this.handleCodeLineTap(line.lineNumber))
+
+                      if (this.showAnnotations && line.annotationText !== '') {
+                        Text(line.annotationText)
+                          .fontSize(10)
+                          .fontColor('#8B8378')
+                          .maxLines(3)
+                          .width('100%')
+                          .padding({ left: 30, right: 4, top: 1, bottom: 3 })
+                      }
+                    }
+                    .width('100%')
+                  }, (line: CppDisplayLine) => line.lineNumber.toString())
+
+                  ForEach(this.warnings, (warning: string) => {
+                    Text('注意 · ' + warning)
+                      .fontSize(9)
+                      .fontColor('#A45F3D')
+                      .width('100%')
+                      .padding(8)
+                      .backgroundColor('#F3E9DF')
+                      .borderRadius(7)
+                  }, (warning: string) => warning)
+                }
+                .width('100%')
+              }
+              .layoutWeight(1)
+              .width('100%')
+              .padding(8)
+              .backgroundColor('#F4F2ED')
+              .borderRadius(10)
+
+              Text('只读预览 · 点击代码行可定位画布节点或指针连接')
+                .fontSize(9)
+                .fontColor('#928B80')
+                .width('100%')
+            }
+            .width(440)
+            .height('100%')
+            .padding(14)
+            .backgroundColor('#FFFEFC')
+            .border({ width: 1, color: '#E5E0D7' })
+            .borderRadius(18)
+          }
+        }
+        .width('100%')
+        .layoutWeight(1)
       }
-      .padding(16)
+      .padding(18)
       .width('100%')
       .height('100%')
-      .backgroundColor('#FFFFFF')
-
-      // A separate overlay keeps the code workspace independent from the
-      // linked-list canvas and the page's normal vertical layout.
-      if (this.showCode) {
-        Column({ space: 8 }) {
-          Row({ space: 8 }) {
-            Text('⠿ 移动')
-              .fontSize(13)
-              .fontColor('#52616B')
-              .width(64)
-              .height(36)
-              .textAlign(TextAlign.Center)
-              .gesture(
-                PanGesture({ fingers: 1, distance: 2 })
-                  .onActionStart(() => {
-                    this.panelDragStartX = this.codePanelX;
-                    this.panelDragStartY = this.codePanelY;
-                  })
-                  .onActionUpdate((event: GestureEvent | undefined) => {
-                    if (event !== undefined) {
-                      this.codePanelX = this.clampCodePanelX(this.panelDragStartX + event.offsetX);
-                      this.codePanelY = this.clampCodePanelY(this.panelDragStartY + event.offsetY);
-                    }
-                  })
-                  .onActionEnd((event: GestureEvent | undefined) => {
-                    if (event !== undefined) {
-                      this.codePanelX = this.clampCodePanelX(this.panelDragStartX + event.offsetX);
-                      this.codePanelY = this.clampCodePanelY(this.panelDragStartY + event.offsetY);
-                    }
-                  })
-              )
-            Text('由当前结构生成的 C++')
-              .fontSize(15)
-              .fontWeight(FontWeight.Medium)
-              .fontColor('#17212B')
-            Blank()
-            Button('收起')
-              .type(ButtonType.Capsule)
-              .onClick(() => {
-                this.showCode = false;
-              })
-          }
-          .width('100%')
-          .height(40)
-          .padding({ left: 4, right: 4 })
-          .backgroundColor('#E9EEF3')
-          .borderRadius(10)
-
-          Row({ space: 10 }) {
-            Text('关键字').fontSize(9).fontColor('#C792EA')
-            Text('类型/函数').fontSize(9).fontColor('#82AAFF')
-            Text('字符串').fontSize(9).fontColor('#C3E88D')
-            Text('数字').fontSize(9).fontColor('#F78C6C')
-            Text('注释').fontSize(9).fontColor('#7FAD7A')
-            Text('指针/运算符').fontSize(9).fontColor('#80CBC4')
-          }
-          .width('100%')
-          .height(20)
-
-          // Keep frequently used display options in one compact toolbar.
-          Row({ space: 8 }) {
-            Button(this.showAnnotations ? '注释：开' : '注释：关')
-              .type(ButtonType.Capsule)
-              .onClick(() => {
-                this.showAnnotations = !this.showAnnotations;
-              })
-            Button(this.showCodeSettings
-              ? '字号 ' + this.codeFontSize.toString() + ' ▴'
-              : '字号 ' + this.codeFontSize.toString() + ' ▾')
-              .type(ButtonType.Capsule)
-              .onClick(() => {
-                this.showCodeSettings = !this.showCodeSettings;
-              })
-          }
-          .width('100%')
-          .height(32)
-
-          // Advanced font controls are shown only on demand.
-          if (this.showCodeSettings) {
-            Row({ space: 6 }) {
-              Button('A−')
-                .type(ButtonType.Normal)
-                .onClick(() => {
-                  this.codeFontSize = Math.max(10, this.codeFontSize - 1);
-                })
-              Text(this.codeFontSize.toString() + ' vp')
-                .fontSize(10)
-                .fontColor('#52616B')
-                .width(42)
-                .textAlign(TextAlign.Center)
-              Button('A+')
-                .type(ButtonType.Normal)
-                .onClick(() => {
-                  this.codeFontSize = Math.min(22, this.codeFontSize + 1);
-                })
-              Button('小')
-                .type(this.codeFontSize === 11 ? ButtonType.Capsule : ButtonType.Normal)
-                .onClick(() => {
-                  this.codeFontSize = 11;
-                })
-              Button('中')
-                .type(this.codeFontSize === 14 ? ButtonType.Capsule : ButtonType.Normal)
-                .onClick(() => {
-                  this.codeFontSize = 14;
-                })
-              Button('大')
-                .type(this.codeFontSize === 17 ? ButtonType.Capsule : ButtonType.Normal)
-                .onClick(() => {
-                  this.codeFontSize = 17;
-                })
-            }
-            .width('100%')
-            .height(30)
-          }
-
-          Scroll() {
-            Column({ space: 2 }) {
-              ForEach(this.codeLines, (line: CppDisplayLine) => {
-                Row({ space: 6 }) {
-                  Text(line.lineNumber.toString())
-                    .fontSize(9)
-                    .fontColor('#64748B')
-                    .fontFamily('monospace')
-                    .width(26)
-                    .textAlign(TextAlign.End)
-
-                  Scroll() {
-                    Text() {
-                      ForEach(line.tokens, (token: CppToken) => {
-                        Span(formatCppDisplayToken(token.text))
-                          .fontSize(this.codeFontSize)
-                          .fontColor(token.color)
-                          .fontFamily('monospace')
-                      }, (token: CppToken) => token.id)
-                    }
-                    // One Text paragraph owns the entire source line. Span children
-                    // only change token color; they cannot distribute tokens as Row items.
-                    .width(measureCppLineWidth(line, this.codeFontSize, this.codeLineViewportWidth))
-                    .textAlign(TextAlign.Start)
-                    .fontSize(this.codeFontSize)
-                    .fontFamily('monospace')
-                    .height(this.codeFontSize + 11)
-                  }
-                  .scrollable(ScrollDirection.Horizontal)
-                  .layoutWeight(1)
-                  .height(this.codeFontSize + 11)
-                  .onAreaChange((oldArea: Area, newArea: Area) => {
-                    const nextWidth = Number(newArea.width);
-                    if (Math.abs(nextWidth - this.codeLineViewportWidth) > 0.5) {
-                      this.codeLineViewportWidth = nextWidth;
-                    }
-                  })
-
-                  if (this.showAnnotations && line.annotationText !== '') {
-                    Row({ space: 3 }) {
-                      Text('▏')
-                        .fontSize(12)
-                        .fontColor(line.annotationColor)
-                      Text(line.annotationText)
-                        .fontSize(12)
-                        .fontColor(line.annotationColor)
-                        .maxLines(3)
-                        .width(178)
-                    }
-                    .width(198)
-                    .height(46)
-                  }
-                }
-                .width('100%')
-                .height(Math.max(this.codeFontSize + 19, 48))
-                .padding({ top: 1, bottom: 1 })
-                .backgroundColor(line.lineNumber === this.selectedCodeLineNumber
-                  ? '#2C4658'
-                  : (line.lineNumber % 2 === 0 ? '#1B2733' : '#17212B'))
-                .borderRadius(3)
-                .onClick(() => this.handleCodeLineTap(line.lineNumber))
-              }, (line: CppDisplayLine) => line.lineNumber.toString())
-
-              ForEach(this.warnings, (warning: string) => {
-                Text('⚠ ' + warning)
-                  .fontSize(10)
-                  .fontColor('#FFCB6B')
-                  .width('100%')
-                  .padding(6)
-                  .backgroundColor('#29313B')
-                  .borderRadius(6)
-              }, (warning: string) => warning)
-            }
-            .width('100%')
-          }
-          .width('100%')
-          .layoutWeight(1)
-          .padding(10)
-          .backgroundColor('#17212B')
-          .borderRadius(12)
-
-          Row() {
-            Text('拖动右侧手柄调整窗口大小')
-              .fontSize(10)
-              .fontColor('#718096')
-            Blank()
-            Text('◢')
-              .fontSize(24)
-              .fontColor('#2563EB')
-              .width(48)
-              .height(40)
-              .textAlign(TextAlign.Center)
-              .gesture(
-                PanGesture({ fingers: 1, distance: 2 })
-                  .onActionStart(() => {
-                    this.panelResizeStartWidth = this.codePanelWidth;
-                    this.panelResizeStartHeight = this.codePanelHeight;
-                  })
-                  .onActionUpdate((event: GestureEvent | undefined) => {
-                    if (event !== undefined) {
-                      this.codePanelWidth = this.clampCodePanelWidth(
-                        this.panelResizeStartWidth + event.offsetX
-                      );
-                      this.codePanelHeight = this.clampCodePanelHeight(
-                        this.panelResizeStartHeight + event.offsetY
-                      );
-                    }
-                  })
-                  .onActionEnd((event: GestureEvent | undefined) => {
-                    if (event !== undefined) {
-                      this.codePanelWidth = this.clampCodePanelWidth(
-                        this.panelResizeStartWidth + event.offsetX
-                      );
-                      this.codePanelHeight = this.clampCodePanelHeight(
-                        this.panelResizeStartHeight + event.offsetY
-                      );
-                    }
-                  })
-              )
-          }
-          .width('100%')
-          .height(40)
-        }
-        .width(this.codePanelWidth)
-        .height(this.codePanelHeight)
-        .padding(10)
-        .backgroundColor('#F7F8FA')
-        .border({ width: 1, color: '#D7E0E8' })
-        .borderRadius(16)
-        .position({ x: this.codePanelX, y: this.codePanelY })
-        .zIndex(10)
-      }
-
-      // The inspector is a symbolic teaching model, not a process-memory debugger.
-      // It is mutually exclusive with the code panel to keep both overlays readable.
-      if (this.showMemory) {
-        Column({ space: 10 }) {
-          Row({ space: 8 }) {
-            Column({ space: 2 }) {
-              Text('内存视图')
-                .fontSize(17)
-                .fontWeight(FontWeight.Bold)
-                .fontColor('#17212B')
-              Text('节点对象与指针引用')
-                .fontSize(11)
-                .fontColor('#718096')
-            }
-            Blank()
-            Button('关闭')
-              .type(ButtonType.Capsule)
-              .onClick(() => {
-                this.showMemory = false;
-              })
-          }
-          .width('100%')
-
-          Row({ space: 8 }) {
-            Text('head')
-              .fontSize(12)
-              .fontColor('#64748B')
-              .width(48)
-            Text(this.memorySnapshot.headId === null
-              ? 'nullptr'
-              : '&' + this.memorySnapshot.headId)
-              .fontSize(14)
-              .fontWeight(FontWeight.Bold)
-              .fontColor('#147D70')
-          }
-          .width('100%')
-          .padding(10)
-          .backgroundColor('#EAF4F2')
-          .borderRadius(9)
-
-          Row({ space: 8 }) {
-            Text('可达 ' + this.memorySnapshot.reachableCount.toString())
-              .fontSize(11)
-              .fontColor('#147D70')
-            Text('不可达 ' + this.memorySnapshot.unreachableCount.toString())
-              .fontSize(11)
-              .fontColor(this.memorySnapshot.unreachableCount > 0 ? '#C26A2D' : '#64748B')
-            if (this.memorySnapshot.hasCycle) {
-              Text('检测到环')
-                .fontSize(11)
-                .fontColor('#B45309')
-            }
-            if (this.memorySnapshot.hasSharedSuccessor) {
-              Text('共享后继')
-                .fontSize(11)
-                .fontColor('#7C3AED')
-            }
-          }
-          .width('100%')
-
-          Scroll() {
-            Column({ space: 8 }) {
-              if (this.memorySnapshot.nodes.length === 0) {
-                Text('还没有节点。先在画布上创建一个节点。')
-                  .fontSize(13)
-                  .fontColor('#64748B')
-                  .width('100%')
-                  .padding(14)
-              }
-              ForEach(this.memorySnapshot.nodes, (memoryNode: MemoryNodeSnapshot) => {
-                Column({ space: 7 }) {
-                  Row({ space: 6 }) {
-                    Text(memoryNode.id)
-                      .fontSize(14)
-                      .fontWeight(FontWeight.Bold)
-                      .fontColor('#17212B')
-                    if (memoryNode.isHead) {
-                      Text('HEAD')
-                        .fontSize(9)
-                        .fontColor('#147D70')
-                        .padding({ left: 5, right: 5, top: 2, bottom: 2 })
-                        .backgroundColor('#DDF3ED')
-                        .borderRadius(5)
-                    }
-                    if (memoryNode.isCycleEntry) {
-                      Text('环入口')
-                        .fontSize(9)
-                        .fontColor('#B45309')
-                        .padding({ left: 5, right: 5, top: 2, bottom: 2 })
-                        .backgroundColor('#FEF3C7')
-                        .borderRadius(5)
-                    }
-                    Blank()
-                    Text(memoryNode.isReachable ? '可达' : '不可达')
-                      .fontSize(10)
-                      .fontColor(memoryNode.isReachable ? '#147D70' : '#C26A2D')
-                  }
-                  Row({ space: 8 }) {
-                    Text('data')
-                      .fontSize(11)
-                      .fontColor('#64748B')
-                      .width(42)
-                    Text(memoryNode.data.toString())
-                      .fontSize(13)
-                      .fontColor('#17212B')
-                      .fontFamily('monospace')
-                  }
-                  Row({ space: 8 }) {
-                    Text('next')
-                      .fontSize(11)
-                      .fontColor('#64748B')
-                      .width(42)
-                    Text(memoryNode.nextId === null ? 'nullptr' : '&' + memoryNode.nextId)
-                      .fontSize(13)
-                      .fontColor(memoryNode.nextId === null ? '#94A3B8' : '#2563EB')
-                      .fontFamily('monospace')
-                  }
-                  if (memoryNode.incomingCount > 1) {
-                    Text('共享后继 · ' + memoryNode.incomingCount.toString() + ' 个节点指向此对象')
-                      .fontSize(10)
-                      .fontColor('#7C3AED')
-                  }
-                }
-                .width('100%')
-                .padding(12)
-                .backgroundColor(this.selectedId === memoryNode.id ? '#E2F3EF' : '#FFFFFF')
-                .border({
-                  width: this.selectedId === memoryNode.id ? 2 : 1,
-                  color: this.selectedId === memoryNode.id ? '#168477' : '#E2E8F0'
-                })
-                .borderRadius(11)
-                .onClick(() => this.handleMemoryNodeTap(memoryNode.id))
-              }, (memoryNode: MemoryNodeSnapshot) => memoryNode.id)
-            }
-            .width('100%')
-          }
-          .layoutWeight(1)
-          .width('100%')
-
-          Text('N1 等是教学对象标识，不是真实内存地址；next 保存的是对另一节点的引用。')
-            .fontSize(10)
-            .fontColor('#64748B')
-            .maxLines(2)
-            .width('100%')
-        }
-        .width(440)
-        .height(500)
-        .padding(14)
-        .backgroundColor('#F7F8FA')
-        .border({ width: 1, color: '#D7E0E8' })
-        .borderRadius(16)
-        .position({ x: Math.max(12, this.viewportWidth - 452), y: 72 })
-        .zIndex(11)
-      }
+      .backgroundColor('#F4F2ED')
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#FFFFFF')
+    .backgroundColor('#F4F2ED')
     .onAreaChange((oldArea: Area, newArea: Area) => {
       this.viewportWidth = Number(newArea.width);
       this.viewportHeight = Number(newArea.height);
