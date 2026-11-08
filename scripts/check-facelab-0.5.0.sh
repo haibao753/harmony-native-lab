@@ -4,7 +4,8 @@ set -euo pipefail
 cpp="apps/facelab/entry/src/main/cpp"
 gpu="apps/facelab/entry/src/main/ets/components/FaceGpuSurface.ets"
 page="apps/facelab/entry/src/main/ets/pages/Index.ets"
-types="apps/facelab/entry/src/main/ets/types/libfacelab_native.d.ts"
+types="apps/facelab/entry/src/main/cpp/types/libfacelab_native/index.d.ts"
+typepkg="apps/facelab/entry/src/main/cpp/types/libfacelab_native/oh-package.json5"
 build="apps/facelab/entry/build-profile.json5"
 manifest="apps/facelab/AppScope/app.json5"
 readme="apps/facelab/README.md"
@@ -12,7 +13,7 @@ release="docs/facelab/RELEASE_NOTES_0.5.0.md"
 
 for file in \
   "$cpp/CMakeLists.txt" "$cpp/FaceGpuRenderer.h" "$cpp/FaceGpuRenderer.cpp" \
-  "$cpp/napi_init.cpp" "$gpu" "$page" "$types" "$build" "$manifest" "$readme" "$release"; do
+  "$cpp/napi_init.cpp" "$gpu" "$page" "$types" "$typepkg" "$build" "$manifest" "$readme" "$release"; do
   test -s "$file"
 done
 
@@ -28,7 +29,13 @@ grep -Fq 'glDrawElements(GL_LINES' "$cpp/FaceGpuRenderer.cpp"
 grep -Fq 'std::chrono::milliseconds(33)' "$cpp/FaceGpuRenderer.cpp"
 grep -Fq 'OH_NativeWindow_CreateNativeWindowFromSurfaceId' "$cpp/FaceGpuRenderer.cpp"
 grep -Fq 'OH_NativeWindow_DestroyNativeWindow' "$cpp/FaceGpuRenderer.cpp"
+if grep -Fq 'napi/native_node_api.h' "$cpp/napi_init.cpp"; then
+  echo "Do not include native_node_api.h; SDK Node-API surface is provided by napi/native_api.h." >&2
+  exit 1
+fi
 grep -Fq 'napi_get_typedarray_info' "$cpp/napi_init.cpp"
+grep -Fq 'length / sizeof(float)' "$cpp/napi_init.cpp"
+grep -Fq 'length / sizeof(uint32_t)' "$cpp/napi_init.cpp"
 grep -Fq 'napi_get_value_bigint_uint64' "$cpp/napi_init.cpp"
 grep -Fq 'nativeRender.UpdateMesh' "$gpu"
 if grep -Fq "from '@kit.ArkUI'" "$gpu" && grep -Fq 'XComponentController' "$gpu"; then
@@ -37,7 +44,11 @@ if grep -Fq "from '@kit.ArkUI'" "$gpu" && grep -Fq 'XComponentController' "$gpu"
 fi
 grep -Fq 'XComponentType.SURFACE' "$gpu"
 grep -Fq 'controller: this.controller' "$gpu"
-grep -Fq '"version": "0.5.0"' apps/facelab/entry/oh-package.json5
+grep -Fq '"version": "1.0.0"' apps/facelab/entry/oh-package.json5
+grep -Fq '"libfacelab_native.so": "file:./src/main/cpp/types/libfacelab_native"' apps/facelab/entry/oh-package.json5
+grep -Fq '"name": "libfacelab_native.so"' "$typepkg"
+grep -Fq '"types": "./index.d.ts"' "$typepkg"
+grep -Fq '"packages": ["libfacelab_native.so"]' "$build"
 grep -Fq 'nativeRender.SetViewTransform' "$gpu"
 grep -Fq 'this.publishViewTransform();' "$gpu"
 grep -Fq "this.meshViewMode === 'regions'" "$page"
