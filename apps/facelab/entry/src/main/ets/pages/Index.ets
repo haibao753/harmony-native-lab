@@ -396,7 +396,6 @@ struct Index {
       this.gestureSelectionIndex = 0;
       this.gestureConfirmCount = 0;
       this.facePenControlEnabled = false;
-      this.facePenPendingColorIndex = -1;
       this.facePenLastCommand = '追踪已停止 · 面部控制已关闭';
       this.gpuSurfaceController.clear();
     }

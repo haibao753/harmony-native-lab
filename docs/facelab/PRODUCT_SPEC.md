@@ -104,7 +104,7 @@ FaceLab 是一个 HarmonyOS 原生视觉与交互实验应用，优先研究 Mat
 
 ### 0.6.0-alpha.1 — FacePen Prototype
 
-- 新增 FaceLab 自有的 M-Pencil 画布；只接收 ArkUI `TouchEvent.sourceTool === SourceTool.Pen`，手指事件不绘制。
+- 新增 FaceLab 自有的手写画布，以 M-Pencil 为目标设备；只接收 ArkUI `TouchEvent.sourceTool === SourceTool.Pen`，不按品牌或设备名限制其他手写笔。
 - 使用 CanvasRenderingContext2D，坐标采用 Canvas 默认 VP 单位，与 ArkUI TouchObject.x/y 的 VP 坐标一致。
 - 使用 `getHistoricalPoints()` 补齐帧间采样点；使用 API 15+ TouchObject.pressure（目标 SDK 26）作为可选笔宽输入，压力不可用时回退固定宽度。
 - 左眼单眨切换上一色，右眼单眨切换下一色；复用 0.5.2 的事件识别、80 ms 单侧闭合确认与 650 ms 冷却。

@@ -9,7 +9,7 @@ Connect the existing 0.5.2 unilateral-wink event pipeline to a local M-Pencil dr
 ## Implemented
 
 - Added a dedicated ArkUI Canvas drawing component using CanvasRenderingContext2D.
-- Accept only `TouchEvent.sourceTool === SourceTool.Pen`; finger input does not create strokes.
+- Accept only `TouchEvent.sourceTool === SourceTool.Pen`; finger input does not create strokes. M-Pencil is the target device, but the component does not identify a pen by brand.
 - Process `Down`, `Move`, `Up`, and `Cancel`; consume stylus events to prevent them from bubbling into the outer Scroll or the 3D face surface.
 - Draw historical touch points before the current point to reduce gaps between samples.
 - Use the optional API 15+ pressure value for line-width variation, with a fixed-width fallback when pressure is absent or zero.

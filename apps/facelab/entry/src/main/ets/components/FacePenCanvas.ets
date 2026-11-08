@@ -250,7 +250,7 @@ export struct FacePenCanvas {
           }
         })
 
-      Text('仅接受 M-Pencil 笔尖输入；手指可用于页面滚动和调色。笔压可用时会映射为线宽。')
+      Text('仅接受手写笔（SourceTool.Pen）输入；本版以 M-Pencil 为目标设备。手指可用于页面滚动和调色，笔压可用时会映射为线宽。')
         .fontSize(11)
         .fontColor('#8190A5')
         .lineHeight(17)

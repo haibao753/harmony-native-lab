@@ -189,7 +189,7 @@ After pulling this change, synchronize OHPM dependencies in DevEco Studio before
 ## 0.6.0-alpha.1 — FacePen Prototype
 
 - 新增 FacePen 本地手写画布，使用 ArkUI Canvas / CanvasRenderingContext2D。
-- 只接受 `SourceTool.Pen` 输入；手指仍可用于页面滚动和调色。
+- 只接受 `SourceTool.Pen` 手写笔输入；M-Pencil 是目标设备，但不按品牌限制其他手写笔；手指仍可用于页面滚动和调色。
 - 墨黑、朱红、钴蓝、松绿、琥珀、紫藤六色可手动选择。
 - 左眼单眨选择上一色，右眼单眨选择下一色；复用 0.5.2 已有的 wink 事件和冷却逻辑。
 - 使用笔画事务：DOWN 时冻结颜色；书写中颜色指令只进入 pending；UP / CANCEL 结束后再应用待切换颜色。
