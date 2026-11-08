@@ -70,6 +70,7 @@ if grep -Fq "FaceMeshViewer" "$page"; then
   exit 1
 fi
 grep -Fq 'FaceGpuSurface({ controller: this.gpuSurfaceController })' "$page"
+grep -Fq 'AR Face Tracking Lab · 0.5.1' "$page"
 grep -Fq 'externalNativeOptions' "$build"
 grep -Fq '"versionCode": 10009' "$manifest"
 grep -Fq '"versionName": "0.5.1"' "$manifest"
