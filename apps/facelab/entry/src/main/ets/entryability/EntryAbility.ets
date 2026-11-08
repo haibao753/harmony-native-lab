@@ -107,8 +107,14 @@ export default class EntryAbility extends UIAbility {
     });
   }
 
-  onWindowStageDestroy(windowStage: window.WindowStage): void {
-    this.disposeWindowListeners();
+  onWindowStageWillDestroy(windowStage: window.WindowStage): void {
+    if (this.windowStage === windowStage) {
+      this.disposeWindowListeners();
+      this.windowStage = undefined;
+    }
+  }
+
+  onWindowStageDestroy(): void {
     this.windowStage = undefined;
   }
 
