@@ -6,13 +6,13 @@ static napi_value Init(napi_env env, napi_value exports)
 }
 
 static napi_module facelabRendererModule = {
-    .nm_version = 1,
-    .nm_flags = 0,
-    .nm_filename = nullptr,
-    .nm_register_func = Init,
-    .nm_modname = "facelab_renderer",
-    .nm_priv = nullptr,
-    .reserved = { 0 }
+    1,
+    0,
+    nullptr,
+    Init,
+    "facelab_renderer",
+    nullptr,
+    { 0 }
 };
 
 extern "C" __attribute__((constructor)) void RegisterFaceLabRendererModule()
