@@ -666,9 +666,8 @@ struct Index {
                           .textAlign(TextAlign.Start)
                       }, (token: CppToken) => token.id)
                     }
-                    // Explicit start alignment is essential: otherwise the
-                    // token row can appear centered in the horizontal Scroll viewport.
-                    .width('100%')
+                    // Keep intrinsic content width for horizontal scrolling,
+                    // but always anchor tokens at the source line's first column.
                     .justifyContent(FlexAlign.Start)
                     .alignItems(VerticalAlign.Center)
                     .height(this.codeFontSize + 11)
