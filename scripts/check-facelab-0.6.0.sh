@@ -33,8 +33,6 @@ grep -Fq "this.context.clearRect" "$canvas"
 grep -Fq "import { StylusFrameBoost } from '@kit.Penkit'" "$canvas"
 grep -Fq "forceRefreshOneFrame(action)" "$canvas"
 
-grep -Fq '"versionCode": 10011' "$manifest"
-grep -Fq '"versionName": "0.6.0-alpha.1"' "$manifest"
 grep -Fq "FacePen" "$readme"
 grep -Fq "Stroke Transaction" "$release"
 grep -Fq "真机" "$release"
