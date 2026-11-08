@@ -13,6 +13,7 @@ on:
     paths:
       - "scripts/**"
       - "apps/algolab/entry/src/main/ets/**"
+      - "apps/algolab/entry/src/test/**"
       - ".github/workflows/algolab-bootstrap-check.yml"
 
 permissions:
@@ -58,4 +59,4 @@ jobs:
           grep -Fq '引入哈希集合' apps/algolab/entry/src/main/ets/codegen/CppLinkedListGenerator.ets
           grep -Fq 'const token: CppToken' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
           grep -Fq 'const result: TokenizeResult' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
-          grep -Fq '1\x27000' apps/algolab/entry/src/test/LocalUnit.test.ets
+          grep -Fq "1'000" apps/algolab/entry/src/test/LocalUnit.test.ets
