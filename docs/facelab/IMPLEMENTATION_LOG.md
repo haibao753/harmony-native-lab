@@ -252,3 +252,23 @@
 - Frozen application version 0.5.1 / versionCode 10009.
 - A dedicated `release/facelab-0.5.1` branch is created as the stable source snapshot.
 - Quantitative frame-rate, thermal and battery measurements are not available; deployment success is recorded without inventing performance numbers.
+
+
+## 2026-11-08 — FaceLab 0.5.1 device acceptance
+- User confirms all four visualizer modes, including semantic face-region mode, are now smooth on MatePad Pro 13.2 (2023).
+- The region-mode lag is considered resolved for the target device.
+- FaceLab 0.5.1 remains the frozen stable baseline at versionCode 10009.
+
+## 2026-11-08 — FaceLab 0.5.2 Gesture Interaction Lab
+### Implemented in source
+- Split AR callback cadence: sample pose / BlendShapes at up to approximately 30 Hz while publishing mesh geometry and GPU updates at approximately 5 Hz.
+- Added unilateral eye-wink detection with close / release hysteresis, edge-triggering and a 650 ms cooldown; simultaneous bilateral closure is ignored as a natural blink.
+- Added sustained jaw-open confirmation requiring weight >= 0.72 for 350 ms, with release at <= 0.40 and a 1000 ms cooldown.
+- Added an opt-in local interaction demo: left / right wink cycles focus among A / B / C; sustained jaw-open confirms the focused option.
+- Gesture input defaults off. Touch and M-Pencil remain available. No system-level input injection or external-app control is performed.
+- Face gesture state resets when tracking is lost or the callback stops.
+
+### Validation boundary
+- Static source-contract checks are the first gate.
+- DevEco SDK 26 compilation and MatePad runtime verification are still required; no successful HAP build or device test is claimed yet.
+- Verify natural bilateral blinking does not trigger wink actions, thresholds feel usable, gesture sampling does not degrade the smooth GPU modes, and stop / restart clears state.
