@@ -65,6 +65,12 @@ jobs:
           grep -Fq '.maxLines(3)' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'export function measureCppLineWidth' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
           grep -Fq 'annotationText' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '@State showAnnotations: boolean = true' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'this.showAnnotations = !this.showAnnotations' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'if (this.showAnnotations && line.annotationText' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '@State showCodeSettings: boolean = false' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'if (this.showCodeSettings)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq "Button(this.showAnnotations ? '注释：开' : '注释：关')" apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq '引入哈希集合' apps/algolab/entry/src/main/ets/codegen/CppLinkedListGenerator.ets
           grep -Fq 'const token: CppToken' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
           grep -Fq 'const result: TokenizeResult' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
