@@ -164,6 +164,8 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
   private lastGestureTimestamp: number = 0;
   private leftEyeLatched: boolean = false;
   private rightEyeLatched: boolean = false;
+  private leftWinkCandidateSince: number = 0;
+  private rightWinkCandidateSince: number = 0;
   private jawOpenStartedAt: number = 0;
   private jawConfirmLatched: boolean = false;
   private lastLeftWinkAt: number = 0;
@@ -796,6 +798,8 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
   private resetGestureDetector(): void {
     this.leftEyeLatched = false;
     this.rightEyeLatched = false;
+    this.leftWinkCandidateSince = 0;
+    this.rightWinkCandidateSince = 0;
     this.jawOpenStartedAt = 0;
     this.jawConfirmLatched = false;
     this.lastLeftWinkAt = 0;
@@ -815,24 +819,39 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
     const leftClosed = leftBlink >= 0.72;
     const rightClosed = rightBlink >= 0.72;
 
-    // Bilateral closure is a natural blink; only unilateral closure becomes a wink.
-    if (leftClosed && rightBlink <= 0.35 && !this.leftEyeLatched && now - this.lastLeftWinkAt >= 650) {
-      leftWink = true;
-      this.lastLeftWinkAt = now;
+    // Bilateral closure is a natural blink. Require a unilateral closure to
+    // persist for 80 ms before firing, filtering one-frame eye-timing differences.
+    if (leftClosed && rightBlink <= 0.35) {
+      if (this.leftWinkCandidateSince === 0) {
+        this.leftWinkCandidateSince = now;
+      }
+      if (!this.leftEyeLatched && now - this.leftWinkCandidateSince >= 80 &&
+        now - this.lastLeftWinkAt >= 650) {
+        leftWink = true;
+        this.leftEyeLatched = true;
+        this.lastLeftWinkAt = now;
+      }
+    } else {
+      this.leftWinkCandidateSince = 0;
+      if (leftBlink <= 0.35) {
+        this.leftEyeLatched = false;
+      }
     }
-    if (rightClosed && leftBlink <= 0.35 && !this.rightEyeLatched && now - this.lastRightWinkAt >= 650) {
-      rightWink = true;
-      this.lastRightWinkAt = now;
-    }
-    if (leftBlink <= 0.35) {
-      this.leftEyeLatched = false;
-    } else if (leftClosed) {
-      this.leftEyeLatched = true;
-    }
-    if (rightBlink <= 0.35) {
-      this.rightEyeLatched = false;
-    } else if (rightClosed) {
-      this.rightEyeLatched = true;
+    if (rightClosed && leftBlink <= 0.35) {
+      if (this.rightWinkCandidateSince === 0) {
+        this.rightWinkCandidateSince = now;
+      }
+      if (!this.rightEyeLatched && now - this.rightWinkCandidateSince >= 80 &&
+        now - this.lastRightWinkAt >= 650) {
+        rightWink = true;
+        this.rightEyeLatched = true;
+        this.lastRightWinkAt = now;
+      }
+    } else {
+      this.rightWinkCandidateSince = 0;
+      if (rightBlink <= 0.35) {
+        this.rightEyeLatched = false;
+      }
     }
 
     if (jawOpen >= 0.72) {
