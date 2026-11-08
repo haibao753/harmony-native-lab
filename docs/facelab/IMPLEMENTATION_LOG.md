@@ -81,3 +81,32 @@
 - Official ArkGraphics 3D type reference confirms Quaternion and Vec3 x/y/z/w fields.
 - The code changes are committed to a dedicated feature branch.
 - No DevEco SDK build or MatePad hardware test has been run in this environment. The user's next build is required to validate ArkTS compatibility and confirm axis directions / mesh displacement behavior.
+
+
+## 2026-11-08 — 0.3.1 Motion Intelligence
+
+### Implemented in code
+
+- Rename the verified physical pose semantics in the UI: X = Pitch (nodding), Y = Yaw (left/right turn), Z = Roll (side tilt), based on the user's MatePad 0.3.0 action test.
+- Add user-triggered neutral-expression mesh capture. The next valid face geometry frame is copied as an in-memory baseline.
+- Compute current mesh displacement relative to the neutral baseline (RMS / MAX), separately from the existing adjacent-frame mesh displacement.
+- Add a rolling eight-sample pose-continuity heuristic based on consecutive raw Euler-angle changes.
+- Display continuity as “较平稳 / 轻微变化 / 头部运动中”; this is not an AR Engine confidence score.
+- Clear neutral mesh and temporal samples when tracking is lost or the callback stops.
+- Bump app version metadata to 0.3.1 / versionCode 10003.
+
+### Validation boundary
+
+- Source changes and documentation have been committed to a new feature branch stacked on the 0.3.0 branch.
+- Static source review only. The GitHub connector cannot run DevEco Studio, compile ArkTS, package a HAP, or test the MatePad.
+- User must build and install 0.3.1 locally. Verify neutral capture, blink / jaw deformation, head movement, continuity feedback, recalibration, and stop cleanup.
+
+
+### 0.3.1 device acceptance update
+
+- User reports that 0.3.1 successfully ran on the MatePad Pro 13.2 (2023) and that no obvious issues were noticed.
+- User specifically verified that, after capturing a neutral-expression mesh baseline, blinking and opening the mouth change the current-vs-neutral mesh RMS / MAX values.
+- This confirms that the neutral-reference geometry metric responds to at least these two expression actions on the target device.
+- No calibrated mapping from RMS / MAX to expression intensity is claimed; values remain in raw mesh coordinate units and may also reflect head-pose changes.
+- Head-pose continuity feedback, recalibration, and stop / restart cleanup have not yet been separately recorded as individually accepted tests.
+- GitHub Actions source-contract checks passed. DevEco build and hardware smoke test were completed by the user on the target device.

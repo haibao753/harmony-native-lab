@@ -16,6 +16,10 @@ export interface FaceMetrics {
   quaternionSummary: string;
   translationSummary: string;
   meshMotionSummary: string;
+  neutralDeformationSummary: string;
+  neutralCalibrated: boolean;
+  trackingStabilityLabel: string;
+  trackingStabilitySummary: string;
   poseCalibrated: boolean;
 }
 
@@ -143,6 +147,10 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
   private smoothedTranslationY: number | undefined = undefined;
   private smoothedTranslationZ: number | undefined = undefined;
   private previousVertices: Float32Array | undefined = undefined;
+  private neutralVertices: Float32Array | undefined = undefined;
+  private neutralCaptureRequested: boolean = false;
+  private previousRawEuler: EulerValues | undefined = undefined;
+  private poseStepSamples: number[] = [];
 
   constructor(
     onMetrics: (metrics: FaceMetrics) => void,
@@ -156,6 +164,10 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
   stop(): void {
     this.active = false;
     this.previousVertices = undefined;
+    this.neutralVertices = undefined;
+    this.neutralCaptureRequested = false;
+    this.previousRawEuler = undefined;
+    this.poseStepSamples = [];
     this.poseBaseline = undefined;
     this.translationBaseline = undefined;
   }
@@ -163,6 +175,11 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
   /** Capture the next valid face pose as the relative zero point. */
   calibratePose(): void {
     this.calibrationRequested = true;
+  }
+
+  /** Capture the next valid face mesh as the neutral-expression reference. */
+  captureNeutralBaseline(): void {
+    this.neutralCaptureRequested = true;
   }
 
   /** Drop the previous mesh sample; the next frame becomes a fresh comparison baseline. */
@@ -213,6 +230,10 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
 
       if (firstFace === undefined) {
         this.previousVertices = undefined;
+        this.neutralVertices = undefined;
+        this.neutralCaptureRequested = false;
+        this.previousRawEuler = undefined;
+        this.poseStepSamples = [];
         this.poseBaseline = undefined;
         this.translationBaseline = undefined;
         this.smoothedX = undefined;
@@ -235,6 +256,10 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
           quaternionSummary: '—',
           translationSummary: '—',
           meshMotionSummary: '等待人脸',
+          neutralDeformationSummary: '等待采集中性表情',
+          neutralCalibrated: false,
+          trackingStabilityLabel: '—',
+          trackingStabilitySummary: '等待姿态数据',
           poseCalibrated: false
         });
         this.lastErrorMessage = '';
@@ -253,6 +278,10 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
       let quaternionSummary = '—';
       let translationSummary = '—';
       let meshMotionSummary = '等待网格数据';
+      let neutralDeformationSummary = this.neutralVertices !== undefined ? '等待网格数据' : '尚未采集中性表情';
+      let neutralCalibrated = this.neutralVertices !== undefined;
+      let trackingStabilityLabel = '建立中';
+      let trackingStabilitySummary = '正在收集连续帧数据';
       let poseCalibrated = this.poseBaseline !== undefined;
 
       try {
@@ -280,6 +309,8 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
           this.smoothedTranslationX = undefined;
           this.smoothedTranslationY = undefined;
           this.smoothedTranslationZ = undefined;
+          this.previousRawEuler = undefined;
+          this.poseStepSamples = [];
         }
 
         const baseline = this.poseBaseline;
@@ -293,6 +324,35 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
           };
           const relativeRotation = multiplyQuaternion(inverseBaseline, rotation);
           const euler = quaternionToEulerDegrees(relativeRotation);
+
+          // Estimate short-term pose continuity from consecutive raw Euler samples.
+          // This is a local motion heuristic, not an AR Engine confidence score.
+          if (this.previousRawEuler !== undefined) {
+            const stepX = shortestAngleDelta(this.previousRawEuler.x, euler.x);
+            const stepY = shortestAngleDelta(this.previousRawEuler.y, euler.y);
+            const stepZ = shortestAngleDelta(this.previousRawEuler.z, euler.z);
+            const poseStep = Math.sqrt(stepX * stepX + stepY * stepY + stepZ * stepZ);
+            this.poseStepSamples.push(poseStep);
+            if (this.poseStepSamples.length > 8) {
+              this.poseStepSamples.shift();
+            }
+            let stepTotal = 0;
+            for (let i = 0; i < this.poseStepSamples.length; i++) {
+              stepTotal += this.poseStepSamples[i];
+            }
+            const averageStep = stepTotal / this.poseStepSamples.length;
+            trackingStabilitySummary = '近 ' + this.poseStepSamples.length.toString() +
+              ' 次更新平均变化 ' + averageStep.toFixed(2) + '°';
+            if (averageStep <= 0.8) {
+              trackingStabilityLabel = '较平稳';
+            } else if (averageStep <= 2.5) {
+              trackingStabilityLabel = '轻微变化';
+            } else {
+              trackingStabilityLabel = '头部运动中';
+            }
+          }
+          this.previousRawEuler = { x: euler.x, y: euler.y, z: euler.z };
+
           const alpha = 0.35;
 
           const filteredX = smoothAngle(this.smoothedX, euler.x, alpha);
@@ -346,6 +406,41 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
         const triangleCount = Math.floor(indexCount / 3);
         meshSummary = vertexCount.toString() + ' 顶点 · ' + triangleCount.toString() + ' 三角面';
 
+        if (this.neutralCaptureRequested) {
+          const neutralSnapshot = new Float32Array(currentVertices.length);
+          neutralSnapshot.set(currentVertices);
+          this.neutralVertices = neutralSnapshot;
+          this.neutralCaptureRequested = false;
+          neutralCalibrated = true;
+          neutralDeformationSummary = '中性基准已采集 · RMS 0.00000 · MAX 0.00000';
+        } else if (this.neutralVertices !== undefined) {
+          if (this.neutralVertices.length !== currentVertices.length) {
+            this.neutralVertices = undefined;
+            neutralCalibrated = false;
+            neutralDeformationSummary = '网格结构发生变化，请重新采集中性基准';
+          } else {
+            let neutralSumSquared = 0;
+            let neutralMaxDisplacement = 0;
+            for (let i = 0; i + 2 < currentVertices.length; i += 3) {
+              const dx = currentVertices[i] - this.neutralVertices[i];
+              const dy = currentVertices[i + 1] - this.neutralVertices[i + 1];
+              const dz = currentVertices[i + 2] - this.neutralVertices[i + 2];
+              const displacement = Math.sqrt(dx * dx + dy * dy + dz * dz);
+              neutralSumSquared += displacement * displacement;
+              if (displacement > neutralMaxDisplacement) {
+                neutralMaxDisplacement = displacement;
+              }
+            }
+            const neutralRms = vertexCount > 0 ? Math.sqrt(neutralSumSquared / vertexCount) : 0;
+            neutralDeformationSummary = 'RMS ' + neutralRms.toFixed(5) +
+              ' · MAX ' + neutralMaxDisplacement.toFixed(5);
+            neutralCalibrated = true;
+          }
+        } else {
+          neutralCalibrated = false;
+          neutralDeformationSummary = '尚未采集中性表情';
+        }
+
         if (this.previousVertices === undefined ||
           this.previousVertices.length !== currentVertices.length) {
           meshMotionSummary = '已建立基准，等待下一帧';
@@ -373,6 +468,7 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
         this.previousVertices = undefined;
         meshSummary = describeError(error as Object);
         meshMotionSummary = '无法计算网格位移';
+        neutralDeformationSummary = '无法计算中性基准形变';
       }
 
       try {
@@ -407,6 +503,10 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
         quaternionSummary: quaternionSummary,
         translationSummary: translationSummary,
         meshMotionSummary: meshMotionSummary,
+        neutralDeformationSummary: neutralDeformationSummary,
+        neutralCalibrated: neutralCalibrated,
+        trackingStabilityLabel: trackingStabilityLabel,
+        trackingStabilitySummary: trackingStabilitySummary,
         poseCalibrated: poseCalibrated
       });
       this.lastErrorMessage = '';

@@ -23,6 +23,10 @@ struct Index {
   @State quaternionSummary: string = '等待姿态数据';
   @State translationSummary: string = '等待姿态数据';
   @State meshMotionSummary: string = '等待网格数据';
+  @State neutralDeformationSummary: string = '尚未采集中性表情';
+  @State neutralCalibrated: boolean = false;
+  @State trackingStabilityLabel: string = '—';
+  @State trackingStabilitySummary: string = '等待姿态数据';
   @State poseCalibrated: boolean = false;
   @State errorMessage: string = '';
 
@@ -63,6 +67,10 @@ struct Index {
     this.quaternionSummary = metrics.quaternionSummary;
     this.translationSummary = metrics.translationSummary;
     this.meshMotionSummary = metrics.meshMotionSummary;
+    this.neutralDeformationSummary = metrics.neutralDeformationSummary;
+    this.neutralCalibrated = metrics.neutralCalibrated;
+    this.trackingStabilityLabel = metrics.trackingStabilityLabel;
+    this.trackingStabilitySummary = metrics.trackingStabilitySummary;
     this.poseCalibrated = metrics.poseCalibrated;
     this.status = metrics.faceCount > 0 ? '正在追踪人脸' : 'AR 已运行，等待人脸进入画面';
   }
@@ -83,6 +91,15 @@ struct Index {
     }
     this.faceCallback.resetMeshBaseline();
     this.meshMotionSummary = '已重置，等待下一帧建立基准';
+  }
+
+  private captureNeutralBaseline(): void {
+    if (this.faceCallback === undefined || this.faceCount === 0) {
+      this.errorMessage = '请先启动追踪并检测到人脸，再采集中性表情基准。';
+      return;
+    }
+    this.faceCallback.captureNeutralBaseline();
+    this.neutralDeformationSummary = '正在采集下一帧，请保持自然放松表情…';
   }
 
   private async startTracking(): Promise<void> {
@@ -195,6 +212,10 @@ struct Index {
       this.quaternionSummary = '已停止';
       this.translationSummary = '已停止';
       this.meshMotionSummary = '已停止';
+      this.neutralDeformationSummary = '尚未采集中性表情';
+      this.neutralCalibrated = false;
+      this.trackingStabilityLabel = '—';
+      this.trackingStabilitySummary = '已停止';
       this.poseCalibrated = false;
     }
   }
@@ -211,7 +232,7 @@ struct Index {
             .fontSize(32)
             .fontWeight(FontWeight.Bold)
             .fontColor('#F4F7FB')
-          Text('AR Face Tracking Lab · 0.3.0')
+          Text('AR Face Tracking Lab · 0.3.1')
             .fontSize(13)
             .fontColor('#9AA9BC')
         }
@@ -406,7 +427,7 @@ struct Index {
             .fontColor(this.poseCalibrated ? '#63D6A5' : '#9AA9BC')
           Row() {
             Column({ space: 4 }) {
-              Text('ROTATION X')
+              Text('PITCH · 上下点头 (X)')
                 .fontSize(10)
                 .fontColor('#9AA9BC')
               Text(this.rotationX)
@@ -417,7 +438,7 @@ struct Index {
             .layoutWeight(1)
             .alignItems(HorizontalAlign.Start)
             Column({ space: 4 }) {
-              Text('ROTATION Y')
+              Text('YAW · 左右转头 (Y)')
                 .fontSize(10)
                 .fontColor('#9AA9BC')
               Text(this.rotationY)
@@ -428,7 +449,7 @@ struct Index {
             .layoutWeight(1)
             .alignItems(HorizontalAlign.Start)
             Column({ space: 4 }) {
-              Text('ROTATION Z')
+              Text('ROLL · 左右歪头 (Z)')
                 .fontSize(10)
                 .fontColor('#9AA9BC')
               Text(this.rotationZ)
@@ -437,6 +458,30 @@ struct Index {
                 .fontColor('#63D6A5')
             }
             .layoutWeight(1)
+            .alignItems(HorizontalAlign.Start)
+          }
+          .width('100%')
+          Row() {
+            Column({ space: 4 }) {
+              Text('姿态连续性')
+                .fontSize(10)
+                .fontColor('#9AA9BC')
+              Text(this.trackingStabilityLabel)
+                .fontSize(16)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#63D6A5')
+            }
+            .layoutWeight(1)
+            .alignItems(HorizontalAlign.Start)
+            Column({ space: 4 }) {
+              Text('短时姿态变化')
+                .fontSize(10)
+                .fontColor('#9AA9BC')
+              Text(this.trackingStabilitySummary)
+                .fontSize(12)
+                .fontColor('#F4F7FB')
+            }
+            .layoutWeight(2)
             .alignItems(HorizontalAlign.Start)
           }
           .width('100%')
@@ -460,7 +505,41 @@ struct Index {
             .onClick(() => {
               this.calibratePose();
             })
-          Text('首次检测到人脸时自动建立基准。角度为标准 XYZ 欧拉角分解；设备实际轴向与正负方向请通过转头实验确认。平移显示相对校准点的 AR 坐标差。')
+          Text('首次检测到人脸时自动建立姿态零点。X 为上下点头（Pitch），Y 为左右转头（Yaw），Z 为左右歪头（Roll），方向已按 MatePad 实测动作对应；正负号表示相反方向。短时连续性是基于相邻姿态帧变化的启发式指标，并非 AR Engine 官方置信度。平移显示相对校准点的 AR 坐标差。')
+            .fontSize(11)
+            .fontColor('#8190A5')
+            .lineHeight(17)
+        }
+        .alignItems(HorizontalAlign.Start)
+        .width('100%')
+        .padding(15)
+        .backgroundColor('#172235')
+        .borderRadius(15)
+
+        Column({ space: 10 }) {
+          Text('NEUTRAL EXPRESSION BASELINE')
+            .fontSize(11)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#8DA2BC')
+          Text(this.neutralCalibrated ? '中性表情基准已建立' : '尚未建立中性表情基准')
+            .fontSize(12)
+            .fontColor(this.neutralCalibrated ? '#63D6A5' : '#9AA9BC')
+          Text('相对中性网格形变')
+            .fontSize(10)
+            .fontColor('#9AA9BC')
+          Text(this.neutralDeformationSummary)
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#F4F7FB')
+          Button('采集 / 重新采集中性表情')
+            .width('100%')
+            .height(42)
+            .enabled(this.faceCount > 0 && this.arContext !== undefined)
+            .backgroundColor('#285B55')
+            .onClick(() => {
+              this.captureNeutralBaseline();
+            })
+          Text('采集时请正视屏幕、放松面部，不要眨眼或张嘴。之后的 RMS / MAX 表示当前网格相对这张中性参考网格的变化幅度；它可能同时受到表情和头部姿态影响。')
             .fontSize(11)
             .fontColor('#8190A5')
             .lineHeight(17)
@@ -479,7 +558,7 @@ struct Index {
           Text(this.meshSummary)
             .fontSize(14)
             .fontColor('#F4F7FB')
-          Text('相邻帧顶点位移')
+          Text('相邻帧网格变化')
             .fontSize(10)
             .fontColor('#9AA9BC')
           Text(this.meshMotionSummary)
@@ -494,7 +573,7 @@ struct Index {
             .onClick(() => {
               this.resetMeshBaseline();
             })
-          Text('RMS 表示所有顶点三维位移的均方根，MAX 表示单个顶点的最大位移。当前显示原始坐标单位，不擅自换算为毫米。')
+          Text('这里比较当前帧与上一帧，用于观察短时网格波动；中性表情基准比较则显示在上方独立卡片。RMS 为顶点位移均方根，MAX 为单个顶点最大位移。数值使用原始坐标单位，不换算为毫米。')
             .fontSize(11)
             .fontColor('#8190A5')
             .lineHeight(17)
