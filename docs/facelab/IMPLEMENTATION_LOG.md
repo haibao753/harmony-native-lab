@@ -41,3 +41,11 @@
 7. 分别眨左眼、眨右眼、张嘴，观察对应权重。
 8. 点击“停止追踪”，确认摄像头预览关闭。
 9. 将构建日志和真机截图回填到 DEVICE_MATRIX.md。
+
+
+## 2026-11-08 — 0.2.1 runtime diagnostic patch
+
+- User's first 0.2.0 device run showed `TypeError: Cannot read property ARFeatureType of undefined`.
+- Replaced runtime enum-member dereferences on `arEngine` with Huawei-documented numeric enum values, retaining ArkTS enum type annotations.
+- Added explicit startup-stage diagnostics.
+- This patch has not yet been rebuilt or tested on the user's device.
