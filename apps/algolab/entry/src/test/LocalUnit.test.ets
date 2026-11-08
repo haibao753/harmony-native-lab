@@ -7,6 +7,7 @@ import {
   setNodeValue
 } from '../main/ets/domain/LinkedListModel';
 import { generateCpp } from '../main/ets/codegen/CppLinkedListGenerator';
+import { highlightCpp } from '../main/ets/codegen/CppSyntaxHighlighter';
 
 export default function localUnitTest() {
   describe('LinkedListModel', () => {
@@ -68,7 +69,55 @@ export default function localUnitTest() {
 
         const generated = generateCpp(linkedDocument);
         expect(generated.code.indexOf('node1->next = node2;') >= 0).assertTrue();
+        expect(generated.annotations.length > 0).assertTrue();
+
+        let hasPointerExplanation = false;
+        for (let i = 0; i < generated.annotations.length; i++) {
+          if (generated.annotations[i].text.indexOf('N1.next 指向 N2') >= 0) {
+            hasPointerExplanation = true;
+          }
+        }
+        expect(hasPointerExplanation).assertTrue();
       }
+    });
+
+    it('highlights C++ keywords, literals, comments and preprocessor lines', 0, () => {
+      const lines = highlightCpp(
+        'int main() { return 42; } // demo\\n#include <iostream>',
+        []
+      );
+      let hasKeyword = false;
+      let hasNumber = false;
+      let hasComment = false;
+      let hasDirective = false;
+      let hasHeader = false;
+
+      for (let i = 0; i < lines.length; i++) {
+        for (let j = 0; j < lines[i].tokens.length; j++) {
+          const token = lines[i].tokens[j];
+          if (token.text === 'int' && token.kind === 'type') {
+            hasKeyword = true;
+          }
+          if (token.text === '42' && token.kind === 'number') {
+            hasNumber = true;
+          }
+          if (token.text.indexOf('// demo') >= 0 && token.kind === 'comment') {
+            hasComment = true;
+          }
+          if (token.text === '#include' && token.kind === 'preprocessor') {
+            hasDirective = true;
+          }
+          if (token.text === '<iostream>' && token.kind === 'header') {
+            hasHeader = true;
+          }
+        }
+      }
+
+      expect(hasKeyword).assertTrue();
+      expect(hasNumber).assertTrue();
+      expect(hasComment).assertTrue();
+      expect(hasDirective).assertTrue();
+      expect(hasHeader).assertTrue();
     });
 
   });
