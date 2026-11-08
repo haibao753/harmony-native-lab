@@ -220,3 +220,23 @@
 - Moved native declarations into the official `src/main/cpp/types/libfacelab_native` package structure and registered the .so dependency and runtime package.
 - Changed the internal entry package version to 1.0.0 while retaining app version 0.5.0, to remove the persistent SemVer warning.
 - Full SDK 26 NDK rebuild and HAP packaging remain pending user validation.
+
+
+## 2026-11-08 — FaceLab 0.5.0 MatePad feedback and 0.5.1 GPU regions
+
+### User hardware feedback
+- User successfully built and deployed FaceLab 0.5.0 to MatePad Pro 13.2 (2023).
+- User reports wireframe, surface and deformation heatmap are now very smooth.
+- User reports Regions mode remains as laggy as the earlier Canvas implementation.
+
+### 0.5.1 source changes
+- Added Int32Array triangle-label input to the Node-API bridge and native renderer.
+- Added a per-triangle expanded vertex upload path for region mode, preserving hard boundaries on shared mesh vertices.
+- Added flat region-ID interpolation and a ten-color GLSL palette matching the previous Canvas mapping.
+- Routed all four visualizer modes through the same XComponent native GPU Surface.
+- Removed the Regions-only ArkUI Canvas branch and its per-frame number[] geometry copies.
+- Bumped application version to 0.5.1 / versionCode 10009.
+
+### Validation boundary
+- The three original GPU modes have user-confirmed smooth performance on the target tablet.
+- 0.5.1 region GPU code has passed static source-contract review only so far; DevEco SDK 26 compilation, label color mapping and device performance still require user verification.
