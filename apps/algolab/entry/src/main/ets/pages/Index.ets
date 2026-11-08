@@ -17,6 +17,8 @@ import {
 } from '../domain/LinkedListModel';
 import { CodeLineLink, generateCpp } from '../codegen/CppLinkedListGenerator';
 import { highlightCpp, formatCppDisplayToken, measureCppLineWidth, CppDisplayLine, CppToken } from '../codegen/CppSyntaxHighlighter';
+import { LinkedListTraceStep, buildTraversalTrace, getLinkedListLesson } from '../domain/LinkedListLessonEngine';
+import { TeachingWorkbench } from '../components/TeachingWorkbench';
 
 @Component
 struct NodeCard {
@@ -115,6 +117,23 @@ struct Index {
   @State connectionSourceId: string = '';
   @State showCode: boolean = false;
   @State showMemory: boolean = false;
+  @State showTeaching: boolean = false;
+  @State activeLessonId: string = 'node';
+  @State traceSteps: LinkedListTraceStep[] = [];
+  @State traceStepIndex: number = 0;
+  @State predictionChoice: number = -1;
+  @State predictionCorrect: boolean = false;
+  @State predictionFeedback: string = '';
+  @State traceStepTitle: string = '';
+  @State traceStepExplanation: string = '';
+  @State traceCurrentLabel: string = 'current = nullptr';
+  @State traceVisitedLabel: string = '尚未访问';
+  @State traceCodeLineNumber: number = 0;
+  @State traceCodeLineText: string = '';
+  @State traceQuestion: string = '';
+  @State traceOptionA: string = '';
+  @State traceOptionB: string = '';
+  @State traceOptionC: string = '';
   // Used to tune the docked inspector width for narrower tablet windows.
   @State viewportWidth: number = 0;
   // Width of the actual horizontal code viewport. Short source lines must
@@ -176,7 +195,138 @@ struct Index {
     }
   }
 
+
+  private clearTrace(): void {
+    this.traceSteps = [];
+    this.traceStepIndex = 0;
+    this.predictionChoice = -1;
+    this.predictionCorrect = false;
+    this.predictionFeedback = '';
+    this.traceStepTitle = '';
+    this.traceStepExplanation = '';
+    this.traceCurrentLabel = 'current = nullptr';
+    this.traceVisitedLabel = '尚未访问';
+    this.traceCodeLineNumber = 0;
+    this.traceCodeLineText = '';
+    this.traceQuestion = '';
+    this.traceOptionA = '';
+    this.traceOptionB = '';
+    this.traceOptionC = '';
+  }
+
+  private selectLesson(lessonId: string): void {
+    this.activeLessonId = lessonId;
+    this.clearTrace();
+  }
+
+  private startTraversalTrace(): void {
+    if (this.document.nodes.length === 0) {
+      this.message = '请先创建至少一个节点，再运行链表遍历演示。';
+      return;
+    }
+    this.activeLessonId = 'traversal';
+    this.traceSteps = buildTraversalTrace(this.document, this.generatedCode);
+    this.traceStepIndex = 0;
+    this.predictionChoice = -1;
+    this.predictionCorrect = false;
+    this.predictionFeedback = '';
+    this.showTeaching = true;
+    this.showMemory = false;
+    this.showCode = false;
+    this.applyTraceStep(0);
+  }
+
+  private applyTraceStep(index: number): void {
+    if (index < 0 || index >= this.traceSteps.length) {
+      return;
+    }
+    const step = this.traceSteps[index];
+    this.traceStepTitle = step.title;
+    this.traceStepExplanation = step.explanation;
+    this.traceCurrentLabel = step.currentId === ''
+      ? 'current = nullptr'
+      : 'current = &' + step.currentId;
+    this.traceVisitedLabel = step.visitedLabel;
+    this.traceCodeLineNumber = step.codeLineNumber;
+    this.traceCodeLineText = '';
+    if (step.codeLineNumber > 0) {
+      const lines = this.generatedCode.split('\n');
+      if (step.codeLineNumber <= lines.length) {
+        this.traceCodeLineText = lines[step.codeLineNumber - 1].trim();
+      }
+    }
+    this.traceQuestion = step.question;
+    this.traceOptionA = step.optionA;
+    this.traceOptionB = step.optionB;
+    this.traceOptionC = step.optionC;
+    this.selectedId = step.activeNodeId;
+    this.selectedEdgeSourceId = step.edgeSourceId;
+    this.selectedEdgeTargetId = step.edgeTargetId;
+    this.selectedCodeLineNumber = step.codeLineNumber;
+    this.syncSelectedValueInput();
+    this.statusText = this.traceCurrentLabel;
+    this.message = step.explanation;
+    this.drawConnections();
+  }
+
+  private answerPrediction(option: number): void {
+    if (this.traceStepIndex >= this.traceSteps.length) {
+      return;
+    }
+    const step = this.traceSteps[this.traceStepIndex];
+    this.predictionChoice = option;
+    this.predictionCorrect = option === step.correctOption;
+    this.predictionFeedback = (this.predictionCorrect ? '判断正确。' : '正确思路：') + step.feedback;
+  }
+
+  private previousTraceStep(): void {
+    if (this.traceStepIndex <= 0) {
+      return;
+    }
+    this.traceStepIndex--;
+    this.predictionChoice = -1;
+    this.predictionCorrect = false;
+    this.predictionFeedback = '';
+    this.applyTraceStep(this.traceStepIndex);
+  }
+
+  private nextTraceStep(): void {
+    if (this.predictionChoice < 0 || this.traceStepIndex >= this.traceSteps.length - 1) {
+      return;
+    }
+    this.traceStepIndex++;
+    this.predictionChoice = -1;
+    this.predictionCorrect = false;
+    this.predictionFeedback = '';
+    this.applyTraceStep(this.traceStepIndex);
+  }
+
+  private restartTrace(): void {
+    if (this.traceSteps.length === 0) {
+      this.startTraversalTrace();
+      return;
+    }
+    this.traceStepIndex = 0;
+    this.predictionChoice = -1;
+    this.predictionCorrect = false;
+    this.predictionFeedback = '';
+    this.applyTraceStep(0);
+  }
+
+  private openMemoryFromTeaching(): void {
+    this.showTeaching = false;
+    this.showCode = false;
+    this.showMemory = true;
+  }
+
+  private openCodeFromTeaching(): void {
+    this.showTeaching = false;
+    this.showMemory = false;
+    this.showCode = true;
+  }
+
   private applyDocument(nextDocument: LinkedListDocument): void {
+    this.clearTrace();
     this.undoStack.push(cloneDocument(this.document));
     if (this.undoStack.length > 50) {
       this.undoStack.shift();
@@ -362,6 +512,7 @@ struct Index {
     const previous = this.undoStack.pop();
     if (previous !== undefined) {
       this.document = previous;
+      this.clearTrace();
       this.canUndo = this.undoStack.length > 0;
       this.canRedo = true;
       this.connectionSourceId = '';
@@ -378,6 +529,7 @@ struct Index {
     const next = this.redoStack.pop();
     if (next !== undefined) {
       this.document = next;
+      this.clearTrace();
       this.canUndo = true;
       this.canRedo = this.redoStack.length > 0;
       this.connectionSourceId = '';
@@ -465,13 +617,27 @@ struct Index {
               .letterSpacing(1.4)
           }
           Blank()
-          Text('1.1  /  MEMORY EXPLORER')
+          Text('1.2  /  TEACHING WORKBENCH')
             .fontSize(10)
             .fontWeight(FontWeight.Medium)
             .fontColor('#8C857A')
             .padding({ left: 10, right: 10, top: 7, bottom: 7 })
             .backgroundColor('#ECE8E0')
             .borderRadius(8)
+          Button(this.showTeaching ? '关闭教学' : '教学工作台')
+            .type(ButtonType.Normal)
+            .height(40)
+            .padding({ left: 14, right: 14 })
+            .backgroundColor(this.showTeaching ? '#F2E4D8' : '#EAE6DE')
+            .fontColor(this.showTeaching ? '#9A6038' : '#48443C')
+            .borderRadius(11)
+            .onClick(() => {
+              this.showTeaching = !this.showTeaching;
+              if (this.showTeaching) {
+                this.showMemory = false;
+                this.showCode = false;
+              }
+            })
           Button('＋ 新建节点')
             .type(ButtonType.Normal)
             .height(40)
@@ -515,30 +681,6 @@ struct Index {
             .borderRadius(9)
             .onClick(() => this.deleteSelectedNode())
           Blank()
-          Button(this.showCode ? '关闭 C++' : 'C++ 代码')
-            .type(ButtonType.Normal)
-            .height(38)
-            .backgroundColor(this.showCode ? '#F2E4D8' : '#EAE6DE')
-            .fontColor(this.showCode ? '#9A6038' : '#48443C')
-            .borderRadius(9)
-            .onClick(() => {
-              this.showCode = !this.showCode;
-              if (this.showCode) {
-                this.showMemory = false;
-              }
-            })
-          Button(this.showMemory ? '关闭内存' : '内存视图')
-            .type(ButtonType.Normal)
-            .height(38)
-            .backgroundColor(this.showMemory ? '#F2E4D8' : '#EAE6DE')
-            .fontColor(this.showMemory ? '#9A6038' : '#48443C')
-            .borderRadius(9)
-            .onClick(() => {
-              this.showMemory = !this.showMemory;
-              if (this.showMemory) {
-                this.showCode = false;
-              }
-            })
         }
         .width('100%')
 
@@ -690,6 +832,51 @@ struct Index {
           .backgroundColor('#FFFEFC')
           .border({ width: 1, color: '#E5E0D7' })
           .borderRadius(18)
+
+
+          // Teaching workbench is the guided learning surface. It never mutates
+          // the linked-list document; it only drives the active pointer/code highlights.
+          if (this.showTeaching) {
+            TeachingWorkbench({
+              activeLessonId: this.activeLessonId,
+              lessonTitle: getLinkedListLesson(this.activeLessonId).title,
+              lessonSubtitle: getLinkedListLesson(this.activeLessonId).subtitle,
+              lessonConcept: getLinkedListLesson(this.activeLessonId).concept,
+              lessonKeyPoint: getLinkedListLesson(this.activeLessonId).keyPoint,
+              lessonMisconception: getLinkedListLesson(this.activeLessonId).misconception,
+              lessonTask: getLinkedListLesson(this.activeLessonId).task,
+              hasDocument: this.document.nodes.length > 0,
+              traceReady: this.traceSteps.length > 0,
+              stepIndex: this.traceStepIndex,
+              stepCount: this.traceSteps.length,
+              stepTitle: this.traceStepTitle,
+              stepExplanation: this.traceStepExplanation,
+              currentLabel: this.traceCurrentLabel,
+              visitedLabel: this.traceVisitedLabel,
+              codeLineNumber: this.traceCodeLineNumber,
+              codeLineText: this.traceCodeLineText,
+              question: this.traceQuestion,
+              optionA: this.traceOptionA,
+              optionB: this.traceOptionB,
+              optionC: this.traceOptionC,
+              selectedOption: this.predictionChoice,
+              predictionCorrect: this.predictionCorrect,
+              predictionFeedback: this.predictionFeedback,
+              canGoPrevious: this.traceSteps.length > 0 && this.traceStepIndex > 0,
+              canGoNext: this.predictionChoice >= 0 && this.traceStepIndex < this.traceSteps.length - 1,
+              onSelectLesson: (lessonId: string) => this.selectLesson(lessonId),
+              onStartTrace: () => this.startTraversalTrace(),
+              onAnswer: (option: number) => this.answerPrediction(option),
+              onPrevious: () => this.previousTraceStep(),
+              onNext: () => this.nextTraceStep(),
+              onRestart: () => this.restartTrace(),
+              onOpenMemory: () => this.openMemoryFromTeaching(),
+              onOpenCode: () => this.openCodeFromTeaching(),
+              onClose: () => {
+                this.showTeaching = false;
+              }
+            })
+          }
 
           // Memory inspector: a docked companion to the canvas, never a floating obstruction.
           if (this.showMemory) {
