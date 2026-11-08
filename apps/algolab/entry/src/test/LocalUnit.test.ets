@@ -81,6 +81,20 @@ export default function localUnitTest() {
       }
     });
 
+    it('keeps digit separators inside numeric tokens', 0, () => {
+      const lines = highlightCpp("int value = 1'000;", []);
+      let hasSeparatedNumber = false;
+      for (let i = 0; i < lines.length; i++) {
+        for (let j = 0; j < lines[i].tokens.length; j++) {
+          const token = lines[i].tokens[j];
+          if (token.text === "1'000" && token.kind === 'number') {
+            hasSeparatedNumber = true;
+          }
+        }
+      }
+      expect(hasSeparatedNumber).assertTrue();
+    });
+
     it('highlights C++ keywords, literals, comments and preprocessor lines', 0, () => {
       const lines = highlightCpp(
         'int main() { return 42; } // demo\n#include <iostream>',
