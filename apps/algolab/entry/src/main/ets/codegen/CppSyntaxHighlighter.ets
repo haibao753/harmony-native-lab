@@ -353,11 +353,18 @@ export function formatCppDisplayToken(source: string): string {
  * Estimate the intrinsic width of a monospace source line in vp.
  * This width is applied to one Text paragraph inside a horizontal Scroll.
  */
-export function measureCppLineWidth(line: CppDisplayLine, fontSize: number): number {
+export function measureCppLineWidth(
+  line: CppDisplayLine,
+  fontSize: number,
+  viewportWidth: number = 0
+): number {
   let characterCount = 0;
   for (let i = 0; i < line.tokens.length; i++) {
     characterCount += formatCppDisplayToken(line.tokens[i].text).length;
   }
-  return Math.max(180, characterCount * fontSize * 0.62 + 12);
+  // A Scroll child narrower than its viewport can be centered by the
+  // scrolling layout. Give every line at least the full viewport width so
+  // TextAlign.Start anchors the first token at the left edge.
+  return Math.max(180, viewportWidth, characterCount * fontSize * 0.62 + 12);
 }
 
