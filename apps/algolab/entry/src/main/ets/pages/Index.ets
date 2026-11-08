@@ -20,6 +20,7 @@ import { classifyInputSource } from '../interaction/InputRouter';
 import { CanvasTransform, screenToCanvasPoint, zoomTransformAtPoint } from '../interaction/CoordinateMapper';
 import {
   InkDocument,
+  InkPoint,
   appendInkPointInPlace,
   beginInkStroke,
   clearInkDocument,
@@ -487,7 +488,7 @@ struct Index {
     const position = screenToCanvasPoint(touch.x, touch.y, transform);
     const rawPressure = touch.pressure === undefined ? 0 : Number(touch.pressure);
     const pressure = rawPressure > 0 ? Math.min(1, rawPressure / 65535) : 0.5;
-    const point = {
+    const point: InkPoint = {
       x: position.x,
       y: position.y,
       pressure: pressure
