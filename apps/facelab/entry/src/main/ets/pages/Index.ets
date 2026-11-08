@@ -126,7 +126,6 @@ struct Index {
       this.lastTextMetricsUpdate = now;
     }
 
-    this.meshRevision++;
     const nextStatus = metrics.faceCount > 0 ? '正在追踪人脸' : 'AR 已运行，等待人脸进入画面';
     if (this.status !== nextStatus) {
       this.status = nextStatus;
@@ -437,6 +436,7 @@ struct Index {
                 .backgroundColor('#34445D')
                 .onClick(() => {
                   this.meshViewReset++;
+                  this.gpuSurfaceController.resetView();
                 })
             }
           }
