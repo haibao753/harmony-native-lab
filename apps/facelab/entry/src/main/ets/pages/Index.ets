@@ -258,7 +258,7 @@ struct Index {
             .fontSize(32)
             .fontWeight(FontWeight.Bold)
             .fontColor('#F4F7FB')
-          Text('AR Face Tracking Lab · 0.5.0')
+          Text('AR Face Tracking Lab · 0.5.1')
             .fontSize(13)
             .fontColor('#9AA9BC')
         }
