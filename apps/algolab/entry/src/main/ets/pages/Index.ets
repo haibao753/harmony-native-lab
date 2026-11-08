@@ -21,6 +21,7 @@ import { CanvasTransform, screenToCanvasPoint, zoomTransformAtPoint } from '../i
 import {
   InkDocument,
   appendInkPoint,
+  appendInkPointInPlace,
   beginInkStroke,
   clearInkDocument,
   cloneInkDocument,
@@ -166,6 +167,7 @@ struct Index {
   @State canUndo: boolean = false;
   @State canRedo: boolean = false;
   @State inkDocument: InkDocument = createEmptyInkDocument();
+  @State inkRenderMode: string = 'full';
   @State penMode: boolean = true;
   @State penContactActive: boolean = false;
   @State canUndoInk: boolean = false;
@@ -495,6 +497,7 @@ struct Index {
     if (event.type === TouchType.Down) {
       this.pushInkUndoSnapshot();
       this.activeInkPointerId = touch.id;
+      this.inkRenderMode = 'full';
       this.inkDocument = beginInkStroke(this.inkDocument, point);
       this.message = 'M-Pencil 已开始记录独立笔迹；链表数据没有改变。';
       return;
@@ -505,7 +508,8 @@ struct Index {
     }
 
     if (event.type === TouchType.Move || event.type === TouchType.Up) {
-      this.inkDocument = appendInkPoint(this.inkDocument, point);
+      this.inkRenderMode = 'append';
+      this.inkDocument = appendInkPointInPlace(this.inkDocument, point);
     }
 
     if (event.type === TouchType.Up || event.type === TouchType.Cancel) {
@@ -518,6 +522,7 @@ struct Index {
       return;
     }
     this.inkRedoStack.push(cloneInkDocument(this.inkDocument));
+    this.inkRenderMode = 'full';
     const previous = this.inkUndoStack.pop();
     if (previous !== undefined) {
       this.inkDocument = previous;
@@ -532,6 +537,7 @@ struct Index {
       return;
     }
     this.inkUndoStack.push(cloneInkDocument(this.inkDocument));
+    this.inkRenderMode = 'full';
     const next = this.inkRedoStack.pop();
     if (next !== undefined) {
       this.inkDocument = next;
@@ -546,6 +552,7 @@ struct Index {
       return;
     }
     this.pushInkUndoSnapshot();
+    this.inkRenderMode = 'full';
     this.inkDocument = clearInkDocument(this.inkDocument);
     this.activeInkPointerId = -1;
     this.message = '已清空笔迹；链表节点和指针没有改变。';
@@ -892,7 +899,10 @@ struct Index {
                   (node: LinkedNode) => node.id
                 )
 
-                InkLayer({ document: this.inkDocument })
+                InkLayer({
+                  document: this.inkDocument,
+                  renderMode: this.inkRenderMode
+                })
 
                 if (this.document.nodes.length === 0) {
                   Column({ space: 9 }) {
