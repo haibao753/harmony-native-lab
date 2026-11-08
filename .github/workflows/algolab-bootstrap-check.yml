@@ -55,6 +55,12 @@ jobs:
         run: |
           grep -Fq 'highlightCpp(generated.code, generated.annotations)' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'ForEach(line.tokens' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'Span(formatCppDisplayToken(token.text))' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '.width(measureCppLineWidth(line, this.codeFontSize))' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '.textAlign(TextAlign.Start)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '.fontSize(12)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '.maxLines(3)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'export function measureCppLineWidth' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
           grep -Fq 'annotationText' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq '引入哈希集合' apps/algolab/entry/src/main/ets/codegen/CppLinkedListGenerator.ets
           grep -Fq 'const token: CppToken' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
@@ -62,7 +68,8 @@ jobs:
           grep -Fq 'formatCppDisplayToken(token.text)' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq '.justifyContent(FlexAlign.Start)' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq '.textAlign(TextAlign.Start)' apps/algolab/entry/src/main/ets/pages/Index.ets
-          grep -Fq '@State codeFontSize: number = 11' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '@State codeFontSize: number = 14' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq "Button('A+')" apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'preserves leading spaces and tabs' apps/algolab/entry/src/test/LocalUnit.test.ets
+          grep -Fq 'measures C++ source line width' apps/algolab/entry/src/test/LocalUnit.test.ets
           grep -Fq "1'000" apps/algolab/entry/src/test/LocalUnit.test.ets
