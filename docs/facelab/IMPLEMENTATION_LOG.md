@@ -202,3 +202,12 @@
 - GitHub 文件提交成功不等于 HarmonyOS 原生模块构建成功。
 - 当前环境未运行 DevEco Studio / HarmonyOS SDK 编译；C++ NDK、ArkTS 类型和 XComponent 生命周期仍待本地构建验证。
 - MatePad Pro 13.2（2023）实测尚未完成；帧率、热力可见性、手势、启动 / 停止资源释放均待验收。
+
+
+## 2026-11-08 — 0.5.0 ArkTS XComponent SDK 26 compile correction
+
+- User's first DevEco SDK 26 build confirmed CMake / native C++ compilation succeeds; ArkTS failed because XComponentController and XComponentType were incorrectly imported as named exports from @kit.ArkUI.
+- Official ArkUI XComponent declarations define XComponentController and XComponentType as global ArkTS declarations in component/xcomponent.d.ts and component/enums.d.ts. They must be referenced without importing them from @kit.ArkUI.
+- Keep the ArkTS XComponentOptions form with type: XComponentType.SURFACE and controller: this.controller. This uses the ArkTS-side lifecycle callbacks documented by Huawei and avoids NativeXComponentParameters, which is the separate API 19+ native-side lifecycle path and does not accept controller.
+- Updated entry module package version from 0.1.0 to 0.5.0 to align package metadata with this release. This is a SemVer version string; whether it eliminates the user's hvigor warning must be confirmed by a fresh build.
+- Next gate: rerun DevEco SDK 26 CompileArkTS, then inspect any subsequent diagnostics. Native CMake success is not a substitute for full HAP success.
