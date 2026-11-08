@@ -221,6 +221,9 @@ bool FaceGpuRenderer::InitializeEgl()
     if (display_ == EGL_NO_DISPLAY || eglInitialize(display_, nullptr, nullptr) != EGL_TRUE) {
         return false;
     }
+    if (eglBindAPI(EGL_OPENGL_ES_API) != EGL_TRUE) {
+        return false;
+    }
 
     const EGLint configAttributes[] = {
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
