@@ -3,7 +3,6 @@ import { ARView, arEngine, arViewController } from '@kit.AREngine';
 import { Scene } from '@kit.ArkGraphics3D';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { FaceMetrics, FaceTrackingCallback } from '../common/FaceTrackingCallback';
-import { FaceMeshViewer } from '../components/FaceMeshViewer';
 import { FaceGpuSurface, FaceGpuSurfaceController } from '../components/FaceGpuSurface';
 
 @Entry
@@ -30,32 +29,17 @@ struct Index {
   @State trackingStabilityLabel: string = '—';
   @State trackingStabilitySummary: string = '等待姿态数据';
   @State poseCalibrated: boolean = false;
-  @State meshRevision: number = 0;
-  @State meshTopologyRevision: number = -1;
   @State meshViewMode: string = 'wireframe';
-  @State meshViewReset: number = 0;
-  @State meshDataAvailable: boolean = false;
   @State meshLabelsAvailable: boolean = false;
-  @State posePitch: number = 0;
-  @State poseYaw: number = 0;
-  @State poseRoll: number = 0;
   @State errorMessage: string = '';
 
   private faceCallback: FaceTrackingCallback | undefined = undefined;
   private gpuSurfaceController: FaceGpuSurfaceController = new FaceGpuSurfaceController();
-  private canvasTopologyRevision: number = -1;
-  private meshVertices: number[] = [];
-  private meshTriangles: number[] = [];
-  private meshEdges: number[] = [];
-  private meshDeformation: number[] = [];
-  private meshLabels: number[] = [];
   private lastTextMetricsUpdate: number = 0;
 
-  private copyNumericData(target: number[], source: Float32Array | Uint32Array | Int32Array): void {
-    target.length = source.length;
-    for (let i = 0; i < source.length; i++) {
-      target[i] = source[i];
-    }
+  private setMeshViewMode(mode: string): void {
+    this.meshViewMode = mode;
+    this.gpuSurfaceController.setMode(mode);
   }
 
   private describeError(error: Object): string {
@@ -83,27 +67,10 @@ struct Index {
     this.faceCount = metrics.faceCount;
     this.neutralCalibrated = metrics.neutralCalibrated;
     this.poseCalibrated = metrics.poseCalibrated;
-    this.meshDataAvailable = metrics.meshFrameAvailable;
-    this.posePitch = metrics.posePitch;
-    this.poseYaw = metrics.poseYaw;
-    this.poseRoll = metrics.poseRoll;
-
-    // GPU modes send the original typed buffers directly through Node-API.
-    // Plain number[] conversion is retained only for the optional region-mode fallback.
+    // All four display modes use the native GPU path. Face labels remain Int32Array
+    // buffers and cross the ArkTS/native boundary without Canvas number[] copies.
     this.gpuSurfaceController.update(metrics, this.meshViewMode);
-    this.meshTopologyRevision = metrics.meshTopologyRevision;
     this.meshLabelsAvailable = metrics.meshLabelsAvailable;
-    if (this.meshViewMode === 'regions') {
-      this.copyNumericData(this.meshVertices, metrics.meshVertices);
-      this.copyNumericData(this.meshDeformation, metrics.meshDeformation);
-      if (this.canvasTopologyRevision !== metrics.meshTopologyRevision) {
-        this.copyNumericData(this.meshTriangles, metrics.meshTriangles);
-        this.copyNumericData(this.meshEdges, metrics.meshEdges);
-        this.copyNumericData(this.meshLabels, metrics.meshLabels);
-        this.canvasTopologyRevision = metrics.meshTopologyRevision;
-      }
-      this.meshRevision++;
-    }
 
     // The geometry viewer updates at 10 Hz; textual diagnostics only need 2 Hz.
     const now = Date.now();
@@ -274,19 +241,7 @@ struct Index {
       this.trackingStabilityLabel = '—';
       this.trackingStabilitySummary = '已停止';
       this.poseCalibrated = false;
-      this.meshVertices.length = 0;
-      this.meshTriangles.length = 0;
-      this.meshEdges.length = 0;
-      this.meshDeformation.length = 0;
-      this.meshLabels.length = 0;
-      this.meshTopologyRevision = -1;
       this.meshLabelsAvailable = false;
-      this.posePitch = 0;
-      this.poseYaw = 0;
-      this.poseRoll = 0;
-      this.meshDataAvailable = false;
-      this.meshRevision++;
-      this.canvasTopologyRevision = -1;
       this.gpuSurfaceController.clear();
     }
   }
@@ -435,7 +390,6 @@ struct Index {
                 .fontSize(11)
                 .backgroundColor('#34445D')
                 .onClick(() => {
-                  this.meshViewReset++;
                   this.gpuSurfaceController.resetView();
                 })
             }
@@ -448,7 +402,7 @@ struct Index {
               .fontSize(12)
               .backgroundColor(this.meshViewMode === 'wireframe' ? '#285B55' : '#34445D')
               .onClick(() => {
-                this.meshViewMode = 'wireframe';
+                this.setMeshViewMode('wireframe');
               })
             Button('实体')
               .layoutWeight(1)
@@ -456,7 +410,7 @@ struct Index {
               .fontSize(12)
               .backgroundColor(this.meshViewMode === 'surface' ? '#285B55' : '#34445D')
               .onClick(() => {
-                this.meshViewMode = 'surface';
+                this.setMeshViewMode('surface');
               })
             Button('形变热力')
               .layoutWeight(1)
@@ -464,7 +418,7 @@ struct Index {
               .fontSize(11)
               .backgroundColor(this.meshViewMode === 'deformation' ? '#285B55' : '#34445D')
               .onClick(() => {
-                this.meshViewMode = 'deformation';
+                this.setMeshViewMode('deformation');
               })
             Button('部位分区')
               .layoutWeight(1)
@@ -472,34 +426,15 @@ struct Index {
               .fontSize(11)
               .backgroundColor(this.meshViewMode === 'regions' ? '#285B55' : '#34445D')
               .onClick(() => {
-                this.meshViewMode = 'regions';
+                this.setMeshViewMode('regions');
               })
           }
           .width('100%')
-          if (this.meshViewMode === 'regions') {
-            FaceMeshViewer({
-              vertices: this.meshVertices,
-              triangles: this.meshTriangles,
-              edges: this.meshEdges,
-              deformation: this.meshDeformation,
-              labels: this.meshLabels,
-              revision: this.meshRevision,
-              mode: this.meshViewMode,
-              hasNeutral: this.neutralCalibrated,
-              hasLabels: this.meshLabelsAvailable,
-              hasMesh: this.meshDataAvailable,
-              posePitch: this.posePitch,
-              poseYaw: this.poseYaw,
-              poseRoll: this.poseRoll,
-              resetKey: this.meshViewReset,
-              topologyRevision: this.canvasTopologyRevision
-            })
-              .width('100%')
-          } else {
-            FaceGpuSurface({ controller: this.gpuSurfaceController })
-              .width('100%')
-          }
-          Text('线框、实体与形变热力现由 OpenGL ES 3.2 原生 GPU 管线绘制，网格缓冲直接从 AR 回调传入 C++；部位分区暂保留 Canvas 兼容路径。')
+          FaceGpuSurface({ controller: this.gpuSurfaceController })
+            .width('100%')
+          Text(this.meshLabelsAvailable ?
+            '四种模式均由 OpenGL ES 原生 GPU 绘制；部位分区直接使用 AR Engine 三角面语义标签。' :
+            '四种模式均由 OpenGL ES 原生 GPU 绘制；当前设备未返回可用的三角面区域标签。')
             .fontSize(11)
             .fontColor('#8190A5')
             .lineHeight(17)
