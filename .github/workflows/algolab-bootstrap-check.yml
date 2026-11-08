@@ -36,6 +36,10 @@ jobs:
           test -s apps/algolab/entry/src/main/ets/codegen/CppLinkedListGenerator.ets
           test -s apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
           test -s apps/algolab/entry/src/main/ets/pages/Index.ets
+          test -s apps/algolab/entry/src/main/ets/interaction/InputRouter.ets
+          test -s apps/algolab/entry/src/main/ets/interaction/CoordinateMapper.ets
+          test -s apps/algolab/entry/src/main/ets/ink/InkStrokeModel.ets
+          test -s apps/algolab/entry/src/main/ets/components/InkLayer.ets
 
       - name: Verify API 26 bootstrap guard
         run: |
@@ -94,3 +98,24 @@ jobs:
           grep -Fq 'creates symbolic memory records' apps/algolab/entry/src/test/LocalUnit.test.ets
           grep -Fq 'marks cycle entry and shared references' apps/algolab/entry/src/test/LocalUnit.test.ets
           grep -Fq 'maps generated next-pointer code lines' apps/algolab/entry/src/test/LocalUnit.test.ets
+
+      - name: Verify Touch and M-Pencil dual input
+        run: |
+          grep -Fq 'classifyInputSource(Number(event.sourceTool))' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'event.sourceTool !== SourceTool.Finger' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'InkLayer({' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'renderMode: this.inkRenderMode' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'this.penContactActive = true' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'this.fingerGestureAllowed = event !== undefined' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'private handleCanvasTouch' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'private undoInk' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'private redoInk' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'GestureMode.Parallel' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'export function beginInkStroke' apps/algolab/entry/src/main/ets/ink/InkStrokeModel.ets
+          grep -Fq 'export function appendInkPointInPlace' apps/algolab/entry/src/main/ets/ink/InkStrokeModel.ets
+          grep -Fq "this.renderMode === 'append'" apps/algolab/entry/src/main/ets/components/InkLayer.ets
+          grep -Fq 'export function screenToCanvasPoint' apps/algolab/entry/src/main/ets/interaction/CoordinateMapper.ets
+          grep -Fq 'routes HarmonyOS stylus and finger sources separately' apps/algolab/entry/src/test/LocalUnit.test.ets
+          grep -Fq 'stores pen strokes independently from the linked-list document' apps/algolab/entry/src/test/LocalUnit.test.ets
+          grep -Fq 'keeps a deep undo snapshot while appending live ink points efficiently' apps/algolab/entry/src/test/LocalUnit.test.ets
+          grep -Fq 'keeps the pinch-center graph point stationary while zooming' apps/algolab/entry/src/test/LocalUnit.test.ets
