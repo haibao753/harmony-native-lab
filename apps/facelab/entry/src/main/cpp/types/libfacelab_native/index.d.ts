@@ -8,6 +8,7 @@ interface FaceLabNativeRender {
     triangles: Uint32Array,
     edges: Uint32Array,
     deformation: Float32Array,
+    labels: Int32Array,
     pitch: number,
     yaw: number,
     roll: number,
