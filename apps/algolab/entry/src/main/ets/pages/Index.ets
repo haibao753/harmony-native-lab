@@ -1,7 +1,10 @@
 import {
   LinkedListDocument,
   LinkedNode,
+  MemoryNodeSnapshot,
+  MemorySnapshot,
   addNode,
+  createMemorySnapshot,
   analyzeDocument,
   cloneDocument,
   createEmptyDocument,
@@ -12,7 +15,7 @@ import {
   setNext,
   setNodeValue
 } from '../domain/LinkedListModel';
-import { generateCpp } from '../codegen/CppLinkedListGenerator';
+import { CodeLineLink, generateCpp } from '../codegen/CppLinkedListGenerator';
 import { highlightCpp, formatCppDisplayToken, measureCppLineWidth, CppDisplayLine, CppToken } from '../codegen/CppSyntaxHighlighter';
 
 @Component
@@ -25,6 +28,7 @@ struct NodeCard {
   @Prop positionX: number = 0;
   @Prop positionY: number = 0;
   @Prop selected: boolean = false;
+  @Prop isHead: boolean = false;
   onTap: (id: string) => void = (id: string) => {};
   onMove: (id: string, x: number, y: number) => void =
     (id: string, x: number, y: number) => {};
@@ -34,9 +38,19 @@ struct NodeCard {
 
   build() {
     Column({ space: 5 }) {
-      Text(this.nodeId)
-        .fontSize(11)
-        .fontColor('#64748B')
+      Row({ space: 6 }) {
+        Text(this.nodeId)
+          .fontSize(11)
+          .fontColor('#64748B')
+        if (this.isHead) {
+          Text('HEAD')
+            .fontSize(9)
+            .fontColor('#147D70')
+            .padding({ left: 5, right: 5, top: 2, bottom: 2 })
+            .backgroundColor('#DDF3ED')
+            .borderRadius(5)
+        }
+      }
       Text(this.nodeValue.toString())
         .fontSize(23)
         .fontWeight(FontWeight.Bold)
@@ -94,9 +108,13 @@ struct NodeCard {
 struct Index {
   @State @Watch('drawConnections') document: LinkedListDocument = createEmptyDocument();
   @State selectedId: string = '';
+  @State selectedEdgeSourceId: string = '';
+  @State selectedEdgeTargetId: string = '';
+  @State selectedCodeLineNumber: number = 0;
   @State valueInput: string = '';
   @State connectionSourceId: string = '';
   @State showCode: boolean = false;
+  @State showMemory: boolean = false;
   // Floating C++ workspace geometry is kept in page state so collapsing the
   // panel and opening it again preserves its position and size for this session.
   @State codePanelX: number = 340;
@@ -110,6 +128,8 @@ struct Index {
   @State codeLineViewportWidth: number = 0;
   @State generatedCode: string = '';
   @State codeLines: CppDisplayLine[] = [];
+  @State codeLineLinks: CodeLineLink[] = [];
+  @State memorySnapshot: MemorySnapshot = createMemorySnapshot(createEmptyDocument());
   // 11 is the original compact size; font controls affect only C++ source tokens.
   @State codeFontSize: number = 14;
   @State showAnnotations: boolean = true;
@@ -144,6 +164,11 @@ struct Index {
     this.syncSelectedValueInput();
     const generated = generateCpp(this.document);
     this.generatedCode = generated.code;
+    this.codeLineLinks = generated.lineLinks;
+    this.memorySnapshot = createMemorySnapshot(this.document);
+    this.selectedCodeLineNumber = 0;
+    this.selectedEdgeSourceId = '';
+    this.selectedEdgeTargetId = '';
     this.codeLines = highlightCpp(generated.code, generated.annotations);
     this.warnings = generated.warnings;
     const analysis = analyzeDocument(this.document);
@@ -194,14 +219,68 @@ struct Index {
       if (nextDocument !== null) {
         this.applyDocument(nextDocument);
         this.selectedId = nodeId;
+        this.selectedEdgeSourceId = sourceId;
+        this.selectedEdgeTargetId = nodeId;
         this.syncSelectedValueInput();
+        this.drawConnections();
         this.message = sourceId + ' 的 next 现在指向 ' + nodeId + '。';
       }
       return;
     }
     this.selectedId = nodeId;
+    this.selectedEdgeSourceId = '';
+    this.selectedEdgeTargetId = '';
+    this.selectedCodeLineNumber = 0;
     this.syncSelectedValueInput();
+    this.drawConnections();
     this.message = '已选择 ' + nodeId + '。可以修改 data、设为 head 或连接 next。';
+  }
+
+  private handleMemoryNodeTap(nodeId: string): void {
+    if (findNode(this.document, nodeId) === null) {
+      return;
+    }
+    this.selectedId = nodeId;
+    this.selectedEdgeSourceId = '';
+    this.selectedEdgeTargetId = '';
+    this.selectedCodeLineNumber = 0;
+    this.syncSelectedValueInput();
+    this.drawConnections();
+    this.message = '内存对象 ' + nodeId + ' 已选中；画布中的对应节点也已同步选中。';
+  }
+
+  private handleCodeLineTap(lineNumber: number): void {
+    let selectedLink: CodeLineLink | null = null;
+    for (let i = 0; i < this.codeLineLinks.length; i++) {
+      if (this.codeLineLinks[i].lineNumber === lineNumber) {
+        selectedLink = this.codeLineLinks[i];
+        break;
+      }
+    }
+    if (selectedLink === null || findNode(this.document, selectedLink.nodeId) === null) {
+      return;
+    }
+
+    this.selectedCodeLineNumber = lineNumber;
+    this.selectedId = selectedLink.nodeId;
+    this.selectedEdgeSourceId = selectedLink.role === 'next' ? selectedLink.nodeId : '';
+    this.selectedEdgeTargetId = selectedLink.role === 'next' && selectedLink.targetNodeId !== null
+      ? selectedLink.targetNodeId
+      : '';
+    this.syncSelectedValueInput();
+    this.drawConnections();
+
+    if (selectedLink.role === 'next' && selectedLink.targetNodeId !== null) {
+      this.message = 'C++ 第 ' + lineNumber.toString() + ' 行对应 ' +
+        selectedLink.nodeId + ' → ' + selectedLink.targetNodeId + ' 这条指针连接。';
+    } else if (selectedLink.role === 'head') {
+      this.message = 'C++ 第 ' + lineNumber.toString() + ' 行设置 head，画布已定位到 ' +
+        selectedLink.nodeId + '。';
+    } else if (selectedLink.role === 'delete') {
+      this.message = 'C++ 第 ' + lineNumber.toString() + ' 行释放 ' + selectedLink.nodeId + '。';
+    } else {
+      this.message = 'C++ 第 ' + lineNumber.toString() + ' 行创建 ' + selectedLink.nodeId + '。';
+    }
   }
 
   private applySelectedValue(): void {
@@ -374,6 +453,11 @@ struct Index {
         continue;
       }
 
+      const isHighlighted = source.id === this.selectedEdgeSourceId &&
+        source.nextId === this.selectedEdgeTargetId;
+      this.canvasContext.strokeStyle = isHighlighted ? '#E07A3A' : '#91A0AE';
+      this.canvasContext.lineWidth = isHighlighted ? 4 : 2.5;
+
       let startX = source.position.x + 136;
       let endX = target.position.x;
       if (target.position.x < source.position.x) {
@@ -478,7 +562,16 @@ struct Index {
           .onClick(() => {
             this.showCode = !this.showCode;
             if (this.showCode) {
+              this.showMemory = false;
               this.normalizeCodePanelBounds();
+            }
+          })
+        Button(this.showMemory ? '收起内存' : '内存视图')
+          .type(ButtonType.Capsule)
+          .onClick(() => {
+            this.showMemory = !this.showMemory;
+            if (this.showMemory) {
+              this.showCode = false;
             }
           })
       }
@@ -514,6 +607,7 @@ struct Index {
               nodeId: node.id,
               nodeValue: node.value,
               nextId: node.nextId,
+              isHead: this.document.headId === node.id,
               positionX: node.position.x,
               positionY: node.position.y,
               selected: this.selectedId === node.id,
@@ -724,8 +818,11 @@ struct Index {
                 .width('100%')
                 .height(Math.max(this.codeFontSize + 19, 48))
                 .padding({ top: 1, bottom: 1 })
-                .backgroundColor(line.lineNumber % 2 === 0 ? '#1B2733' : '#17212B')
+                .backgroundColor(line.lineNumber === this.selectedCodeLineNumber
+                  ? '#2C4658'
+                  : (line.lineNumber % 2 === 0 ? '#1B2733' : '#17212B'))
                 .borderRadius(3)
+                .onClick(() => this.handleCodeLineTap(line.lineNumber))
               }, (line: CppDisplayLine) => line.lineNumber.toString())
 
               ForEach(this.warnings, (warning: string) => {
@@ -796,6 +893,161 @@ struct Index {
         .borderRadius(16)
         .position({ x: this.codePanelX, y: this.codePanelY })
         .zIndex(10)
+      }
+
+      // The inspector is a symbolic teaching model, not a process-memory debugger.
+      // It is mutually exclusive with the code panel to keep both overlays readable.
+      if (this.showMemory) {
+        Column({ space: 10 }) {
+          Row({ space: 8 }) {
+            Column({ space: 2 }) {
+              Text('内存视图')
+                .fontSize(17)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#17212B')
+              Text('节点对象与指针引用')
+                .fontSize(11)
+                .fontColor('#718096')
+            }
+            Blank()
+            Button('关闭')
+              .type(ButtonType.Capsule)
+              .onClick(() => {
+                this.showMemory = false;
+              })
+          }
+          .width('100%')
+
+          Row({ space: 8 }) {
+            Text('head')
+              .fontSize(12)
+              .fontColor('#64748B')
+              .width(48)
+            Text(this.memorySnapshot.headId === null
+              ? 'nullptr'
+              : '&' + this.memorySnapshot.headId)
+              .fontSize(14)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#147D70')
+          }
+          .width('100%')
+          .padding(10)
+          .backgroundColor('#EAF4F2')
+          .borderRadius(9)
+
+          Row({ space: 8 }) {
+            Text('可达 ' + this.memorySnapshot.reachableCount.toString())
+              .fontSize(11)
+              .fontColor('#147D70')
+            Text('不可达 ' + this.memorySnapshot.unreachableCount.toString())
+              .fontSize(11)
+              .fontColor(this.memorySnapshot.unreachableCount > 0 ? '#C26A2D' : '#64748B')
+            if (this.memorySnapshot.hasCycle) {
+              Text('检测到环')
+                .fontSize(11)
+                .fontColor('#B45309')
+            }
+            if (this.memorySnapshot.hasSharedSuccessor) {
+              Text('共享后继')
+                .fontSize(11)
+                .fontColor('#7C3AED')
+            }
+          }
+          .width('100%')
+
+          Scroll() {
+            Column({ space: 8 }) {
+              if (this.memorySnapshot.nodes.length === 0) {
+                Text('还没有节点。先在画布上创建一个节点。')
+                  .fontSize(13)
+                  .fontColor('#64748B')
+                  .width('100%')
+                  .padding(14)
+              }
+              ForEach(this.memorySnapshot.nodes, (memoryNode: MemoryNodeSnapshot) => {
+                Column({ space: 7 }) {
+                  Row({ space: 6 }) {
+                    Text(memoryNode.id)
+                      .fontSize(14)
+                      .fontWeight(FontWeight.Bold)
+                      .fontColor('#17212B')
+                    if (memoryNode.isHead) {
+                      Text('HEAD')
+                        .fontSize(9)
+                        .fontColor('#147D70')
+                        .padding({ left: 5, right: 5, top: 2, bottom: 2 })
+                        .backgroundColor('#DDF3ED')
+                        .borderRadius(5)
+                    }
+                    if (memoryNode.isCycleEntry) {
+                      Text('环入口')
+                        .fontSize(9)
+                        .fontColor('#B45309')
+                        .padding({ left: 5, right: 5, top: 2, bottom: 2 })
+                        .backgroundColor('#FEF3C7')
+                        .borderRadius(5)
+                    }
+                    Blank()
+                    Text(memoryNode.isReachable ? '可达' : '不可达')
+                      .fontSize(10)
+                      .fontColor(memoryNode.isReachable ? '#147D70' : '#C26A2D')
+                  }
+                  Row({ space: 8 }) {
+                    Text('data')
+                      .fontSize(11)
+                      .fontColor('#64748B')
+                      .width(42)
+                    Text(memoryNode.data.toString())
+                      .fontSize(13)
+                      .fontColor('#17212B')
+                      .fontFamily('monospace')
+                  }
+                  Row({ space: 8 }) {
+                    Text('next')
+                      .fontSize(11)
+                      .fontColor('#64748B')
+                      .width(42)
+                    Text(memoryNode.nextId === null ? 'nullptr' : '&' + memoryNode.nextId)
+                      .fontSize(13)
+                      .fontColor(memoryNode.nextId === null ? '#94A3B8' : '#2563EB')
+                      .fontFamily('monospace')
+                  }
+                  if (memoryNode.incomingCount > 1) {
+                    Text('共享后继 · ' + memoryNode.incomingCount.toString() + ' 个节点指向此对象')
+                      .fontSize(10)
+                      .fontColor('#7C3AED')
+                  }
+                }
+                .width('100%')
+                .padding(12)
+                .backgroundColor(this.selectedId === memoryNode.id ? '#E2F3EF' : '#FFFFFF')
+                .border({
+                  width: this.selectedId === memoryNode.id ? 2 : 1,
+                  color: this.selectedId === memoryNode.id ? '#168477' : '#E2E8F0'
+                })
+                .borderRadius(11)
+                .onClick(() => this.handleMemoryNodeTap(memoryNode.id))
+              }, (memoryNode: MemoryNodeSnapshot) => memoryNode.id)
+            }
+            .width('100%')
+          }
+          .layoutWeight(1)
+          .width('100%')
+
+          Text('N1 等是教学对象标识，不是真实内存地址；next 保存的是对另一节点的引用。')
+            .fontSize(10)
+            .fontColor('#64748B')
+            .maxLines(2)
+            .width('100%')
+        }
+        .width(440)
+        .height(500)
+        .padding(14)
+        .backgroundColor('#F7F8FA')
+        .border({ width: 1, color: '#D7E0E8' })
+        .borderRadius(16)
+        .position({ x: Math.max(12, this.viewportWidth - 452), y: 72 })
+        .zIndex(11)
       }
     }
     .width('100%')
