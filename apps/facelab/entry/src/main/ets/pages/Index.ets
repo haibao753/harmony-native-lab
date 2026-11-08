@@ -478,6 +478,11 @@ struct Index {
             .fontSize(11)
             .fontColor('#63D6A5')
             .lineHeight(17)
+          Text(this.neutralCalibrated ? '形变参考：NEUTRAL Δ · 相对中性表情网格' :
+            '形变参考：LIVE MOTION Δ · 相邻帧几何位移')
+            .fontSize(11)
+            .fontColor('#AAB8C8')
+            .lineHeight(17)
           Divider()
           Text('FACE DATA')
             .fontSize(11)

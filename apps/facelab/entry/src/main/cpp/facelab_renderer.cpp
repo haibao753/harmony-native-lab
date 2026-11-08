@@ -583,6 +583,16 @@ private:
 
     void RenderLoop()
     {
+        // A recreated XComponent Surface gets a new EGL context and fresh GL
+        // objects. Never reuse buffer-capacity or topology cache state across contexts.
+        vertexCapacity_ = 0;
+        triangleCapacity_ = 0;
+        edgeCapacity_ = 0;
+        uploadedTopologyRevision_ = UINT64_MAX;
+        vertexCount_ = 0;
+        triangleIndexCount_ = 0;
+        edgeIndexCount_ = 0;
+        heatMax_ = 1.0f;
         if (!InitEgl() || !InitGl()) {
             ReleaseEgl();
             return;
