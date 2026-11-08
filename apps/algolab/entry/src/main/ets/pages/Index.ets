@@ -181,6 +181,8 @@ struct Index {
   private lastPanOffsetX: number = 0;
   private lastPanOffsetY: number = 0;
   private lastPinchScale: number = 1;
+  private panGestureAllowed: boolean = false;
+  private pinchGestureAllowed: boolean = false;
 
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true);
   private canvasContext: CanvasRenderingContext2D =
@@ -462,6 +464,8 @@ struct Index {
     this.lastInputLabel = 'M-Pencil';
     if (event.type === TouchType.Down) {
       this.penContactActive = true;
+      this.panGestureAllowed = false;
+      this.pinchGestureAllowed = false;
     } else if (event.type === TouchType.Up || event.type === TouchType.Cancel) {
       this.penContactActive = false;
     }
@@ -548,7 +552,8 @@ struct Index {
   }
 
   private handleCanvasPan(event: GestureEvent | undefined): void {
-    if (event === undefined || event.sourceTool !== SourceTool.Finger || this.penContactActive) {
+    if (event === undefined || event.sourceTool !== SourceTool.Finger ||
+      !this.panGestureAllowed || this.penContactActive) {
       return;
     }
     const deltaX = event.offsetX - this.lastPanOffsetX;
@@ -560,7 +565,8 @@ struct Index {
   }
 
   private handleCanvasPinch(event: GestureEvent | undefined): void {
-    if (event === undefined || event.sourceTool !== SourceTool.Finger || this.penContactActive) {
+    if (event === undefined || event.sourceTool !== SourceTool.Finger ||
+      !this.pinchGestureAllowed || this.penContactActive) {
       return;
     }
     const ratio = event.scale / this.lastPinchScale;
@@ -924,16 +930,32 @@ struct Index {
               GestureGroup(
                 GestureMode.Parallel,
                 PinchGesture({ fingers: 2 })
-                  .onActionStart(() => {
+                  .onActionStart((event: GestureEvent | undefined) => {
+                    this.pinchGestureAllowed = event !== undefined &&
+                      event.sourceTool === SourceTool.Finger && !this.penContactActive;
                     this.lastPinchScale = 1;
                   })
-                  .onActionUpdate((event: GestureEvent | undefined) => this.handleCanvasPinch(event)),
+                  .onActionUpdate((event: GestureEvent | undefined) => this.handleCanvasPinch(event))
+                  .onActionEnd(() => {
+                    this.pinchGestureAllowed = false;
+                  })
+                  .onActionCancel(() => {
+                    this.pinchGestureAllowed = false;
+                  }),
                 PanGesture({ fingers: 2, distance: 4 })
-                  .onActionStart(() => {
+                  .onActionStart((event: GestureEvent | undefined) => {
+                    this.panGestureAllowed = event !== undefined &&
+                      event.sourceTool === SourceTool.Finger && !this.penContactActive;
                     this.lastPanOffsetX = 0;
                     this.lastPanOffsetY = 0;
                   })
                   .onActionUpdate((event: GestureEvent | undefined) => this.handleCanvasPan(event))
+                  .onActionEnd(() => {
+                    this.panGestureAllowed = false;
+                  })
+                  .onActionCancel(() => {
+                    this.panGestureAllowed = false;
+                  })
               ),
               GestureMask.Normal
             )
