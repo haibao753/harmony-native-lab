@@ -9,6 +9,7 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 - 使用 VBO / EBO 更新顶点与静态拓扑，Shader 实现实体光照、线框、形变热力和部位分区。
 - 原生渲染线程目标约 30 FPS，与约 5 Hz 的 AR 网格数据更新解耦。
 - 保留 ARView 相机预览、头部姿态、BlendShapes 和本地数据处理。
+- 增加原生性能诊断：渲染 FPS、AR 网格更新 Hz、NAPI 复制耗时、GL 命令提交 CPU 耗时和网格规模。
 - 真机性能、EGL / Shader 兼容性和资源生命周期仍待 MatePad 验收。
 
 ## 0.4.3 — Live Deformation Heatmap & Lite Rendering

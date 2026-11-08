@@ -113,3 +113,14 @@
 | 性能 / 稳定性 | CPU、GPU、端到端延迟、连续运行 | 待测 |
 
 目标设备仍为 MatePad Pro 13.2（2023）、HarmonyOS 7.0.0.111 SP8、SDK 26.0.0。源码支持和 API 文档可用不代表目标设备已经通过运行验收。
+
+
+### 0.5.0 性能诊断字段（源码已加入，待设备测量）
+
+- Render FPS：原生渲染线程每秒完成的绘制次数。
+- AR mesh update Hz：原生层收到新网格快照的频率。
+- NAPI copy ms：TypedArray 复制到 native snapshot 的耗时。
+- GL submission CPU ms：CPU 侧提交 OpenGL 绘制命令的耗时，不等于 GPU 执行耗时。
+- Vertex / triangle count：当前网格规模。
+
+这些字段在 FaceLab 观察器下方显示。需在 MatePad 上记录空闲、稳定追踪、快速转头、停止重启等场景的数据。

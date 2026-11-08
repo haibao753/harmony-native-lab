@@ -14,6 +14,7 @@ After 0.4.3, the user confirmed that the deformation heatmap was now visible, bu
 - Keep a thread-safe native mesh snapshot and a dedicated render thread.
 - Upload dynamic vertex attributes to a GPU VBO; reuse triangle and edge EBOs while topology is unchanged.
 - Render wireframe, lit surface, per-vertex deformation heatmap, and face-region colors with GPU shaders.
+- Add a native stats API and on-screen diagnostics for render FPS, AR mesh update Hz, NAPI copy time, GL command-submission CPU time, and mesh size.
 - Preserve one-finger rotation, two-finger zoom, AR camera preview, head pose, BlendShapes, neutral baseline capture, and in-memory-only face data handling.
 
 ## Version metadata

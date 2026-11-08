@@ -201,3 +201,11 @@
 - 代码已提交到独立 feature 分支；本环境不能运行 DevEco Studio / HarmonyOS SDK 构建或 MatePad 真机。
 - 需要用户本地构建确认 ArkTS / C++ NDK 兼容性，并在 MatePad 上验证 EGL、Shader、网格显示、四种模式、触控、停止重启和持续运行。
 - 30 FPS 为渲染线程目标，不是已测得性能；面部几何更新仍约 5 Hz，需分别记录渲染帧率和 AR 数据更新频率。
+
+
+### 0.5.0 性能诊断补充
+
+- 新增 GetStats NAPI 接口。
+- 原生线程每秒计算 Render FPS；网格快照到达时计算 AR mesh update Hz。
+- 记录 NAPI TypedArray 复制耗时、GL 命令提交 CPU 耗时、顶点数和三角面数。
+- 页面每秒刷新一次诊断文本。GL 提交耗时不代表 GPU 实际执行耗时；真机还需结合系统性能工具观察 GPU 和端到端延迟。

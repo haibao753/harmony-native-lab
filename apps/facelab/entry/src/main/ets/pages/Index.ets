@@ -38,9 +38,11 @@ struct Index {
   @State poseYaw: number = 0;
   @State poseRoll: number = 0;
   @State errorMessage: string = '';
+  @State gpuStatsSummary: string = '等待原生渲染器数据';
 
   private faceCallback: FaceTrackingCallback | undefined = undefined;
   private lastTextMetricsUpdate: number = 0;
+  private lastGpuStatsUpdate: number = 0;
 
   private describeError(error: Object): string {
     const err = error as BusinessError;
@@ -95,6 +97,14 @@ struct Index {
 
     // AR mesh callbacks are throttled to about 5 Hz; textual diagnostics only need 2 Hz.
     const now = Date.now();
+    if (now - this.lastGpuStatsUpdate >= 1000) {
+      const stats = nativeRenderer.GetStats();
+      this.gpuStatsSummary = '渲染 ' + stats.renderFps.toFixed(1) + ' FPS · AR ' +
+        stats.meshUpdateHz.toFixed(1) + ' Hz · 顶点 ' + stats.vertexCount.toString() +
+        ' · GL提交CPU ' + stats.drawCpuMs.toFixed(2) + ' ms · NAPI复制 ' +
+        stats.napiCopyMs.toFixed(2) + ' ms';
+      this.lastGpuStatsUpdate = now;
+    }
     if (now - this.lastTextMetricsUpdate >= 500) {
       this.meshSummary = metrics.meshSummary;
       this.poseSummary = metrics.poseSummary;
@@ -463,6 +473,10 @@ struct Index {
           Text('原生 XComponent + C++ OpenGL ES 3.2 渲染。顶点与索引直接进入 GPU VBO / EBO，形变热力由逐顶点 Shader 着色；GPU 独立渲染目标约 30 FPS，AR 网格数据约 5 Hz 更新。单指旋转、双指缩放；所有面部数据仅在本机内存处理。真机性能仍待验收。')
             .fontSize(11)
             .fontColor('#8190A5')
+            .lineHeight(17)
+          Text(this.gpuStatsSummary)
+            .fontSize(11)
+            .fontColor('#63D6A5')
             .lineHeight(17)
           Divider()
           Text('FACE DATA')

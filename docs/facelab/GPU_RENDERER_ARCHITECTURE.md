@@ -79,8 +79,9 @@ The heatmap is normalized against the largest displacement in the current snapsh
 | Index upload | Only when topology revision changes |
 | ArkTS per-frame vertex conversion | Removed from the default viewer path |
 | Face data persistence | None; in-memory only |
+| Runtime diagnostics | Render FPS, AR mesh update Hz, NAPI copy ms, GL submission CPU ms, vertex / triangle counts |
 
-No frame-rate or latency claim is accepted until measured on MatePad Pro 13.2 (2023). Record sustained render FPS, AR mesh update frequency, CPU utilization, GPU utilization if available, end-to-end motion latency, memory, and thermal behavior.
+No frame-rate or latency claim is accepted until measured on MatePad Pro 13.2 (2023). The UI exposes render FPS, AR mesh update frequency, NAPI typed-array copy time, GL command-submission CPU time, and mesh size. GL submission time is not GPU execution time. Also record sustained CPU utilization, GPU utilization if available, end-to-end motion latency, memory, and thermal behavior.
 
 ## 7. Known limitations in this first vertical slice
 

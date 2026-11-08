@@ -29,6 +29,15 @@ struct FaceVertex {
     float region;
 };
 
+struct RendererStats {
+    double renderFps = 0.0;
+    double meshUpdateHz = 0.0;
+    double napiCopyMs = 0.0;
+    double drawCpuMs = 0.0;
+    uint32_t vertexCount = 0;
+    uint32_t triangleCount = 0;
+};
+
 struct MeshSnapshot {
     std::vector<float> positions;
     std::vector<uint32_t> triangles;
@@ -277,9 +286,33 @@ public:
         zoom_ = std::max(0.65f, std::min(2.8f, zoom));
     }
 
+    void SetNapiCopyMs(double value)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        stats_.napiCopyMs = value;
+    }
+
+    RendererStats GetStats()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return stats_;
+    }
+
     void UpdateMesh(MeshSnapshot snapshot)
     {
         std::lock_guard<std::mutex> lock(mutex_);
+        const auto now = std::chrono::steady_clock::now();
+        if (lastMeshUpdateTime_.time_since_epoch().count() > 0) {
+            const double deltaMs = std::chrono::duration<double, std::milli>(now - lastMeshUpdateTime_).count();
+            if (deltaMs > 0.0) {
+                const double instantHz = 1000.0 / deltaMs;
+                stats_.meshUpdateHz = stats_.meshUpdateHz <= 0.0 ? instantHz :
+                    stats_.meshUpdateHz * 0.7 + instantHz * 0.3;
+            }
+        }
+        lastMeshUpdateTime_ = now;
+        stats_.vertexCount = static_cast<uint32_t>(snapshot.positions.size() / 3);
+        stats_.triangleCount = static_cast<uint32_t>(snapshot.triangles.size() / 3);
         snapshot.revision = latest_.revision + 1;
         latest_ = std::move(snapshot);
         cv_.notify_all();
@@ -576,8 +609,27 @@ private:
                 current = std::move(pending);
                 UploadMesh(current);
             }
+            const auto drawStarted = std::chrono::steady_clock::now();
             Draw(current, mode, width, height, viewYaw, viewPitch, zoom);
+            const double drawMs = std::chrono::duration<double, std::milli>(
+                std::chrono::steady_clock::now() - drawStarted).count();
             eglSwapBuffers(display_, surface_);
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                stats_.drawCpuMs = drawMs;
+                framesInStatsWindow_++;
+                const auto now = std::chrono::steady_clock::now();
+                if (statsWindowStart_.time_since_epoch().count() == 0) {
+                    statsWindowStart_ = now;
+                } else {
+                    const double windowSeconds = std::chrono::duration<double>(now - statsWindowStart_).count();
+                    if (windowSeconds >= 1.0) {
+                        stats_.renderFps = static_cast<double>(framesInStatsWindow_) / windowSeconds;
+                        framesInStatsWindow_ = 0;
+                        statsWindowStart_ = now;
+                    }
+                }
+            }
             nextFrame += std::chrono::milliseconds(FRAME_INTERVAL_MS);
             std::this_thread::sleep_until(nextFrame);
             if (std::chrono::steady_clock::now() - nextFrame > std::chrono::milliseconds(100)) {
@@ -606,6 +658,10 @@ private:
     float viewPitch_ = 0.0f;
     float zoom_ = 1.0f;
     MeshSnapshot latest_;
+    RendererStats stats_;
+    std::chrono::steady_clock::time_point lastMeshUpdateTime_{};
+    std::chrono::steady_clock::time_point statsWindowStart_{};
+    uint32_t framesInStatsWindow_ = 0;
 
     EGLDisplay display_ = EGL_NO_DISPLAY;
     EGLSurface surface_ = EGL_NO_SURFACE;
@@ -742,6 +798,7 @@ napi_value UpdateMesh(napi_env env, napi_callback_info info)
         return ReturnUndefined(env);
     }
 
+    const auto copyStarted = std::chrono::steady_clock::now();
     MeshSnapshot snapshot;
     const float *vertices = static_cast<const float *>(verticesData);
     const uint32_t *triangles = static_cast<const uint32_t *>(trianglesData);
@@ -763,8 +820,32 @@ napi_value UpdateMesh(napi_env env, napi_callback_info info)
     snapshot.pitch = static_cast<float>(pitch);
     snapshot.yaw = static_cast<float>(yaw);
     snapshot.roll = static_cast<float>(roll);
+    const double copyMs = std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now() - copyStarted).count();
+    gRenderer.SetNapiCopyMs(copyMs);
     gRenderer.UpdateMesh(std::move(snapshot));
     return ReturnUndefined(env);
+}
+
+napi_value GetStats(napi_env env, napi_callback_info info)
+{
+    const RendererStats stats = gRenderer.GetStats();
+    napi_value result = nullptr;
+    napi_create_object(env, &result);
+    napi_value value = nullptr;
+    napi_create_double(env, stats.renderFps, &value);
+    napi_set_named_property(env, result, "renderFps", value);
+    napi_create_double(env, stats.meshUpdateHz, &value);
+    napi_set_named_property(env, result, "meshUpdateHz", value);
+    napi_create_double(env, stats.napiCopyMs, &value);
+    napi_set_named_property(env, result, "napiCopyMs", value);
+    napi_create_double(env, stats.drawCpuMs, &value);
+    napi_set_named_property(env, result, "drawCpuMs", value);
+    napi_create_uint32(env, stats.vertexCount, &value);
+    napi_set_named_property(env, result, "vertexCount", value);
+    napi_create_uint32(env, stats.triangleCount, &value);
+    napi_set_named_property(env, result, "triangleCount", value);
+    return result;
 }
 
 napi_value ClearMesh(napi_env env, napi_callback_info info)
@@ -783,7 +864,8 @@ napi_value RegisterRenderer(napi_env env, napi_value exports)
         {"UpdateMesh", nullptr, UpdateMesh, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"ClearMesh", nullptr, ClearMesh, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"SetMode", nullptr, SetMode, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"SetViewTransform", nullptr, SetViewTransform, nullptr, nullptr, nullptr, napi_default, nullptr}
+        {"SetViewTransform", nullptr, SetViewTransform, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"GetStats", nullptr, GetStats, nullptr, nullptr, nullptr, napi_default, nullptr}
     };
     napi_define_properties(env, exports, sizeof(properties) / sizeof(properties[0]), properties);
     return exports;
