@@ -110,3 +110,40 @@
 - No calibrated mapping from RMS / MAX to expression intensity is claimed; values remain in raw mesh coordinate units and may also reflect head-pose changes.
 - Head-pose continuity feedback, recalibration, and stop / restart cleanup have not yet been separately recorded as individually accepted tests.
 - GitHub Actions source-contract checks passed. DevEco build and hardware smoke test were completed by the user on the target device.
+
+
+## 2026-11-08 — 0.4.0 Face Visualizer
+
+### Implemented in code
+
+- Added `FaceMeshViewer.ets`, an ArkUI Canvas-based 3D projection viewer.
+- Pass copied XYZ mesh vertices, triangle indices, unique edge pairs, and per-vertex neutral-baseline displacement from the AR callback to the viewer.
+- Added wireframe, translucent surface, deformation heatmap, and semantic region color modes.
+- Read optional `ARGeometry.getTriangleLabels()` and map the documented label IDs to face regions.
+- Apply the live relative ARPose Euler angles to the face-local mesh projection, then combine with user inspection rotation.
+- Added one-finger drag rotation, two-finger pinch zoom, and view reset.
+- Bumped app version to 0.4.0 / versionCode 10004.
+- Kept the existing approximately 5 Hz callback update throttle and in-memory-only data handling.
+
+### Validation boundary
+
+- Static source review and GitHub source-contract checks only.
+- No DevEco Studio build or MatePad 0.4.0 hardware test has been performed by the assistant.
+- The user must verify ArkTS compilation, Canvas rendering, region-label availability, live head-pose transform direction, expression deformation, gesture interaction, performance, and stop / restart cleanup.
+
+
+## 2026-11-08 — 0.4.1 Runtime Stability Hotfix
+
+### Root cause and fix
+
+- The MatePad first-frame JSCrash identified FaceMeshViewer.ets:158:40 and `TypeError: This value does not have a [[TypedArrayName]] internal slot`.
+- The failure was caused by TypedArray values crossing the ArkUI `@Prop` observation boundary; TypedArray accessors require a genuine TypedArray receiver.
+- Kept typed geometry buffers inside FaceTrackingCallback for processing, then converted vertices, triangles, edges, deformation, and optional labels with Array.from() in Index.ets.
+- Restricted all five FaceMeshViewer array props to ordinary number[] values.
+- Updated the visible app version and app metadata to 0.4.1 / versionCode 10005.
+- Added a dedicated release note, 0.4.1 source-contract checks, and kept the old 0.4.0 check script as a compatibility alias.
+
+### Verification boundary
+
+- GitHub Actions run 42459080651 passed the shell syntax and FaceLab 0.4.1 source-contract steps.
+- DevEco Studio compilation and MatePad hardware retest have not yet been performed; no runtime success is claimed.

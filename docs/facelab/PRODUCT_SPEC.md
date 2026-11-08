@@ -46,11 +46,20 @@ FaceLab 是一个 HarmonyOS 原生视觉与交互实验应用，优先研究 Mat
 - 将相邻帧网格变化与中性基准形变分开显示。
 - 增加基于连续姿态帧变化的短时连续性提示，并明确其不是 SDK 置信度。
 
-### 0.4.0 — Face Visualization
-- 将面部 Mesh 绘制为线框或半透明网格。
-- 显示头部姿态坐标轴。
-- 显示眼睛、眉毛、嘴唇等区域标签（以 API 实际返回数据为准）。
-- 加入帧率、追踪状态与数据有效性监控。
+### 0.4.0 — Face Visualizer
+- 将 AR Engine 实时人脸 Mesh 的顶点和三角面索引传递给独立观察器。
+- 使用 ArkUI Canvas 做三维投影绘制，提供线框、半透明表面、形变热力和区域分区四种模式。
+- 使用 ARPose 相对姿态驱动网格随真实头部运动；支持单指旋转、双指缩放和视角重置。
+- 使用 getTriangleLabels() 的可选结果区分嘴唇、眼睛、眉毛、眉心、鼻子等区域；设备不支持时回退到其他显示模式。
+- 缓存拓扑边，限制 UI 数据更新频率，保持本地内存处理。
+- 明确本版本 Canvas 方案是三维投影绘制，不是独立 GPU 3D 场景；后续根据真机性能评估是否迁移 ArkGraphics3D。
+
+### 0.4.1 — Runtime Stability Hotfix
+- 修复 MatePad 首帧网格绘制时 TypedArray 经 ArkUI `@Prop` 观察代理触发的运行时异常。
+- AR 回调层保留 Float32Array / Uint32Array / Int32Array；跨入 FaceMeshViewer 前将五类网格数据转换为普通 number[]。
+- FaceMeshViewer 的 @Prop 不再接收 TypedArray；增加源码契约检查防止边界回归。
+- 版本号更新为 0.4.1 / versionCode 10005。
+- DevEco 编译与 MatePad 真机回归仍是发布验收条件，源码检查通过不等于设备验收通过。
 
 ### 0.5.0 — Interaction Lab
 - 头部左右转动、点头与倾斜映射为可配置操作。

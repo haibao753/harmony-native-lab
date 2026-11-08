@@ -3,6 +3,7 @@ import { ARView, arEngine, arViewController } from '@kit.AREngine';
 import { Scene } from '@kit.ArkGraphics3D';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { FaceMetrics, FaceTrackingCallback } from '../common/FaceTrackingCallback';
+import { FaceMeshViewer } from '../components/FaceMeshViewer';
 
 @Entry
 @Component
@@ -28,9 +29,22 @@ struct Index {
   @State trackingStabilityLabel: string = '—';
   @State trackingStabilitySummary: string = '等待姿态数据';
   @State poseCalibrated: boolean = false;
+  @State meshRevision: number = 0;
+  @State meshViewMode: string = 'wireframe';
+  @State meshViewReset: number = 0;
+  @State meshDataAvailable: boolean = false;
+  @State meshLabelsAvailable: boolean = false;
+  @State posePitch: number = 0;
+  @State poseYaw: number = 0;
+  @State poseRoll: number = 0;
   @State errorMessage: string = '';
 
   private faceCallback: FaceTrackingCallback | undefined = undefined;
+  private meshVertices: number[] = [];
+  private meshTriangles: number[] = [];
+  private meshEdges: number[] = [];
+  private meshDeformation: number[] = [];
+  private meshLabels: number[] = [];
 
   private describeError(error: Object): string {
     const err = error as BusinessError;
@@ -72,6 +86,19 @@ struct Index {
     this.trackingStabilityLabel = metrics.trackingStabilityLabel;
     this.trackingStabilitySummary = metrics.trackingStabilitySummary;
     this.poseCalibrated = metrics.poseCalibrated;
+    // ArkUI @Prop wraps object values for observation. Convert TypedArrays to plain arrays here,
+    // because TypedArray accessors such as .length require the original internal slot.
+    this.meshVertices = Array.from(metrics.meshVertices);
+    this.meshTriangles = Array.from(metrics.meshTriangles);
+    this.meshEdges = Array.from(metrics.meshEdges);
+    this.meshDeformation = Array.from(metrics.meshDeformation);
+    this.meshDataAvailable = metrics.meshFrameAvailable;
+    this.meshLabels = Array.from(metrics.meshLabels);
+    this.meshLabelsAvailable = metrics.meshLabelsAvailable;
+    this.posePitch = metrics.posePitch;
+    this.poseYaw = metrics.poseYaw;
+    this.poseRoll = metrics.poseRoll;
+    this.meshRevision++;
     this.status = metrics.faceCount > 0 ? '正在追踪人脸' : 'AR 已运行，等待人脸进入画面';
   }
 
@@ -217,6 +244,17 @@ struct Index {
       this.trackingStabilityLabel = '—';
       this.trackingStabilitySummary = '已停止';
       this.poseCalibrated = false;
+      this.meshVertices = [];
+      this.meshTriangles = [];
+      this.meshEdges = [];
+      this.meshDeformation = [];
+      this.meshLabels = [];
+      this.meshLabelsAvailable = false;
+      this.posePitch = 0;
+      this.poseYaw = 0;
+      this.poseRoll = 0;
+      this.meshDataAvailable = false;
+      this.meshRevision++;
     }
   }
 
@@ -232,7 +270,7 @@ struct Index {
             .fontSize(32)
             .fontWeight(FontWeight.Bold)
             .fontColor('#F4F7FB')
-          Text('AR Face Tracking Lab · 0.3.1')
+          Text('AR Face Tracking Lab · 0.4.1')
             .fontSize(13)
             .fontColor('#9AA9BC')
         }
@@ -339,6 +377,83 @@ struct Index {
         .borderRadius(15)
 
         Column({ space: 10 }) {
+          Row() {
+            Column({ space: 4 }) {
+              Text('FACE VISUALIZER')
+                .fontSize(11)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#8DA2BC')
+              Text('来自 AR Engine 的实时三维人脸几何')
+                .fontSize(12)
+                .fontColor('#AAB8C8')
+            }
+            .layoutWeight(1)
+            Button('重置视角')
+              .height(34)
+              .fontSize(11)
+              .backgroundColor('#34445D')
+              .onClick(() => {
+                this.meshViewReset++;
+              })
+          }
+          .width('100%')
+          Row({ space: 6 }) {
+            Button('线框')
+              .layoutWeight(1)
+              .height(36)
+              .fontSize(12)
+              .backgroundColor(this.meshViewMode === 'wireframe' ? '#285B55' : '#34445D')
+              .onClick(() => {
+                this.meshViewMode = 'wireframe';
+              })
+            Button('实体')
+              .layoutWeight(1)
+              .height(36)
+              .fontSize(12)
+              .backgroundColor(this.meshViewMode === 'surface' ? '#285B55' : '#34445D')
+              .onClick(() => {
+                this.meshViewMode = 'surface';
+              })
+            Button('形变热力')
+              .layoutWeight(1)
+              .height(36)
+              .fontSize(11)
+              .backgroundColor(this.meshViewMode === 'deformation' ? '#285B55' : '#34445D')
+              .onClick(() => {
+                this.meshViewMode = 'deformation';
+              })
+            Button('部位分区')
+              .layoutWeight(1)
+              .height(36)
+              .fontSize(11)
+              .backgroundColor(this.meshViewMode === 'regions' ? '#285B55' : '#34445D')
+              .onClick(() => {
+                this.meshViewMode = 'regions';
+              })
+          }
+          .width('100%')
+          FaceMeshViewer({
+            vertices: this.meshVertices,
+            triangles: this.meshTriangles,
+            edges: this.meshEdges,
+            deformation: this.meshDeformation,
+            labels: this.meshLabels,
+            revision: this.meshRevision,
+            mode: this.meshViewMode,
+            hasNeutral: this.neutralCalibrated,
+            hasLabels: this.meshLabelsAvailable,
+            hasMesh: this.meshDataAvailable,
+            posePitch: this.posePitch,
+            poseYaw: this.poseYaw,
+            poseRoll: this.poseRoll,
+            resetKey: this.meshViewReset
+          })
+            .width('100%')
+          Text('单指拖动旋转 · 双指捏合缩放。模型随实时头部姿态转动；支持线框、半透明表面、形变热力和面部区域分区。形变热力需先采集中性表情；区域分区需设备返回三角面标签。当前使用三维顶点投影到原生 Canvas 绘制，非独立 GPU 三维场景。')
+            .fontSize(11)
+            .fontColor('#8190A5')
+            .lineHeight(17)
+          Divider()
           Text('FACE DATA')
             .fontSize(11)
             .fontWeight(FontWeight.Bold)

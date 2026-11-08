@@ -191,3 +191,58 @@ The UI now uses these semantic labels. The sign of each angle is not hard-coded 
 ### Privacy and lifecycle
 
 Neutral mesh samples and pose-step history remain in memory only. They are cleared when tracking is lost or the callback stops. No face data is persisted or uploaded.
+
+
+## 13. 0.4.0 — Face Visualizer
+
+### Data path
+
+- `ARGeometry.getVertices()` returns the face mesh vertex buffer.
+- `ARGeometry.getIndices()` returns triangle indices.
+- `ARGeometry.getTriangleLabels()` is queried in an isolated optional try/catch. If the device/runtime does not return a label buffer with one label per triangle, region mode reports that labels are unavailable and the other modes continue.
+- The observed target-device vertex layout remains XYZ Float32. Triangle indices are interpreted as 32-bit values, consistent with the existing 0.3.x byte-count assumption; confirm on the target build.
+- A unique undirected edge list is built once per topology-size change and cached.
+- Each frame copies current vertices and per-vertex displacement from the neutral baseline into in-memory buffers for the UI.
+
+### Triangle label values
+
+Huawei's HarmonyOS AR Engine reference documents:
+- -1: non-face
+- 0: face other
+- 1: lower lip
+- 2: upper lip
+- 3: left eye
+- 4: right eye
+- 5: left brow
+- 6: right brow
+- 7: brow center
+- 8: nose
+
+The UI only uses these labels when the returned buffer length matches the triangle count. It does not infer semantic regions from vertex positions.
+
+### Rendering
+
+- `FaceMeshViewer` owns one `CanvasRenderingContext2D` instance alongside its Canvas component.
+- It computes a centered, aspect-fit projection from the current XYZ vertex bounds.
+- The renderer supports wireframe, translucent surface, deformation heatmap, and semantic region color modes.
+- The current relative Pitch / Yaw / Roll from ARPose is combined with user inspection rotation.
+- One-finger drag changes inspection rotation; two-finger pinch changes zoom; reset restores user inspection offsets and zoom.
+- Rendering is event-driven by the existing approximately 5 Hz metrics callback, not a separate animation timer.
+
+### Performance and limitations
+
+- The renderer is a 3D-to-2D projection using ArkUI CanvasRenderingContext2D. It is not an ArkGraphics3D scene or a GPU-native mesh renderer.
+- Canvas drawing queues commands while visible; avoid introducing an unbounded high-frequency producer. The existing 5 Hz callback throttle is retained.
+- Surface/region modes draw all triangle faces; wireframe uses a cached unique edge list.
+- Region labels are optional and device-dependent. If unavailable, wireframe, surface, and deformation modes remain usable.
+- Face region coloring is based on Huawei's explicit per-triangle labels, not guessed facial landmark coordinates.
+- All vertex, index, label, and deformation arrays remain in memory and are cleared when tracking stops or is lost.
+
+
+## 14. 0.4.1 — ArkUI TypedArray boundary fix
+
+The 2026-11-08 MatePad Pro JSCrash report identified `FaceMeshViewer.ets:158:40` with `TypeError: This value does not have a [[TypedArrayName]] internal slot`. The stack shows the failure during `@Prop` state-variable reset and the first `draw()` triggered by a mesh update, not during camera or AR session initialization.
+
+ArkUI observation may proxy object-valued `@Prop` values. TypedArray accessors such as `.length` require a genuine TypedArray receiver and cannot be invoked on the proxy. The AR callback therefore retains efficient `Float32Array` / `Uint32Array` / `Int32Array` buffers for calculations, while `Index.ets` converts them with `Array.from()` at the UI boundary. `FaceMeshViewer` accepts ordinary `number[]` props and only reads their length and indexed values. This avoids exposing TypedArrays to ArkUI's object observation while keeping the AR data-processing layer unchanged.
+
+The fix is source-level only until DevEco compilation and on-device acceptance are completed. Verify first-frame rendering, all four display modes, gestures, and stop / restart cleanup on the MatePad Pro.
