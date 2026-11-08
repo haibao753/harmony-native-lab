@@ -1,33 +1,39 @@
 # FaceLab 设备兼容性记录
 
-最后核对：2026-11-08。
+最后更新：2026-11-08。
 
 | 项目 | 已知信息 | 状态 |
 |---|---|---|
 | 目标设备 | MatePad Pro 13.2（2023） | 用户提供 |
 | 系统版本 | HarmonyOS 7.0.0.111 SP8 | 用户提供 |
 | Compile SDK | 26.0.0 | 用户提供 |
-| AR Engine FACE | 需要在真机运行时探测 | 未验证 |
-| AR Engine DEPTH | 需要在真机运行时探测 | 未验证 |
-| dToF 原始数据访问 | 不能由硬件规格推断普通应用可访问 | 不作假设 |
-| 模拟器 | AR Engine 文档说明不支持 | 不适用 |
+| AR Engine FACE | 真机能力检测返回 true | <span>已验证</span> |
+| AR Engine DEPTH | 真机能力检测返回 false | <span>已验证</span> |
+| ARViewContext.init | 尚未在 0.2.0 真机验证 | 待测 |
+| ARFace.getGeometry | 尚未在 0.2.0 真机验证 | 待测 |
+| ARFace.getBlendShapes | 尚未在 0.2.0 真机验证 | 待测 |
+| dToF 原始数据访问 | 不因硬件或 FACE 支持而推断开放 | 不作假设 |
+| AR 模拟器 | AR Engine 需真机验证 | 不适用 |
+
+## 首次真机能力检测（0.1.0）
+
+用户在 MatePad Pro 13.2（2023）上运行 FaceLab 0.1.0，截图显示：
+- FACE TRACKING：SUPPORTED
+- DEPTH ESTIMATION：NOT SUPPORTED
+
+这证明 `arViewController.isARTypeSupported(ARENGINE_FEATURE_TYPE_FACE)` 在该设备上返回 true。
+
+## 0.2.0 待验证项目
+
+| 日期 | 系统 | AR 会话初始化 | 人脸数 | Mesh | Pose | BlendShapes | 备注 |
+|---|---|---|---:|---|---|---|---|
+| 待测 | 7.0.0.111 SP8 | 待测 | — | 待测 | 待测 | 待测 | 首次运行 0.2.0 |
 
 ## 官方支持列表核对
 
-华为当前公开的 HarmonyOS AR Engine 支持机型列表中，列出了 **MatePad Pro 13.2 英寸 2025 全系列（全特性支持）**，但没有列出 MatePad Pro 13.2 英寸 2023 款。
-
-因此：
-- 不把 2023 款标记为官方支持。
-- 不因设备有前置 dToF 或系统为 HarmonyOS 7 就推断 FACE 能力可用。
-- 以应用内 `arViewController.isARTypeSupported(ARENGINE_FEATURE_TYPE_FACE)` 的真机结果作为第一手证据。
-- 若返回不支持或错误码 801，记录系统版本、设备型号和错误码，不反复假设升级 SDK 就能解决。
-
-## 测试记录
-
-| 日期 | 系统 | FACE | DEPTH | 备注 |
-|---|---|---|---|---|
-| 待测 | 7.0.0.111 SP8 | 待测 | 待测 | 首次真机验证 |
+华为公开的 AR Engine 支持机型列表列出 MatePad Pro 13.2 英寸 2025 全系列，但未列出 2023 款。因此本项目将真机能力检测结果作为设备证据，同时对 ARViewContext 初始化及各子接口分别做运行时验证。
 
 ## 来源
-- [AR Engine 支持机型列表（华为开发者联盟）](https://developer.huawei.com/consumer/cn/forum/topic/0208215774177333398)
-- [AR Engine 开发准备](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arengine-preparations/)
+
+- [AR Engine 支持机型列表](https://developer.huawei.com/consumer/cn/forum/topic/0208215774177333398)
+- [AR Engine 人脸跟踪（ArkTS）](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/arengine-face/)

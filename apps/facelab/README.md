@@ -1,16 +1,17 @@
 # FaceLab
 
-HarmonyOS 原生三维人脸与新型交互实验应用。当前版本首先验证目标设备是否支持 AR Engine 的人脸追踪与深度估计特性；通过能力检查后，再逐步接入人脸网格、头部姿态和微表情数据。
+HarmonyOS 原生三维人脸与新型交互实验应用。
 
-> **重要边界：** AR Engine 人脸追踪能力不等于直接读取前置 dToF 传感器原始数据。FaceLab 不尝试绕过系统安全通道，也不会读取人脸认证数据。
+## 当前版本：0.2.0 — AR Face Session
 
-## 当前版本：0.1.0 — Capability Probe
-
-- 查询 `ARENGINE_FEATURE_TYPE_FACE` 人脸追踪能力。
-- 查询 `ARENGINE_FEATURE_TYPE_DEPTH` 深度估计能力。
-- 分开显示检测结果，避免把深度估计误认为原始 dToF 数据访问。
-- 检测失败时显示错误码和信息。
-- 本阶段不启动相机预览、不采集或保存图像/生物特征数据。
+- 用户主动点击后申请相机权限。
+- 初始化 AR Engine FACE 会话，使用前置摄像头。
+- 通过 ARView 展示 AR 摄像头场景。
+- 在 AR 帧回调中统计追踪到的人脸数量。
+- 尝试读取人脸 Mesh 顶点 / 三角面、头部 Pose 矩阵和 BlendShapes。
+- 展示左眼眨眼、右眼眨眼、张嘴三个表情参数。
+- AR 资源在帧处理后释放；停止追踪时销毁 ARViewContext。
+- UI 数据更新节流到约 5 Hz，避免高频刷新。
 
 ## 目标设备
 
@@ -18,25 +19,29 @@ HarmonyOS 原生三维人脸与新型交互实验应用。当前版本首先验�
 - HarmonyOS 7.0.0.111 SP8
 - DevEco Studio 26.0.0
 - Compile SDK / HarmonyOS SDK API 26.0.0
-- ArkTS + ArkUI + Stage 模型
 
-**设备兼容性尚未验证。** 华为当前公开的 AR Engine 支持机型列表列出了 MatePad Pro 13.2 英寸 2025 全系列，但没有列出 2023 款。请以目标平板上 `arViewController.isARTypeSupported()` 的实际检测结果为准。
+## 已知真机结果
+
+用户已在目标平板运行 0.1.0：
+- AR Engine FACE：SUPPORTED
+- AR Engine DEPTH：NOT SUPPORTED
+
+这证明设备报告支持 FACE 特性，但不保证每个子接口（Geometry / BlendShapes）都能成功调用。0.2.0 会逐项显示子接口结果。
 
 ## 打开工程
 
-在 DevEco Studio 中打开本目录：`apps/facelab`。等待依赖同步后，选择 entry 模块构建并部署到真实 MatePad。AR Engine 不支持模拟器，必须使用真实设备验证。
+在 DevEco Studio 中打开本目录：`apps/facelab`。同步依赖后构建 entry 模块，并部署到真实 MatePad。AR Engine 必须在真机上验证。
 
-## 下一步路线
+## 测试步骤
 
-1. **0.1.0 能力探针：** FACE / DEPTH 支持情况。
-2. **0.2.0 AR 会话：** 申请相机权限，创建 ARViewContext，启动前置相机人脸跟踪。
-3. **0.3.0 面部数据：** 读取 ARFace 几何网格、姿态和 BlendShapes。
-4. **0.4.0 三维可视化：** 绘制实时面部网格、关键部位与参数仪表盘。
-5. **0.5.0 交互实验：** 头部姿态、眨眼、张嘴等动作映射为可配置的平板操作。
+1. 安装 0.2.0。
+2. 点击“开始追踪”。
+3. 在系统弹窗中允许 FaceLab 使用摄像头。
+4. 将脸放在前置摄像头画面内，观察人脸计数、Mesh、Pose 和 BlendShapes 指标。
+5. 闭合左眼、闭合右眼、张开嘴巴，观察三个权重是否变化。
+6. 点击“停止追踪”，确认相机预览关闭。
+7. 将结果和 DevEco 编译日志反馈到项目 issue / 对话中。
 
-## 安全与隐私
+## 隐私
 
-- 相机权限只在真正启动 AR 会话时申请；0.1.0 仅进行能力查询。
-- 默认不保存相机帧、人脸网格或面部动作数据。
-- 不做人脸身份识别，不尝试访问系统人脸解锁数据。
-- 不用于医疗诊断、生命安全或高风险身份验证场景。
+所有数据只在设备内存中用于实时展示，不保存、不上传。FaceLab 不进行身份识别，不访问系统人脸认证数据，也不读取 dToF 原始传感器帧。

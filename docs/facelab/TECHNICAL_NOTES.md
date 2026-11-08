@@ -1,56 +1,90 @@
 # FaceLab 技术说明
 
 ## 1. 技术栈
-- ArkTS + ArkUI。
-- Stage 模型。
+
+- ArkTS + ArkUI，Stage 模型。
 - HarmonyOS SDK / Compile SDK 26.0.0。
 - AR Engine Kit：`@kit.AREngine`。
-- 当前入口：`apps/facelab/entry/src/main/ets/pages/Index.ets`。
+- Graphics 3D Kit：`@kit.ArkGraphics3D`。
+- 入口页面：`apps/facelab/entry/src/main/ets/pages/Index.ets`。
+- 帧回调：`apps/facelab/entry/src/main/ets/common/FaceTrackingCallback.ets`。
 
-## 2. 0.1.0 能力检查
+## 2. 已验证的设备能力
 
-```ts
-import { arEngine, arViewController } from '@kit.AREngine';
+目标设备 MatePad Pro 13.2（2023）、HarmonyOS 7.0.0.111 SP8、SDK 26.0.0：
+- `ARENGINE_FEATURE_TYPE_FACE`：真机检测为 true。
+- `ARENGINE_FEATURE_TYPE_DEPTH`：真机检测为 false。
 
-const faceSupported = arViewController.isARTypeSupported(
-  arEngine.ARFeatureType.ARENGINE_FEATURE_TYPE_FACE
-);
+FACE 与 DEPTH 是独立特性。人脸追踪不依赖通用 AR 深度估计能力，也不代表可读取 dToF 原始数据。
 
-const depthSupported = arViewController.isARTypeSupported(
-  arEngine.ARFeatureType.ARENGINE_FEATURE_TYPE_DEPTH
-);
-```
+## 3. 0.2.0 AR 会话初始化
 
-FACE 和 DEPTH 必须分别判断。能力探测不是传感器数据读取，也不是相机预览。
+官方 ArkTS 人脸跟踪示例要求：
+1. 检查 FACE 特性。
+2. 请求 CAMERA 权限；同时在 module.json5 声明 GYROSCOPE 和 ACCELEROMETER（这两项为 system_grant）。
+3. 加载 AR 场景：`Scene.load()`。
+4. 创建 `arViewController.ARViewContext`。
+5. 设置 scene 和继承自 `ARViewCallback` 的回调。
+6. 设置 FACE 配置：
+   - `type: arEngine.ARType.FACE`
+   - `planeFindingMode: arEngine.ARPlaneFindingMode.DISABLED`
+   - `powerMode: arEngine.ARPowerMode.NORMAL`
+   - `focusMode: arEngine.ARFocusMode.AUTO`
+   - `cameraLensFacing: arEngine.ARCameraLensFacing.FRONT`
+   - `multiFaceMode: arEngine.ARMultiFaceMode.MULTIFACE_ENABLE`
+7. 调用 `await context.init()`。
+8. 使用 `ARView({ context })` 呈现 AR 场景和相机预览。
 
-## 3. 后续人脸会话
+必须先设置 scene、callback、config，再调用 init；否则可能出现 1009200202（缺少场景）或 1009200203（缺少配置）。
 
-华为 ArkTS 人脸跟踪指南的数据流：
-1. 检查 FACE 特性支持。
-2. 申请并获得 `ohos.permission.CAMERA`。
-3. 创建 `arViewController.ARViewContext`，按官方 AR 会话指南配置人脸跟踪和前置镜头。
-4. 设置继承自 `arViewController.ARViewCallback` 的回调类。
-5. 在 `onFrameUpdate` 中从 session 获取 frame。
-6. 使用 `ARSession.getAllTrackables(arEngine.ARTrackableType.FACE)` 获取人脸对象。
-7. 从 `ARFace.getGeometry()` 获取网格，从 `ARFace.getBlendShapes()` 获取微表情数据。
-8. 按官方生命周期及时释放 frame 及相关资源。
+## 4. 帧数据读取
 
-具体会话初始化、ARView 组件和三维渲染代码必须以 API 26 SDK 类型定义和官方示例为准；在真机能力检查通过前，不提前假设这些步骤可用。
+在 `ARViewCallback.onFrameUpdate(ctx, sysBootTs)` 中：
+- 从 `ctx.session` 获取 ARSession。
+- 调用 `session.getFrame()` 获取当前帧。
+- 调用 `session.getAllTrackables(arEngine.ARTrackableType.FACE)` 获取人脸。
+- 只处理 `state === arEngine.ARTrackingState.TRACKING` 的人脸。
+- `face.getPose().getMatrix()` 获取 4×4 位姿矩阵。
+- `face.getGeometry().getVertices()` / `getIndices()` 获取 Mesh 数据。
+- `face.getBlendShapes().getTypes()` / `getData()` 获取表情类型与权重。
+- 使用完毕后释放 ARPose、ARGeometry、ARBlendShapes 和 ARFrame。
 
-## 4. 关键边界
-- AR Engine 的 FACE 是系统提供的人脸跟踪能力；它不等同于系统人脸认证。
-- MatePad 的 dToF 硬件存在，不代表普通应用可以读取原始 ToF 帧或人脸认证数据。
-- AR Engine 的 DEPTH 是独立的深度估计特性，不应描述成“读取 dToF 原始数据”。
-- AR Engine 当前文档说明仅在中国大陆地区提供服务；设备地区、服务可用性和系统版本都可能影响结果。
-- AR Engine 不支持模拟器，必须真机验证。
-- 人脸网格与动作参数属于敏感个人数据；本项目默认只在设备本地实时处理。
+当前 UI 以约 5 Hz 更新统计值，ARView 的场景渲染仍由 AR Engine 自身驱动。
 
 ## 5. 权限
-当前模块声明了 `ohos.permission.CAMERA`，但 0.1.0 不主动请求该权限，因为能力查询页面不启动相机。进入 0.2.0 后，必须在用户明确点击“开始追踪”时请求授权，并在拒绝时保持应用可用且说明原因。
 
-## 6. 官方资料
+- `ohos.permission.CAMERA`：user_grant，用户点击“开始追踪”后通过 `abilityAccessCtrl.createAtManager().requestPermissionsFromUser()` 请求。
+- `ohos.permission.GYROSCOPE`：system_grant，在 module.json5 声明。
+- `ohos.permission.ACCELEROMETER`：system_grant，在 module.json5 声明。
+
+ARViewContext.init() 文档要求以上三项权限。若用户拒绝 CAMERA，应用不启动 AR 会话。
+
+## 6. 错误码
+
+- 201：权限未授予。
+- 801：设备不兼容。
+- 1009200007：配置不支持。
+- 1009200008：资源耗尽。
+- 1009200009：服务不可用。
+- 1009200010：相机不可用。
+- 1009200201：ARView 非法操作。
+- 1009200202：缺少 AR 场景。
+- 1009200203：缺少 AR 配置。
+- 1009200204：AR 会话初始化失败。
+- 1009200205：AR 场景相机节点创建失败。
+
+## 7. 隐私与数据生命周期
+
+- 不保存、不上传相机帧、人脸 Mesh 或 BlendShapes。
+- 仅在内存中展示实时统计。
+- 停止追踪或页面退出时销毁 ARViewContext。
+- 不访问系统人脸认证模板或 TEE 安全数据。
+- 不宣称可以读取 dToF 原始深度帧。
+
+## 8. 官方资料
+
 - [AR Engine 人脸跟踪（ArkTS）](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/arengine-face/)
-- [AR Engine 开发准备与硬件要求](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arengine-preparations/)
+- [ARViewController / ARViewContext API](https://developer.huawei.com/consumer/cn/doc/harmonyos-references/arengine-api-arviewcontroller/)
 - [AR Engine API 参考](https://developer.huawei.com/consumer/cn/doc/harmonyos-references/arengine-api-arengine/)
-- [AR Engine 支持机型列表](https://developer.huawei.com/consumer/cn/forum/topic/0208215774177333398)
-- [AR Engine 概览](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arengine-overview/)
+- [用户授权申请](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/request-user-authorization/)
+- [系统权限列表](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/permissions-for-all/)

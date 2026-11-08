@@ -15,6 +15,12 @@
         "usedScene": {
           "abilities": ["EntryAbility"]
         }
+      },
+      {
+        "name": "ohos.permission.GYROSCOPE"
+      },
+      {
+        "name": "ohos.permission.ACCELEROMETER"
       }
     ],
     "abilities": [
