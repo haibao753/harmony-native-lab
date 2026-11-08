@@ -93,12 +93,13 @@ function pushToken(tokens: CppToken[], text: string, kind: string): void {
     last.text += text;
     return;
   }
-  tokens.push({
+  const token: CppToken = {
     id: tokens.length.toString(),
     text: text,
     kind: kind,
     color: colorFor(kind)
-  });
+  };
+  tokens.push(token);
 }
 
 function nextNonSpace(line: string, start: number): string {
@@ -232,7 +233,7 @@ function tokenizeLine(line: string, startsInBlockComment: boolean): TokenizeResu
     if (isDigit(ch)) {
       let end = index + 1;
       while (end < line.length &&
-        (isIdentifierPart(line[end]) || line[end] === '.' || line[end] === ''')) {
+        (isIdentifierPart(line[end]) || line[end] === '.' || line[end] === "'")) {
         end++;
       }
       pushToken(tokens, line.slice(index, end), 'number');
@@ -267,7 +268,11 @@ function tokenizeLine(line: string, startsInBlockComment: boolean): TokenizeResu
   if (tokens.length === 0) {
     pushToken(tokens, ' ', 'plain');
   }
-  return { tokens: tokens, inBlockComment: inBlockComment };
+  const result: TokenizeResult = {
+    tokens: tokens,
+    inBlockComment: inBlockComment
+  };
+  return result;
 }
 
 function annotationColor(tone: string): string {
@@ -314,12 +319,13 @@ export function highlightCpp(
       }
     }
 
-    result.push({
+    const displayLine: CppDisplayLine = {
       lineNumber: i + 1,
       tokens: parsed.tokens,
       annotationText: noteText,
       annotationColor: noteColor
-    });
+    };
+    result.push(displayLine);
   }
   return result;
 }
