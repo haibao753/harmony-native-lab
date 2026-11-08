@@ -109,7 +109,10 @@ jobs:
           grep -Fq 'private redoInk' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'GestureMode.Parallel' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'export function beginInkStroke' apps/algolab/entry/src/main/ets/ink/InkStrokeModel.ets
+          grep -Fq 'export function appendInkPointInPlace' apps/algolab/entry/src/main/ets/ink/InkStrokeModel.ets
+          grep -Fq "this.renderMode === 'append'" apps/algolab/entry/src/main/ets/components/InkLayer.ets
           grep -Fq 'export function screenToCanvasPoint' apps/algolab/entry/src/main/ets/interaction/CoordinateMapper.ets
           grep -Fq 'routes HarmonyOS stylus and finger sources separately' apps/algolab/entry/src/test/LocalUnit.test.ets
           grep -Fq 'stores pen strokes independently from the linked-list document' apps/algolab/entry/src/test/LocalUnit.test.ets
+          grep -Fq 'keeps a deep undo snapshot while appending live ink points efficiently' apps/algolab/entry/src/test/LocalUnit.test.ets
           grep -Fq 'keeps the pinch-center graph point stationary while zooming' apps/algolab/entry/src/test/LocalUnit.test.ets
