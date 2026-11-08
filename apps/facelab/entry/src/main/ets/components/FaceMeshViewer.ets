@@ -342,7 +342,7 @@ export struct FaceMeshViewer {
         ctx.fillText('当前设备暂未返回面部区域标签', 14, 43);
       }
     } else if (this.mode === 'deformation') {
-      if (this.hasNeutral && this.deformation.length === vertexCount) {
+      if (this.deformation.length === vertexCount) {
         let maxDeformation = 0;
         for (let i = 0; i < this.deformation.length; i++) {
           if (this.deformation[i] > maxDeformation) {
@@ -391,10 +391,14 @@ export struct FaceMeshViewer {
         }
         ctx.font = '9px sans-serif';
         ctx.fillStyle = '#C6D3E1';
-        ctx.fillText('LOW', legendX, legendY - 5);
+        ctx.fillText(this.hasNeutral ? 'NEUTRAL Δ' : 'LIVE MOTION Δ', legendX, legendY - 5);
         ctx.textAlign = 'right';
         ctx.fillText('HIGH · ' + maxDeformation.toFixed(4), width - 14, legendY - 5);
         ctx.textAlign = 'left';
+        if (maxDeformation <= 0.00001) {
+          ctx.fillStyle = '#D2DCE8';
+          ctx.fillText(this.hasNeutral ? '当前形变较小' : '移动面部以观察实时动态热区', 14, 43);
+        }
       } else {
         ctx.font = '12px sans-serif';
         ctx.fillStyle = '#F2C078';

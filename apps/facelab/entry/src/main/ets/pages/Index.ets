@@ -295,7 +295,7 @@ struct Index {
             .fontSize(32)
             .fontWeight(FontWeight.Bold)
             .fontColor('#F4F7FB')
-          Text('AR Face Tracking Lab · 0.4.2')
+          Text('AR Face Tracking Lab · 0.4.3')
             .fontSize(13)
             .fontColor('#9AA9BC')
         }
@@ -413,13 +413,23 @@ struct Index {
                 .fontColor('#AAB8C8')
             }
             .layoutWeight(1)
-            Button('重置视角')
-              .height(34)
-              .fontSize(11)
-              .backgroundColor('#34445D')
-              .onClick(() => {
-                this.meshViewReset++;
-              })
+            Row({ space: 6 }) {
+              Button('采集基准')
+                .height(34)
+                .fontSize(11)
+                .enabled(this.faceCount > 0 && this.arContext !== undefined)
+                .backgroundColor('#285B55')
+                .onClick(() => {
+                  this.captureNeutralBaseline();
+                })
+              Button('重置视角')
+                .height(34)
+                .fontSize(11)
+                .backgroundColor('#34445D')
+                .onClick(() => {
+                  this.meshViewReset++;
+                })
+            }
           }
           .width('100%')
           Row({ space: 6 }) {
@@ -475,7 +485,7 @@ struct Index {
             topologyRevision: this.meshTopologyRevision
           })
             .width('100%')
-          Text('单指拖动旋转 · 双指捏合缩放。模型随实时头部姿态转动；支持线框、半透明表面、形变热力和面部区域分区。形变热力需先采集中性表情；区域分区需设备返回三角面标签。当前使用三维顶点投影到原生 Canvas 绘制，非独立 GPU 三维场景。')
+          Text('单指拖动旋转 · 双指捏合缩放。热力图未采集中性基准时显示相邻帧动态位移；采集后显示相对中性网格的形变。区域分区需设备返回三角面标签。为减轻卡顿，网格更新降至约 5 Hz；当前仍使用 Canvas 投影绘制，非 GPU 原生三维场景。')
             .fontSize(11)
             .fontColor('#8190A5')
             .lineHeight(17)

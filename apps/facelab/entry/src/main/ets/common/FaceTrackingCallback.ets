@@ -139,7 +139,7 @@ function formatSigned(value: number, digits: number): string {
 
 /**
  * Reads AR Engine face data and computes relative pose / per-frame mesh movement.
- * Mesh/UI updates are throttled to approximately 10 Hz; ARView rendering remains independent.
+ * Mesh/UI updates are throttled to approximately 5 Hz to reduce CPU pressure; ARView rendering remains independent.
  */
 export class FaceTrackingCallback extends arViewController.ARViewCallback {
   private active: boolean = true;
@@ -228,7 +228,7 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
   }
 
   async onFrameUpdate(ctx: arViewController.ARViewContext, sysBootTs: number): Promise<void> {
-    if (!this.active || this.processing || sysBootTs - this.lastPublishedTimestamp < 100000) {
+    if (!this.active || this.processing || sysBootTs - this.lastPublishedTimestamp < 200000) {
       return;
     }
 
@@ -587,7 +587,7 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
           }
         } else {
           neutralCalibrated = false;
-          neutralDeformationSummary = '尚未采集中性表情';
+          neutralDeformationSummary = '未采集中性基准 · 暂以相邻帧动态位移显示';
         }
 
         if (this.previousVertices === undefined ||
@@ -601,6 +601,9 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
             const dy = currentVertices[i + 1] - this.previousVertices[i + 1];
             const dz = currentVertices[i + 2] - this.previousVertices[i + 2];
             const displacement = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (this.neutralVertices === undefined) {
+              meshDeformation[Math.floor(i / 3)] = displacement;
+            }
             sumSquaredDisplacement += displacement * displacement;
             if (displacement > maxDisplacement) {
               maxDisplacement = displacement;
@@ -608,6 +611,9 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
           }
           const rms = vertexCount > 0 ? Math.sqrt(sumSquaredDisplacement / vertexCount) : 0;
           meshMotionSummary = 'RMS ' + rms.toFixed(5) + ' · MAX ' + maxDisplacement.toFixed(5);
+          if (this.neutralVertices === undefined) {
+            neutralDeformationSummary = '动态位移 RMS ' + rms.toFixed(5) + ' · MAX ' + maxDisplacement.toFixed(5);
+          }
         }
 
         if (this.previousVertices === undefined || this.previousVertices.length !== currentVertices.length) {
