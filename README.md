@@ -58,6 +58,7 @@ harmony-native-lab/
 - [AlgoLab 交互设计](docs/INTERACTION_DESIGN.md)
 - [AlgoLab 技术架构](docs/TECHNICAL_ARCHITECTURE.md)
 - [首轮实现记录与验收场景](docs/IMPLEMENTATION_LOG.md)
+- [AlgoLab 1.0.0 发布说明](docs/releases/v1.0.0.md)
 - [开发环境与工作流](docs/development-guide.md)
 - [官方 Stage 工程生成脚本](scripts/README.md)
 - [云端构建 Runner 接入指南（可选，暂缓）](docs/cloud-build-runner.md)
