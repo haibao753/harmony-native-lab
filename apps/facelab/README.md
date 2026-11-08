@@ -122,6 +122,10 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 9. 停止追踪并离开页面，确认相机关闭、渲染线程退出、Surface 销毁后可重新进入。
 10. 回填 DevEco 完整构建日志、设备截图和性能数据至 docs/facelab/DEVICE_MATRIX.md。
 
+## SDK 26 XComponent API note
+
+`XComponentController` and `XComponentType` are ArkTS global declarations in the ArkUI component API; do not import them as named exports from `@kit.ArkUI`. Use the ArkTS XComponent options object with `type: XComponentType.SURFACE` and `controller`. Do not confuse it with the API 19+ `NativeXComponentParameters` overload, which is a separate native-side lifecycle API.
+
 ## 0.5.0 技术边界
 
 GPU 渲染线程目标约 30 Hz，AR Engine 网格发布仍约 5 Hz；两者不是同一帧率。当前没有设备实测数据，不能承诺达到 30 FPS，也不能预先认定卡顿已消除。所有面部数据仅在内存中处理，不保存、不上传。
