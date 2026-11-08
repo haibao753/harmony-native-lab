@@ -55,3 +55,13 @@ The first user build completed CMake / native C++ compilation and failed in ArkT
 6. Switch to Regions and verify the Canvas fallback.
 7. Stop tracking and leave the page; confirm camera and native rendering resources are released.
 8. Compare visible frame pacing, CPU load, temperature, and battery impact against 0.4.3.
+
+## SDK 26 native build correction
+
+The second user build confirmed ArkTS compilation succeeds. Ninja then failed because the installed SDK 26 NDK does not provide `napi/native_node_api.h`; FaceLab uses the Node-API functions declared by `napi/native_api.h`, so the unnecessary include has been removed.
+
+The HarmonyOS Node-API reference also documents a semantic difference: `napi_get_typedarray_info` returns byte length on HarmonyOS. Both typed-array readers now convert byte length to element count before copying.
+
+The native declaration package has been moved to Huawei's documented `src/main/cpp/types/libfacelab_native` structure, registered as a local OHPM dependency and runtime package. The internal entry package version is 1.0.0; the application version remains 0.5.0.
+
+This source correction has not yet been verified by another DevEco build or on-device run.
