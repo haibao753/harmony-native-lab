@@ -52,7 +52,8 @@ harmony-native-lab/
 │   ├── README.md
 │   └── bootstrap-algolab-stage.sh
 ├── apps/
-│   ├── algolab/\n│   └── facelab/
+│   ├── algolab/
+│   └── facelab/
 │       ├── README.md
 │       └── entry/src/main/ets/
 │           ├── domain/
