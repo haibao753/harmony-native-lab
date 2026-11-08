@@ -217,6 +217,8 @@ struct Index {
   private selectLesson(lessonId: string): void {
     this.activeLessonId = lessonId;
     this.clearTrace();
+    this.refreshDerivedState();
+    this.drawConnections();
   }
 
   private startTraversalTrace(): void {
@@ -352,6 +354,9 @@ struct Index {
   }
 
   private handleNodeTap(nodeId: string): void {
+    if (this.traceSteps.length > 0) {
+      this.clearTrace();
+    }
     if (this.connectionSourceId !== '') {
       const sourceId = this.connectionSourceId;
       const nextDocument = setNext(this.document, sourceId, nodeId);
@@ -377,6 +382,9 @@ struct Index {
   }
 
   private handleMemoryNodeTap(nodeId: string): void {
+    if (this.traceSteps.length > 0) {
+      this.clearTrace();
+    }
     if (findNode(this.document, nodeId) === null) {
       return;
     }
@@ -390,6 +398,9 @@ struct Index {
   }
 
   private handleCodeLineTap(lineNumber: number): void {
+    if (this.traceSteps.length > 0) {
+      this.clearTrace();
+    }
     let selectedLink: CodeLineLink | null = null;
     for (let i = 0; i < this.codeLineLinks.length; i++) {
       if (this.codeLineLinks[i].lineNumber === lineNumber) {
