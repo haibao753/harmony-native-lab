@@ -44,11 +44,12 @@ jobs:
           grep -Fq 'devecocli build --modules entry --build-mode debug' scripts/build-algolab-hap.sh
           test -s .github/workflows/algolab-harmonyos-hap.yml
 
-      - name: Verify floating C++ workspace source hooks
+      - name: Verify docked C++ inspector source hooks
         run: |
-          grep -Fq 'codePanelWidth' apps/algolab/entry/src/main/ets/pages/Index.ets
-          grep -Fq 'panelDragStartX' apps/algolab/entry/src/main/ets/pages/Index.ets
-          grep -Fq 'panelResizeStartWidth' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'if (this.showCode)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'if (this.showMemory)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'this.showMemory = false' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '.width(440)' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'onAreaChange' apps/algolab/entry/src/main/ets/pages/Index.ets
 
       - name: Verify C++ highlighting and educational annotations
@@ -70,7 +71,7 @@ jobs:
           grep -Fq 'if (this.showAnnotations && line.annotationText' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq '@State showCodeSettings: boolean = false' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'if (this.showCodeSettings)' apps/algolab/entry/src/main/ets/pages/Index.ets
-          grep -Fq "Button(this.showAnnotations ? '注释：开' : '注释：关')" apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq "Button(this.showAnnotations ? '注释开' : '注释关')" apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq '引入哈希集合' apps/algolab/entry/src/main/ets/codegen/CppLinkedListGenerator.ets
           grep -Fq 'const token: CppToken' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
           grep -Fq 'const result: TokenizeResult' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
