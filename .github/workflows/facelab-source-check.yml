@@ -6,6 +6,7 @@ on:
       - "apps/facelab/**"
       - "docs/facelab/**"
       - "scripts/check-facelab-0.4.0.sh"
+      - "scripts/check-facelab-0.4.1.sh"
       - "scripts/check-facelab-0.4.2.sh"
       - ".github/workflows/facelab-source-check.yml"
   push:
