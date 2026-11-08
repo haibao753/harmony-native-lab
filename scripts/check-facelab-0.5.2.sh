@@ -19,7 +19,14 @@ done
 grep -Fq 'GESTURE_SAMPLE_INTERVAL_US = 33333' "$callback"
 grep -Fq 'MESH_PUBLISH_INTERVAL_US = 200000' "$callback"
 grep -Fq 'interface FaceGestureMetrics' "$callback"
+grep -Fq 'interface GestureEventResult' "$callback"
 grep -Fq 'private detectGestureEvents(' "$callback"
+grep -Fq '): GestureEventResult {' "$callback"
+grep -Fq 'const result: GestureEventResult = {' "$callback"
+if grep -Fq '): { leftWink: boolean; rightWink: boolean; jawConfirm: boolean }' "$callback"; then
+  echo "ArkTS-incompatible inline gesture result type found." >&2
+  exit 1
+fi
 grep -Fq 'leftBlink >= 0.72' "$callback"
 grep -Fq 'now - this.leftWinkCandidateSince >= 80' "$callback"
 grep -Fq 'now - this.rightWinkCandidateSince >= 80' "$callback"
