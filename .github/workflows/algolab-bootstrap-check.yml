@@ -56,7 +56,10 @@ jobs:
           grep -Fq 'highlightCpp(generated.code, generated.annotations)' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'ForEach(line.tokens' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'Span(formatCppDisplayToken(token.text))' apps/algolab/entry/src/main/ets/pages/Index.ets
-          grep -Fq '.width(measureCppLineWidth(line, this.codeFontSize))' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '.width(measureCppLineWidth(line, this.codeFontSize, this.codeLineViewportWidth))' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '@State codeLineViewportWidth: number = 0' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'this.codeLineViewportWidth = nextWidth' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'Math.max(180, viewportWidth' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
           grep -Fq '.textAlign(TextAlign.Start)' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq '.fontSize(12)' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq '.maxLines(3)' apps/algolab/entry/src/main/ets/pages/Index.ets
