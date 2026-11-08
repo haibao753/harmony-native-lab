@@ -13,14 +13,13 @@ add_library(facelab_renderer SHARED
 
 find_library(EGL_LIB EGL)
 find_library(GLES_LIB GLESv3)
-find_library(NATIVE_WINDOW_LIB native_window)
 find_library(ACE_NDK_LIB ace_ndk.z)
 find_library(ACE_NAPI_LIB ace_napi.z)
 
 target_link_libraries(facelab_renderer PUBLIC
     ${EGL_LIB}
     ${GLES_LIB}
-    ${NATIVE_WINDOW_LIB}
+    libnative_window.so
     ${ACE_NDK_LIB}
     ${ACE_NAPI_LIB}
 )
