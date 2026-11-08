@@ -307,3 +307,10 @@ Canvas 仍是 ArkUI `CanvasRenderingContext2D` 的 3D 投影绘制，并非 GPU 
 
 
 The current implementation requests an OpenGL ES 3.x context with `EGL_CONTEXT_CLIENT_VERSION = 3` and uses GLSL ES `#version 300 es` (the OpenGL ES 3.0 shader baseline). It does not currently request a 3.2 minor context.
+
+## 18. SDK 26 NAPI header and TypedArray byte length
+
+- The NDK implementation now includes `napi/native_api.h` only. The SDK 26 compile log showed `napi/native_node_api.h` is not present in the installed NDK headers, and FaceLab does not use Node-specific APIs from that header.
+- Huawei's Node-API reference documents that HarmonyOS's exported `napi_get_typedarray_info` returns the TypedArray byte length, unlike the standard native symbol which returns element count. Both Float32Array and Uint32Array readers now divide by `sizeof(element)` before copying.
+- The native type declarations were moved to the documented `src/main/cpp/types/libfacelab_native` package layout, with matching local dependency and runtimeOnly registration.
+- The module-level package version is set to 1.0.0 (SemVer) independently of the app's user-facing version 0.5.0.
