@@ -31,7 +31,13 @@ grep -Fq 'OH_NativeWindow_DestroyNativeWindow' "$cpp/FaceGpuRenderer.cpp"
 grep -Fq 'napi_get_typedarray_info' "$cpp/napi_init.cpp"
 grep -Fq 'napi_get_value_bigint_uint64' "$cpp/napi_init.cpp"
 grep -Fq 'nativeRender.UpdateMesh' "$gpu"
+if grep -Fq "from '@kit.ArkUI'" "$gpu" && grep -Fq 'XComponentController' "$gpu"; then
+  echo "XComponentController / XComponentType are ArkUI global declarations, not @kit.ArkUI named exports." >&2
+  exit 1
+fi
 grep -Fq 'XComponentType.SURFACE' "$gpu"
+grep -Fq 'controller: this.controller' "$gpu"
+grep -Fq '"version": "0.5.0"' apps/facelab/entry/oh-package.json5
 grep -Fq 'nativeRender.SetViewTransform' "$gpu"
 grep -Fq 'this.publishViewTransform();' "$gpu"
 grep -Fq "this.meshViewMode === 'regions'" "$page"
