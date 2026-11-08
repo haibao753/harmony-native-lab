@@ -272,3 +272,10 @@
 - Static source-contract checks are the first gate.
 - DevEco SDK 26 compilation and MatePad runtime verification are still required; no successful HAP build or device test is claimed yet.
 - Verify natural bilateral blinking does not trigger wink actions, thresholds feel usable, gesture sampling does not degrade the smooth GPU modes, and stop / restart clears state.
+
+## 2026-11-08 — FaceLab 0.5.2 ArkTS compile compatibility fix
+- Replaced the inline object return type in `detectGestureEvents()` with the explicitly declared `GestureEventResult` interface.
+- Assigned the returned gesture event object to an explicitly typed local variable before returning it, satisfying ArkTS object-literal typing rules.
+- Extended `scripts/check-facelab-0.5.2.sh` to assert the explicit interface and typed result declaration and reject the former inline object return type.
+- GitHub Actions source checks passed for both FaceLab 0.5.2 and the repository bootstrap checks.
+- DevEco Studio / SDK 26 compilation and MatePad device validation remain pending; the successful CI result is not a substitute for a local ArkTS build.
