@@ -81,3 +81,13 @@ jobs:
           grep -Fq 'preserves leading spaces and tabs' apps/algolab/entry/src/test/LocalUnit.test.ets
           grep -Fq 'measures C++ source line width' apps/algolab/entry/src/test/LocalUnit.test.ets
           grep -Fq "1'000" apps/algolab/entry/src/test/LocalUnit.test.ets
+          grep -Fq 'export function createMemorySnapshot' apps/algolab/entry/src/main/ets/domain/LinkedListModel.ets
+          grep -Fq '@State memorySnapshot: MemorySnapshot' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'this.memorySnapshot = createMemorySnapshot(this.document)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'private handleMemoryNodeTap' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'private handleCodeLineTap' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'selectedEdgeSourceId' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'N1 等是教学对象标识，不是真实内存地址' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'creates symbolic memory records' apps/algolab/entry/src/test/LocalUnit.test.ets
+          grep -Fq 'marks cycle entry and shared references' apps/algolab/entry/src/test/LocalUnit.test.ets
+          grep -Fq 'maps generated next-pointer code lines' apps/algolab/entry/src/test/LocalUnit.test.ets
