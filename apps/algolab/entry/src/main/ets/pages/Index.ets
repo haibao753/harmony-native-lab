@@ -105,6 +105,9 @@ struct Index {
   @State codePanelHeight: number = 500;
   @State viewportWidth: number = 0;
   @State viewportHeight: number = 0;
+  // Width of the actual horizontal code viewport. Short source lines must
+  // occupy at least this width; otherwise Scroll may center their content.
+  @State codeLineViewportWidth: number = 0;
   @State generatedCode: string = '';
   @State codeLines: CppDisplayLine[] = [];
   // 11 is the original compact size; font controls affect only C++ source tokens.
@@ -667,7 +670,7 @@ struct Index {
                     }
                     // One Text paragraph owns the entire source line. Span children
                     // only change token color; they cannot distribute tokens as Row items.
-                    .width(measureCppLineWidth(line, this.codeFontSize))
+                    .width(measureCppLineWidth(line, this.codeFontSize, this.codeLineViewportWidth))
                     .textAlign(TextAlign.Start)
                     .fontSize(this.codeFontSize)
                     .fontFamily('monospace')
@@ -676,6 +679,12 @@ struct Index {
                   .scrollable(ScrollDirection.Horizontal)
                   .layoutWeight(1)
                   .height(this.codeFontSize + 11)
+                  .onAreaChange((oldArea: Area, newArea: Area) => {
+                    const nextWidth = Number(newArea.width);
+                    if (Math.abs(nextWidth - this.codeLineViewportWidth) > 0.5) {
+                      this.codeLineViewportWidth = nextWidth;
+                    }
+                  })
 
                   if (line.annotationText !== '') {
                     Row({ space: 3 }) {
