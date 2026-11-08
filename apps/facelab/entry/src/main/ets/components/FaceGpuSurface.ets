@@ -84,6 +84,11 @@ export class FaceGpuSurfaceController extends XComponentController {
     this.publishLatest();
   }
 
+  setMode(mode: string): void {
+    this.latestMode = mode;
+    this.publishLatest();
+  }
+
   clear(): void {
     this.latestMetrics = undefined;
     if (this.surfaceId !== undefined) {
@@ -97,6 +102,9 @@ export class FaceGpuSurfaceController extends XComponentController {
     }
     if (mode === 'deformation') {
       return 2;
+    }
+    if (mode === 'regions') {
+      return 3;
     }
     return 0;
   }
@@ -113,6 +121,7 @@ export class FaceGpuSurfaceController extends XComponentController {
       metrics.meshTriangles,
       metrics.meshEdges,
       metrics.meshDeformation,
+      metrics.meshLabels,
       metrics.posePitch,
       metrics.poseYaw,
       metrics.poseRoll,
