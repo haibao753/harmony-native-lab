@@ -2,6 +2,8 @@ import { LINKED_LIST_LESSONS, LinkedListLesson } from '../domain/LinkedListLesso
 
 @Component
 export struct TeachingWorkbench {
+  // Match the responsive width used by the docked memory inspector.
+  @Prop panelWidth: number = 320;
   @Prop activeLessonId: string = 'node';
   @Prop lessonTitle: string = '节点的组成';
   @Prop lessonSubtitle: string = '';
@@ -374,7 +376,7 @@ export struct TeachingWorkbench {
       }
       .width('100%')
     }
-    .width(370)
+    .width(this.panelWidth)
     .height('100%')
     .padding(14)
     .backgroundColor('#FFFEFC')
