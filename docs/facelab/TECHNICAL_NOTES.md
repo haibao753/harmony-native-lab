@@ -107,3 +107,14 @@ Huawei's API reference documents the following enum numeric values:
 To avoid runtime property dereferences on the `arEngine` namespace object, 0.2.1 uses these documented numeric enum values with the corresponding ArkTS enum types. This is a compatibility workaround, not evidence that the device's AR Engine service is unavailable. The app now also records the exact startup stage in its diagnostic message.
 
 If the next run fails, the stage label distinguishes capability check, scene loading, callback creation, configuration, and session initialization.
+
+
+## 10. 0.2.2 — skip duplicate FACE capability probe
+
+The user reproduced the same `Cannot read property ARFeatureType of undefined` exception at the exact startup stage `检查 FACE 能力`, even after the numeric enum workaround. This narrows the failure to the repeated `isARTypeSupported()` call path in the 0.2.x startup flow, not to camera permission, scene loading, or ARViewContext initialization.
+
+FaceLab 0.1.0 had already run the same capability probe successfully on the same MatePad Pro 13.2 (2023), HarmonyOS 7.0.0.111 SP8, reporting FACE=SUPPORTED. Therefore 0.2.2 removes the duplicate runtime capability probe and uses the device-specific 0.1.0 result as the precondition. The AR session's `context.init()` is now the decisive runtime validation.
+
+The AR session configuration and callback return to Huawei's documented ArkTS enum member expressions (for example `arEngine.ARType.FACE`, `arEngine.ARTrackableType.FACE`, and `arEngine.ARBlendShapeType.EYE_BLINK_LEFT`). This follows the official face-tracking guide and avoids hand-maintained magic enum values.
+
+If startup still fails, the new stage label should now advance to scene loading, callback creation, FACE configuration, or AR session initialization.
