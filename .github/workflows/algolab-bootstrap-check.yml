@@ -113,3 +113,13 @@ jobs:
           grep -Fq 'builds a synchronized traversal trace' apps/algolab/entry/src/test/LocalUnit.test.ets
           grep -Fq 'stops the traversal trace when a node address repeats' apps/algolab/entry/src/test/LocalUnit.test.ets
           grep -Fq '"versionName": "1.2.0-alpha.2"' apps/algolab/AppScope/app.json5
+
+      - name: Verify traversal playback and lifecycle cleanup
+        run: |
+          grep -Fq 'setInterval(() =>' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'clearInterval(this.playbackTimer)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'aboutToDisappear(): void' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'private toggleAutoPlay' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'progressPercent: this.traceProgressPercent' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq "Button(this.isPlaying ? '暂停' : '播放')" apps/algolab/entry/src/main/ets/components/TeachingWorkbench.ets
+          grep -Fq '连续播放用于快速观察完整流程' apps/algolab/entry/src/main/ets/components/TeachingWorkbench.ets
