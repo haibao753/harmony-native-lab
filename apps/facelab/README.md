@@ -128,7 +128,7 @@ HarmonyOS 原生三维人脸与新型交互实验应用。
 
 ## 0.5.1 技术边界
 
-GPU 渲染线程目标约 30 Hz，AR Engine 网格发布仍约 5 Hz；两者不是同一帧率。当前没有设备实测数据，不能承诺达到 30 FPS，也不能预先认定卡顿已消除。所有面部数据仅在内存中处理，不保存、不上传。
+GPU 渲染线程目标约 30 Hz，AR Engine 网格发布仍约 5 Hz；两者不是同一帧率。0.5.1 已在 MatePad Pro 13.2（2023）成功构建并部署；尚无分模式 FPS、温升和功耗的量化记录，因此不承诺达到 30 FPS。所有面部数据仅在内存中处理，不保存、不上传。
 
 ## Native module packaging (SDK 26)
 
@@ -148,4 +148,15 @@ After pulling this change, synchronize OHPM dependencies in DevEco Studio before
 - GLSL ES 使用 flat region varying 选择与旧版一致的十种区域色板；通过 glDrawArrays(GL_TRIANGLES) 在 GPU 上绘制。
 - 移除 Index.ets 中部位分区专用的普通 number[] 复制和 FaceMeshViewer Canvas 分支。
 - 其他三种 GPU 模式保持原有索引绘制路径；所有面部数据仍只在本机内存处理。
-- 代码实现已提交，DevEco 编译与 MatePad 真机性能回归待验证。
+- 0.5.1 已成功构建并部署到 MatePad Pro 13.2（2023）；用户确认部署成功。分模式帧率、温升与功耗尚无量化记录。
+
+
+## 0.5.1 稳定版本冻结（2026-11-08）
+
+- 状态：已合并至 `main`，PR #11。
+- 正式版本：`0.5.1`（versionCode `10009`）。
+- 发布提交：`beceadcb871543d943c28cd482c1ded8680fd71c`。
+- 发布分支：`release/facelab-0.5.1`。
+- 用户已确认 0.5.1 成功构建并部署到 MatePad Pro 13.2（2023）。
+- 该版本作为稳定基线冻结；后续功能和性能改动应从新分支开始，不直接改写此发布快照。
+- 当前没有分模式 FPS、温升或功耗的量化基准；不得将目标帧率写成实测结果。
