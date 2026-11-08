@@ -60,6 +60,8 @@ jobs:
           grep -Fq 'const token: CppToken' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
           grep -Fq 'const result: TokenizeResult' apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
           grep -Fq 'formatCppDisplayToken(token.text)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '.justifyContent(FlexAlign.Start)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '.textAlign(TextAlign.Start)' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq '@State codeFontSize: number = 11' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq "Button('A+')" apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'preserves leading spaces and tabs' apps/algolab/entry/src/test/LocalUnit.test.ets
