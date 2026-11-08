@@ -41,6 +41,7 @@ struct NodeCard {
   @Prop selected: boolean = false;
   @Prop isHead: boolean = false;
   @Prop canvasScale: number = 1;
+  @Prop penContactActive: boolean = false;
   onTap: (id: string) => void = (id: string) => {};
   onMove: (id: string, x: number, y: number) => void =
     (id: string, x: number, y: number) => {};
@@ -83,25 +84,27 @@ struct NodeCard {
     .position({ x: this.positionX, y: this.positionY })
     .translate({ x: this.dragOffsetX, y: this.dragOffsetY })
     .onClick(() => {
-      this.onTap(this.nodeId);
+      if (!this.penContactActive) {
+        this.onTap(this.nodeId);
+      }
     })
     .gesture(
       PanGesture({ fingers: 1, distance: 4 })
         .onActionStart((event: GestureEvent | undefined) => {
-          if (event === undefined || event.sourceTool !== SourceTool.Finger) {
+          if (event === undefined || event.sourceTool !== SourceTool.Finger || this.penContactActive) {
             return;
           }
           this.dragOffsetX = 0;
           this.dragOffsetY = 0;
         })
         .onActionUpdate((event: GestureEvent | undefined) => {
-          if (event !== undefined && event.sourceTool === SourceTool.Finger) {
+          if (event !== undefined && event.sourceTool === SourceTool.Finger && !this.penContactActive) {
             this.dragOffsetX = event.offsetX;
             this.dragOffsetY = event.offsetY;
           }
         })
         .onActionEnd((event: GestureEvent | undefined) => {
-          if (event !== undefined && event.sourceTool === SourceTool.Finger) {
+          if (event !== undefined && event.sourceTool === SourceTool.Finger && !this.penContactActive) {
             const safeScale = this.canvasScale > 0 ? this.canvasScale : 1;
             this.onMove(
               this.nodeId,
@@ -151,6 +154,7 @@ struct Index {
   @State canRedo: boolean = false;
   @State inkDocument: InkDocument = createEmptyInkDocument();
   @State penMode: boolean = true;
+  @State penContactActive: boolean = false;
   @State canUndoInk: boolean = false;
   @State canRedoInk: boolean = false;
   @State canvasScale: number = 1;
@@ -432,11 +436,22 @@ struct Index {
       return;
     }
     const inputKind = classifyInputSource(Number(event.sourceTool));
+    if (inputKind === 'finger') {
+      if (event.type === TouchType.Down) {
+        this.lastInputLabel = '手指';
+      }
+      return;
+    }
     if (inputKind !== 'pen') {
       return;
     }
 
     this.lastInputLabel = 'M-Pencil';
+    if (event.type === TouchType.Down) {
+      this.penContactActive = true;
+    } else if (event.type === TouchType.Up || event.type === TouchType.Cancel) {
+      this.penContactActive = false;
+    }
     if (!this.penMode) {
       return;
     }
@@ -520,7 +535,7 @@ struct Index {
   }
 
   private handleCanvasPan(event: GestureEvent | undefined): void {
-    if (event === undefined || event.sourceTool !== SourceTool.Finger) {
+    if (event === undefined || event.sourceTool !== SourceTool.Finger || this.penContactActive) {
       return;
     }
     const deltaX = event.offsetX - this.lastPanOffsetX;
@@ -532,7 +547,7 @@ struct Index {
   }
 
   private handleCanvasPinch(event: GestureEvent | undefined): void {
-    if (event === undefined || event.sourceTool !== SourceTool.Finger) {
+    if (event === undefined || event.sourceTool !== SourceTool.Finger || this.penContactActive) {
       return;
     }
     const ratio = event.scale / this.lastPinchScale;
@@ -850,6 +865,7 @@ struct Index {
                       positionY: node.position.y,
                       selected: this.selectedId === node.id,
                       canvasScale: this.canvasScale,
+                      penContactActive: this.penContactActive,
                       onTap: (id: string) => this.handleNodeTap(id),
                       onMove: (id: string, x: number, y: number) => this.moveSelectedNode(id, x, y)
                     })
