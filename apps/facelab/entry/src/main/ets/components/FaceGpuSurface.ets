@@ -17,6 +17,7 @@ export class FaceGpuSurfaceController extends XComponentController {
     const id = BigInt(surfaceId);
     this.surfaceId = id;
     nativeRender.SetSurfaceId(id);
+    this.publishViewTransform();
     this.publishLatest();
   }
 
