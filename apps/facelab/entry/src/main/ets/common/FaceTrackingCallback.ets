@@ -295,26 +295,32 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
           const euler = quaternionToEulerDegrees(relativeRotation);
           const alpha = 0.35;
 
-          this.smoothedX = smoothAngle(this.smoothedX, euler.x, alpha);
-          this.smoothedY = smoothAngle(this.smoothedY, euler.y, alpha);
-          this.smoothedZ = smoothAngle(this.smoothedZ, euler.z, alpha);
+          const filteredX = smoothAngle(this.smoothedX, euler.x, alpha);
+          const filteredY = smoothAngle(this.smoothedY, euler.y, alpha);
+          const filteredZ = smoothAngle(this.smoothedZ, euler.z, alpha);
+          this.smoothedX = filteredX;
+          this.smoothedY = filteredY;
+          this.smoothedZ = filteredZ;
 
           const deltaX = translation.x - translationBase.x;
           const deltaY = translation.y - translationBase.y;
           const deltaZ = translation.z - translationBase.z;
-          this.smoothedTranslationX = this.smoothedTranslationX === undefined ?
+          const filteredTranslationX = this.smoothedTranslationX === undefined ?
             deltaX : this.smoothedTranslationX + (deltaX - this.smoothedTranslationX) * alpha;
-          this.smoothedTranslationY = this.smoothedTranslationY === undefined ?
+          const filteredTranslationY = this.smoothedTranslationY === undefined ?
             deltaY : this.smoothedTranslationY + (deltaY - this.smoothedTranslationY) * alpha;
-          this.smoothedTranslationZ = this.smoothedTranslationZ === undefined ?
+          const filteredTranslationZ = this.smoothedTranslationZ === undefined ?
             deltaZ : this.smoothedTranslationZ + (deltaZ - this.smoothedTranslationZ) * alpha;
+          this.smoothedTranslationX = filteredTranslationX;
+          this.smoothedTranslationY = filteredTranslationY;
+          this.smoothedTranslationZ = filteredTranslationZ;
 
-          rotationX = formatSigned(this.smoothedX, 1) + '°';
-          rotationY = formatSigned(this.smoothedY, 1) + '°';
-          rotationZ = formatSigned(this.smoothedZ, 1) + '°';
-          translationSummary = 'ΔX ' + formatSigned(this.smoothedTranslationX, 3) +
-            ' · ΔY ' + formatSigned(this.smoothedTranslationY, 3) +
-            ' · ΔZ ' + formatSigned(this.smoothedTranslationZ, 3);
+          rotationX = formatSigned(filteredX, 1) + '°';
+          rotationY = formatSigned(filteredY, 1) + '°';
+          rotationZ = formatSigned(filteredZ, 1) + '°';
+          translationSummary = 'ΔX ' + formatSigned(filteredTranslationX, 3) +
+            ' · ΔY ' + formatSigned(filteredTranslationY, 3) +
+            ' · ΔZ ' + formatSigned(filteredTranslationZ, 3);
           quaternionSummary = 'x ' + rotation.x.toFixed(3) + ' · y ' +
             rotation.y.toFixed(3) + ' · z ' + rotation.z.toFixed(3) + ' · w ' +
             rotation.w.toFixed(3);
@@ -364,6 +370,7 @@ export class FaceTrackingCallback extends arViewController.ARViewCallback {
         snapshot.set(currentVertices);
         this.previousVertices = snapshot;
       } catch (error) {
+        this.previousVertices = undefined;
         meshSummary = describeError(error as Object);
         meshMotionSummary = '无法计算网格位移';
       }
