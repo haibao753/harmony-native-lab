@@ -22,6 +22,7 @@ on:
       - "scripts/check-facelab-0.4.2.sh"
       - "scripts/check-facelab-0.4.3.sh"
       - "scripts/check-facelab-0.5.0.sh"
+      - "scripts/check-facelab-0.5.2.sh"
       - ".github/workflows/facelab-source-check.yml"
 
 permissions:
