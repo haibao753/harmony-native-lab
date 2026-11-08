@@ -1,7 +1,6 @@
 #include "FaceGpuRenderer.h"
 
 #include <napi/native_api.h>
-#include <napi/native_node_api.h>
 
 #include <cstdint>
 #include <memory>
@@ -37,12 +36,14 @@ bool ReadFloat32Array(napi_env env, napi_value value, std::vector<float> &output
     napi_value arrayBuffer = nullptr;
     size_t byteOffset = 0;
     if (napi_get_typedarray_info(env, value, &type, &length, &data, &arrayBuffer, &byteOffset) != napi_ok ||
-        type != napi_float32_array || (length > 0 && data == nullptr)) {
+        type != napi_float32_array || (length > 0 && data == nullptr) || length % sizeof(float) != 0) {
         return false;
     }
-    if (length == 0) { output.clear(); return true; }
+    // HarmonyOS napi_get_typedarray_info reports byte length, not element count.
+    const size_t elementCount = length / sizeof(float);
+    if (elementCount == 0) { output.clear(); return true; }
     const float *source = static_cast<const float *>(data);
-    output.assign(source, source + length);
+    output.assign(source, source + elementCount);
     return true;
 }
 
@@ -54,12 +55,14 @@ bool ReadUint32Array(napi_env env, napi_value value, std::vector<uint32_t> &outp
     napi_value arrayBuffer = nullptr;
     size_t byteOffset = 0;
     if (napi_get_typedarray_info(env, value, &type, &length, &data, &arrayBuffer, &byteOffset) != napi_ok ||
-        type != napi_uint32_array || (length > 0 && data == nullptr)) {
+        type != napi_uint32_array || (length > 0 && data == nullptr) || length % sizeof(uint32_t) != 0) {
         return false;
     }
-    if (length == 0) { output.clear(); return true; }
+    // HarmonyOS napi_get_typedarray_info reports byte length, not element count.
+    const size_t elementCount = length / sizeof(uint32_t);
+    if (elementCount == 0) { output.clear(); return true; }
     const uint32_t *source = static_cast<const uint32_t *>(data);
-    output.assign(source, source + length);
+    output.assign(source, source + elementCount);
     return true;
 }
 
