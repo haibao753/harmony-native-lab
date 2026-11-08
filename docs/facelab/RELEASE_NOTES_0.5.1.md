@@ -29,13 +29,21 @@ FaceLab 0.5.0 was successfully deployed on MatePad Pro 13.2 (2023). The user con
 ## Validation status
 
 - FaceLab 0.5.0: user-confirmed smooth behavior for wireframe, surface and deformation heatmap.
-- FaceLab 0.5.1 source implementation: committed to the feature branch.
-- Static source-contract CI: pending for this commit.
-- DevEco Studio / HarmonyOS SDK 26.0.0 build: pending.
-- MatePad region colors, semantic label correctness, frame pacing, CPU load, temperature and battery impact: pending user validation.
+- FaceLab 0.5.1: merged into `main` via PR #11.
+- Static source-contract CI: passed.
+- User confirmed successful DevEco build and deployment to MatePad Pro 13.2 (2023).
+- No per-mode FPS, CPU load, temperature or battery measurements were supplied; these remain unquantified.
 
-No claim is made that region-mode performance is fixed until the new build is installed and tested on the target tablet.
+The release is frozen as the stable 0.5.1 baseline. Successful deployment is confirmed; no numerical performance guarantee is made.
 
 ## Privacy
 
 Face geometry, triangle labels and region colors are processed in local memory only. No face data is saved or uploaded.
+
+
+## Release freeze
+
+- Main merge commit: `beceadcb871543d943c28cd482c1ded8680fd71c`
+- Pull request: #11 (merged)
+- Stable snapshot branch: `release/facelab-0.5.1`
+- Application version: `0.5.1`, versionCode `10009`
