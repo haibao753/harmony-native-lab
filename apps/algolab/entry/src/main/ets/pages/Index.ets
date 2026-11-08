@@ -108,7 +108,7 @@ struct Index {
   @State generatedCode: string = '';
   @State codeLines: CppDisplayLine[] = [];
   // 11 is the original compact size; font controls affect only C++ source tokens.
-  @State codeFontSize: number = 11;
+  @State codeFontSize: number = 14;
   @State warnings: string[] = [];
   @State message: string = '先添加一个节点。拖动节点只改变位置，不会改变指针关系。';
   @State statusText: string = '空画布';
@@ -310,6 +310,16 @@ struct Index {
       this.refreshDerivedState();
       this.message = '已恢复操作。';
     }
+  }
+
+  private codeLineWidth(line: CppDisplayLine): number {
+    let characterCount = 0;
+    for (let i = 0; i < line.tokens.length; i++) {
+      characterCount += formatCppDisplayToken(line.tokens[i].text).length;
+    }
+    // Monospace glyphs occupy approximately 0.62em. Give each line its own
+    // measured width so short lines start at column zero and long lines scroll.
+    return Math.max(180, characterCount * this.codeFontSize * 0.62 + 12);
   }
 
   private clampCodePanelX(value: number): number {
@@ -616,7 +626,7 @@ struct Index {
               .onClick(() => {
                 this.codeFontSize = Math.max(10, this.codeFontSize - 1);
               })
-            Text(this.codeFontSize.toString() + ' px')
+            Text(this.codeFontSize.toString() + ' vp')
               .fontSize(10)
               .fontColor('#52616B')
               .width(42)
@@ -657,19 +667,20 @@ struct Index {
                     .textAlign(TextAlign.End)
 
                   Scroll() {
-                    Row({ space: 0 }) {
+                    Text() {
                       ForEach(line.tokens, (token: CppToken) => {
-                        Text(formatCppDisplayToken(token.text))
+                        Span(formatCppDisplayToken(token.text))
                           .fontSize(this.codeFontSize)
                           .fontColor(token.color)
                           .fontFamily('monospace')
-                          .textAlign(TextAlign.Start)
                       }, (token: CppToken) => token.id)
                     }
-                    // Keep intrinsic content width for horizontal scrolling,
-                    // but always anchor tokens at the source line's first column.
-                    .justifyContent(FlexAlign.Start)
-                    .alignItems(VerticalAlign.Center)
+                    // One Text paragraph owns the entire source line. Span children
+                    // only change token color; they cannot distribute tokens as Row items.
+                    .width(this.codeLineWidth(line))
+                    .textAlign(TextAlign.Start)
+                    .fontSize(this.codeFontSize)
+                    .fontFamily('monospace')
                     .height(this.codeFontSize + 11)
                   }
                   .scrollable(ScrollDirection.Horizontal)
@@ -682,20 +693,20 @@ struct Index {
                         .fontSize(12)
                         .fontColor(line.annotationColor)
                       Text(line.annotationText)
-                        .fontSize(9)
+                        .fontSize(12)
                         .fontColor(line.annotationColor)
-                        .maxLines(2)
-                        .width(156)
+                        .maxLines(3)
+                        .width(178)
                     }
-                    .width(174)
-                    .height(28)
+                    .width(198)
+                    .height(46)
                   } else {
                     Blank()
-                      .width(174)
+                      .width(198)
                   }
                 }
                 .width('100%')
-                .height(this.codeFontSize + 19)
+                .height(Math.max(this.codeFontSize + 19, 48))
                 .padding({ top: 1, bottom: 1 })
                 .backgroundColor(line.lineNumber % 2 === 0 ? '#1B2733' : '#17212B')
                 .borderRadius(3)
