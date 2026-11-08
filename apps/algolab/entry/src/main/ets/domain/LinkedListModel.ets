@@ -232,3 +232,68 @@ export function analyzeDocument(document: LinkedListDocument): StructureAnalysis
     cycleEntryId: cycleEntryId
   };
 }
+
+
+/**
+ * A symbolic memory record for teaching. These IDs are stable application
+ * object labels, not physical or runtime memory addresses.
+ */
+export interface MemoryNodeSnapshot {
+  id: string;
+  data: number;
+  nextId: string | null;
+  isHead: boolean;
+  isReachable: boolean;
+  isCycleEntry: boolean;
+  incomingCount: number;
+}
+
+export interface MemorySnapshot {
+  headId: string | null;
+  nodes: MemoryNodeSnapshot[];
+  reachableCount: number;
+  unreachableCount: number;
+  hasCycle: boolean;
+  cycleEntryId: string | null;
+  hasSharedSuccessor: boolean;
+}
+
+/**
+ * Build a read-only teaching view from the authoritative linked-list model.
+ * The next field is represented as a symbolic reference such as &N2.
+ */
+export function createMemorySnapshot(document: LinkedListDocument): MemorySnapshot {
+  const analysis = analyzeDocument(document);
+  const rows: MemoryNodeSnapshot[] = [];
+
+  for (let i = 0; i < document.nodes.length; i++) {
+    const node = document.nodes[i];
+    let incomingCount = 0;
+
+    for (let j = 0; j < document.nodes.length; j++) {
+      if (document.nodes[j].nextId === node.id) {
+        incomingCount++;
+      }
+    }
+
+    rows.push({
+      id: node.id,
+      data: node.value,
+      nextId: node.nextId,
+      isHead: document.headId === node.id,
+      isReachable: analysis.reachableIds.indexOf(node.id) >= 0,
+      isCycleEntry: analysis.cycleEntryId === node.id,
+      incomingCount: incomingCount
+    });
+  }
+
+  return {
+    headId: document.headId,
+    nodes: rows,
+    reachableCount: analysis.reachableIds.length,
+    unreachableCount: analysis.unreachableIds.length,
+    hasCycle: analysis.hasCycle,
+    cycleEntryId: analysis.cycleEntryId,
+    hasSharedSuccessor: analysis.hasSharedSuccessor
+  };
+}
