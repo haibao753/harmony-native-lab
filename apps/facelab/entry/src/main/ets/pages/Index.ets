@@ -17,6 +17,13 @@ struct Index {
   @State leftBlink: string = '—';
   @State rightBlink: string = '—';
   @State jawOpen: string = '—';
+  @State rotationX: string = '—';
+  @State rotationY: string = '—';
+  @State rotationZ: string = '—';
+  @State quaternionSummary: string = '等待姿态数据';
+  @State translationSummary: string = '等待姿态数据';
+  @State meshMotionSummary: string = '等待网格数据';
+  @State poseCalibrated: boolean = false;
   @State errorMessage: string = '';
 
   private faceCallback: FaceTrackingCallback | undefined = undefined;
@@ -50,7 +57,32 @@ struct Index {
     this.leftBlink = metrics.leftBlink;
     this.rightBlink = metrics.rightBlink;
     this.jawOpen = metrics.jawOpen;
+    this.rotationX = metrics.rotationX;
+    this.rotationY = metrics.rotationY;
+    this.rotationZ = metrics.rotationZ;
+    this.quaternionSummary = metrics.quaternionSummary;
+    this.translationSummary = metrics.translationSummary;
+    this.meshMotionSummary = metrics.meshMotionSummary;
+    this.poseCalibrated = metrics.poseCalibrated;
     this.status = metrics.faceCount > 0 ? '正在追踪人脸' : 'AR 已运行，等待人脸进入画面';
+  }
+
+  private calibratePose(): void {
+    if (this.faceCallback === undefined || this.faceCount === 0) {
+      this.errorMessage = '请先启动追踪并让摄像头检测到人脸，再进行姿态校准。';
+      return;
+    }
+    this.faceCallback.calibratePose();
+    this.status = '正在校准姿态，请保持当前头部位置…';
+  }
+
+  private resetMeshBaseline(): void {
+    if (this.faceCallback === undefined || this.faceCount === 0) {
+      this.errorMessage = '请先启动追踪并检测到人脸，再重置网格位移基准。';
+      return;
+    }
+    this.faceCallback.resetMeshBaseline();
+    this.meshMotionSummary = '已重置，等待下一帧建立基准';
   }
 
   private async startTracking(): Promise<void> {
@@ -157,6 +189,13 @@ struct Index {
       this.leftBlink = '—';
       this.rightBlink = '—';
       this.jawOpen = '—';
+      this.rotationX = '—';
+      this.rotationY = '—';
+      this.rotationZ = '—';
+      this.quaternionSummary = '已停止';
+      this.translationSummary = '已停止';
+      this.meshMotionSummary = '已停止';
+      this.poseCalibrated = false;
     }
   }
 
@@ -172,7 +211,7 @@ struct Index {
             .fontSize(32)
             .fontWeight(FontWeight.Bold)
             .fontColor('#F4F7FB')
-          Text('AR Face Tracking Lab · 0.2.0')
+          Text('AR Face Tracking Lab · 0.3.0')
             .fontSize(13)
             .fontColor('#9AA9BC')
         }
@@ -350,6 +389,115 @@ struct Index {
             .layoutWeight(1)
           }
           .width('100%')
+        }
+        .alignItems(HorizontalAlign.Start)
+        .width('100%')
+        .padding(15)
+        .backgroundColor('#172235')
+        .borderRadius(15)
+
+        Column({ space: 10 }) {
+          Text('POSE EXPLORER')
+            .fontSize(11)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#8DA2BC')
+          Text(this.poseCalibrated ? '姿态基准已建立' : '等待姿态基准')
+            .fontSize(11)
+            .fontColor(this.poseCalibrated ? '#63D6A5' : '#9AA9BC')
+          Row() {
+            Column({ space: 4 }) {
+              Text('ROTATION X')
+                .fontSize(10)
+                .fontColor('#9AA9BC')
+              Text(this.rotationX)
+                .fontSize(21)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#63D6A5')
+            }
+            .layoutWeight(1)
+            .alignItems(HorizontalAlign.Start)
+            Column({ space: 4 }) {
+              Text('ROTATION Y')
+                .fontSize(10)
+                .fontColor('#9AA9BC')
+              Text(this.rotationY)
+                .fontSize(21)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#63D6A5')
+            }
+            .layoutWeight(1)
+            .alignItems(HorizontalAlign.Start)
+            Column({ space: 4 }) {
+              Text('ROTATION Z')
+                .fontSize(10)
+                .fontColor('#9AA9BC')
+              Text(this.rotationZ)
+                .fontSize(21)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#63D6A5')
+            }
+            .layoutWeight(1)
+            .alignItems(HorizontalAlign.Start)
+          }
+          .width('100%')
+          Text('QUATERNION')
+            .fontSize(10)
+            .fontColor('#9AA9BC')
+          Text(this.quaternionSummary)
+            .fontSize(12)
+            .fontColor('#F4F7FB')
+          Text('RELATIVE TRANSLATION')
+            .fontSize(10)
+            .fontColor('#9AA9BC')
+          Text(this.translationSummary)
+            .fontSize(12)
+            .fontColor('#F4F7FB')
+          Button('校准当前姿态为零点')
+            .width('100%')
+            .height(42)
+            .enabled(this.faceCount > 0 && this.arContext !== undefined)
+            .backgroundColor('#285B55')
+            .onClick(() => {
+              this.calibratePose();
+            })
+          Text('首次检测到人脸时自动建立基准。角度为标准 XYZ 欧拉角分解；设备实际轴向与正负方向请通过转头实验确认。平移显示相对校准点的 AR 坐标差。')
+            .fontSize(11)
+            .fontColor('#8190A5')
+            .lineHeight(17)
+        }
+        .alignItems(HorizontalAlign.Start)
+        .width('100%')
+        .padding(15)
+        .backgroundColor('#172235')
+        .borderRadius(15)
+
+        Column({ space: 10 }) {
+          Text('MESH DIAGNOSTICS')
+            .fontSize(11)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#8DA2BC')
+          Text(this.meshSummary)
+            .fontSize(14)
+            .fontColor('#F4F7FB')
+          Text('相邻帧顶点位移')
+            .fontSize(10)
+            .fontColor('#9AA9BC')
+          Text(this.meshMotionSummary)
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#63D6A5')
+          Button('重置网格位移基准')
+            .width('100%')
+            .height(42)
+            .enabled(this.faceCount > 0 && this.arContext !== undefined)
+            .backgroundColor('#34445D')
+            .onClick(() => {
+              this.resetMeshBaseline();
+            })
+          Text('RMS 表示所有顶点三维位移的均方根，MAX 表示单个顶点的最大位移。当前显示原始坐标单位，不擅自换算为毫米。')
+            .fontSize(11)
+            .fontColor('#8190A5')
+            .lineHeight(17)
         }
         .alignItems(HorizontalAlign.Start)
         .width('100%')

@@ -118,3 +118,43 @@ FaceLab 0.1.0 had already run the same capability probe successfully on the same
 The AR session configuration and callback return to Huawei's documented ArkTS enum member expressions (for example `arEngine.ARType.FACE`, `arEngine.ARTrackableType.FACE`, and `arEngine.ARBlendShapeType.EYE_BLINK_LEFT`). This follows the official face-tracking guide and avoids hand-maintained magic enum values.
 
 If startup still fails, the new stage label should now advance to scene loading, callback creation, FACE configuration, or AR session initialization.
+
+
+## 11. 0.3.0 — Pose Explorer
+
+### Pose source
+
+Huawei AR Engine exposes `ARPose.rotation` as an ArkGraphics3D `Quaternion` (x/y/z/w) and `ARPose.translation` as a `Vec3` (x/y/z). The API reference also documents `getMatrix()` as a 16-value column-major matrix. FaceLab now reads the typed quaternion and translation properties directly rather than reverse-engineering the matrix.
+
+### Relative orientation
+
+- The first valid face pose after tracking begins becomes the automatic baseline.
+- The UI calibration button requests that the next valid pose become the new baseline.
+- Relative rotation is computed as `inverse(qBaseline) * qCurrent`.
+- The relative quaternion is normalized before conversion.
+- Displayed angles use the standard XYZ Tait-Bryan decomposition, in degrees.
+- The UI deliberately labels axes X/Y/Z rather than asserting device-specific yaw/pitch/roll semantics. Confirm the physical axis directions and signs on the MatePad before renaming them.
+- Rotation and translation deltas use an exponential smoothing factor of 0.35. Angular smoothing follows the shortest path across the ±180° boundary.
+
+### Translation
+
+The displayed values are `current.translation - baseline.translation`. They are relative AR coordinate deltas; the UI does not attach a length unit until the face-pose coordinate scale is confirmed on-device.
+
+### Mesh diagnostics
+
+- The device's observed face-vertex buffer is parsed as three Float32 coordinates (XYZ) per vertex; the parser validates that the ArrayBuffer byte length is divisible by 12.
+- A copied previous-frame vertex snapshot is retained in memory only.
+- For each vertex, displacement is `sqrt(dx² + dy² + dz²)`.
+- RMS is `sqrt(sum(displacement²) / vertexCount)`; MAX is the largest per-vertex displacement in the frame pair.
+- Values are shown in raw coordinate units because the ArkTS API page describes the ArrayBuffer but does not state a physical unit or vertex packing in its short signature. The observed 3482-vertex count on the target device is consistent with the current XYZ Float32 interpretation.
+- The next valid frame after a reset establishes a fresh comparison baseline.
+- When face tracking is lost, the previous mesh snapshot and pose baseline are cleared to avoid comparing unrelated face sessions.
+
+### Scope
+
+0.3.0 is a numerical Pose & Mesh diagnostics release. It does not yet render a standalone 3D mesh viewer. Existing ARView camera preview, FACE tracking, BlendShapes, and resource release behavior remain in place.
+
+### Official references
+
+- [AR Engine API — ARPose, ARGeometry, ARFace](https://developer.huawei.com/consumer/cn/doc/harmonyos-references/arengine-api-arengine/)
+- [ArkGraphics 3D SceneType — Quaternion and Vec3](https://developer.huawei.com/consumer/cn/doc/harmonyos-references/js-apis-inner-scene-types/)
