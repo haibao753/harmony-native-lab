@@ -1,6 +1,15 @@
 {
   "apiType": "stageMode",
   "buildOption": {
+    "arkOptions": {
+      "types": ["./src/main/cpp/types/libfacelab_renderer/index.d.ts"]
+    },
+    "externalNativeOptions": {
+      "path": "./src/main/cpp/CMakeLists.txt",
+      "abiFilters": ["arm64-v8a", "x86_64"],
+      "arguments": "",
+      "cppFlags": ""
+    },
     "resOptions": {
       "copyCodeResource": {
         "enable": false

@@ -3,7 +3,8 @@ import { ARView, arEngine, arViewController } from '@kit.AREngine';
 import { Scene } from '@kit.ArkGraphics3D';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { FaceMetrics, FaceTrackingCallback } from '../common/FaceTrackingCallback';
-import { FaceMeshViewer } from '../components/FaceMeshViewer';
+import { FaceGpuRenderer } from '../components/FaceGpuRenderer';
+import nativeRenderer from 'libfacelab_renderer.so';
 
 @Entry
 @Component
@@ -29,8 +30,6 @@ struct Index {
   @State trackingStabilityLabel: string = '—';
   @State trackingStabilitySummary: string = '等待姿态数据';
   @State poseCalibrated: boolean = false;
-  @State meshRevision: number = 0;
-  @State meshTopologyRevision: number = -1;
   @State meshViewMode: string = 'wireframe';
   @State meshViewReset: number = 0;
   @State meshDataAvailable: boolean = false;
@@ -41,19 +40,7 @@ struct Index {
   @State errorMessage: string = '';
 
   private faceCallback: FaceTrackingCallback | undefined = undefined;
-  private meshVertices: number[] = [];
-  private meshTriangles: number[] = [];
-  private meshEdges: number[] = [];
-  private meshDeformation: number[] = [];
-  private meshLabels: number[] = [];
   private lastTextMetricsUpdate: number = 0;
-
-  private copyNumericData(target: number[], source: Float32Array | Uint32Array | Int32Array): void {
-    target.length = source.length;
-    for (let i = 0; i < source.length; i++) {
-      target[i] = source[i];
-    }
-  }
 
   private describeError(error: Object): string {
     const err = error as BusinessError;
@@ -85,20 +72,28 @@ struct Index {
     this.poseYaw = metrics.poseYaw;
     this.poseRoll = metrics.poseRoll;
 
-    // Keep the same plain-array instances across frames. The viewer redraws when
-    // meshRevision changes, so we avoid allocating and proxy-wrapping five arrays
-    // on every AR update.
-    this.copyNumericData(this.meshVertices, metrics.meshVertices);
-    this.copyNumericData(this.meshDeformation, metrics.meshDeformation);
-    if (this.meshTopologyRevision !== metrics.meshTopologyRevision) {
-      this.copyNumericData(this.meshTriangles, metrics.meshTriangles);
-      this.copyNumericData(this.meshEdges, metrics.meshEdges);
-      this.copyNumericData(this.meshLabels, metrics.meshLabels);
-      this.meshTopologyRevision = metrics.meshTopologyRevision;
-      this.meshLabelsAvailable = metrics.meshLabelsAvailable;
+    // Pass the original typed buffers directly across NAPI. C++ copies them
+    // once into a renderer-owned snapshot; ArkTS no longer expands every vertex
+    // and index into observable number[] arrays.
+    this.meshLabelsAvailable = metrics.meshLabelsAvailable;
+    if (metrics.meshFrameAvailable && metrics.meshVertices.length >= 9 &&
+      metrics.meshTriangles.length >= 3) {
+      nativeRenderer.UpdateMesh(
+        metrics.meshVertices,
+        metrics.meshTriangles,
+        metrics.meshEdges,
+        metrics.meshDeformation,
+        metrics.meshLabels,
+        metrics.posePitch,
+        metrics.poseYaw,
+        metrics.poseRoll,
+        metrics.meshTopologyRevision
+      );
+    } else {
+      nativeRenderer.ClearMesh();
     }
 
-    // The geometry viewer updates at 10 Hz; textual diagnostics only need 2 Hz.
+    // AR mesh callbacks are throttled to about 5 Hz; textual diagnostics only need 2 Hz.
     const now = Date.now();
     if (now - this.lastTextMetricsUpdate >= 500) {
       this.meshSummary = metrics.meshSummary;
@@ -119,7 +114,6 @@ struct Index {
       this.lastTextMetricsUpdate = now;
     }
 
-    this.meshRevision++;
     const nextStatus = metrics.faceCount > 0 ? '正在追踪人脸' : 'AR 已运行，等待人脸进入画面';
     if (this.status !== nextStatus) {
       this.status = nextStatus;
@@ -268,18 +262,12 @@ struct Index {
       this.trackingStabilityLabel = '—';
       this.trackingStabilitySummary = '已停止';
       this.poseCalibrated = false;
-      this.meshVertices.length = 0;
-      this.meshTriangles.length = 0;
-      this.meshEdges.length = 0;
-      this.meshDeformation.length = 0;
-      this.meshLabels.length = 0;
-      this.meshTopologyRevision = -1;
       this.meshLabelsAvailable = false;
+      nativeRenderer.ClearMesh();
       this.posePitch = 0;
       this.poseYaw = 0;
       this.poseRoll = 0;
       this.meshDataAvailable = false;
-      this.meshRevision++;
     }
   }
 
@@ -295,7 +283,7 @@ struct Index {
             .fontSize(32)
             .fontWeight(FontWeight.Bold)
             .fontColor('#F4F7FB')
-          Text('AR Face Tracking Lab · 0.4.3')
+          Text('AR Face Tracking Lab · 0.5.0')
             .fontSize(13)
             .fontColor('#9AA9BC')
         }
@@ -467,25 +455,12 @@ struct Index {
               })
           }
           .width('100%')
-          FaceMeshViewer({
-            vertices: this.meshVertices,
-            triangles: this.meshTriangles,
-            edges: this.meshEdges,
-            deformation: this.meshDeformation,
-            labels: this.meshLabels,
-            revision: this.meshRevision,
+          FaceGpuRenderer({
             mode: this.meshViewMode,
-            hasNeutral: this.neutralCalibrated,
-            hasLabels: this.meshLabelsAvailable,
-            hasMesh: this.meshDataAvailable,
-            posePitch: this.posePitch,
-            poseYaw: this.poseYaw,
-            poseRoll: this.poseRoll,
-            resetKey: this.meshViewReset,
-            topologyRevision: this.meshTopologyRevision
+            resetKey: this.meshViewReset
           })
             .width('100%')
-          Text('单指拖动旋转 · 双指捏合缩放。热力图未采集中性基准时显示相邻帧动态位移；采集后显示相对中性网格的形变。区域分区需设备返回三角面标签。为减轻卡顿，网格更新降至约 5 Hz；当前仍使用 Canvas 投影绘制，非 GPU 原生三维场景。')
+          Text('原生 XComponent + C++ OpenGL ES 3.2 渲染。顶点与索引直接进入 GPU VBO / EBO，形变热力由逐顶点 Shader 着色；GPU 独立渲染目标约 30 FPS，AR 网格数据约 5 Hz 更新。单指旋转、双指缩放；所有面部数据仅在本机内存处理。真机性能仍待验收。')
             .fontSize(11)
             .fontColor('#8190A5')
             .lineHeight(17)
