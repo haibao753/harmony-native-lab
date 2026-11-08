@@ -4,6 +4,16 @@ import { Scene } from '@kit.ArkGraphics3D';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { FaceMetrics, FaceTrackingCallback } from '../common/FaceTrackingCallback';
 
+// AR Engine enum values are documented by Huawei. Use their numeric values at runtime
+// so this page does not dereference the arEngine namespace object for enum members.
+const FACE_FEATURE_TYPE: arEngine.ARFeatureType = 6 as arEngine.ARFeatureType;
+const FACE_AR_TYPE: arEngine.ARType = 0x10 as arEngine.ARType;
+const FACE_PLANE_MODE: arEngine.ARPlaneFindingMode = 0 as arEngine.ARPlaneFindingMode;
+const FACE_POWER_MODE: arEngine.ARPowerMode = 0 as arEngine.ARPowerMode;
+const FACE_FOCUS_MODE: arEngine.ARFocusMode = 1 as arEngine.ARFocusMode;
+const FRONT_CAMERA: arEngine.ARCameraLensFacing = 1 as arEngine.ARCameraLensFacing;
+const MULTI_FACE_MODE: arEngine.ARMultiFaceMode = 0x800 as arEngine.ARMultiFaceMode;
+
 @Entry
 @Component
 struct Index {
@@ -62,6 +72,7 @@ struct Index {
     this.errorMessage = '';
     this.status = '正在申请相机权限…';
 
+    let stage = '申请相机权限';
     let context: arViewController.ARViewContext | undefined = undefined;
     try {
       const granted = await this.requestCameraPermission();
@@ -73,21 +84,22 @@ struct Index {
         return;
       }
 
-      const supported = arViewController.isARTypeSupported(
-        arEngine.ARFeatureType.ARENGINE_FEATURE_TYPE_FACE
-      );
+      stage = '检查 FACE 能力';
+      const supported = arViewController.isARTypeSupported(FACE_FEATURE_TYPE);
       if (!supported) {
         this.status = '设备不支持人脸追踪';
         this.errorMessage = '当前设备没有报告支持 AR Engine FACE 特性。';
         return;
       }
 
+      stage = '加载 AR 场景';
       this.status = '正在加载 AR 场景…';
       const scene = await Scene.load();
 
       context = new arViewController.ARViewContext();
       context.scene = scene;
 
+      stage = '创建人脸追踪回调';
       this.faceCallback = new FaceTrackingCallback(
         (metrics: FaceMetrics) => {
           this.onFaceMetrics(metrics);
@@ -98,22 +110,24 @@ struct Index {
       );
       context.callback = this.faceCallback;
 
+      stage = '配置 FACE 会话';
       context.config = {
-        type: arEngine.ARType.FACE,
-        planeFindingMode: arEngine.ARPlaneFindingMode.DISABLED,
-        powerMode: arEngine.ARPowerMode.NORMAL,
-        focusMode: arEngine.ARFocusMode.AUTO,
-        cameraLensFacing: arEngine.ARCameraLensFacing.FRONT,
-        multiFaceMode: arEngine.ARMultiFaceMode.MULTIFACE_ENABLE
+        type: FACE_AR_TYPE,
+        planeFindingMode: FACE_PLANE_MODE,
+        powerMode: FACE_POWER_MODE,
+        focusMode: FACE_FOCUS_MODE,
+        cameraLensFacing: FRONT_CAMERA,
+        multiFaceMode: MULTI_FACE_MODE
       };
 
+      stage = '初始化 AR 会话';
       this.status = '正在初始化 AR 会话…';
       await context.init();
       this.arContext = context;
       this.status = 'AR 已启动，等待人脸进入画面';
     } catch (error) {
-      this.status = '启动失败';
-      this.errorMessage = this.describeError(error as Object);
+      this.status = '启动失败 · ' + stage;
+      this.errorMessage = '失败阶段：' + stage + '\\n' + this.describeError(error as Object);
       if (this.faceCallback) {
         this.faceCallback.stop();
         this.faceCallback = undefined;
