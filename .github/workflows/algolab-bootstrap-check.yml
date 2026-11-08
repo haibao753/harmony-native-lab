@@ -32,6 +32,7 @@ jobs:
         run: |
           test -s apps/algolab/entry/src/main/ets/domain/LinkedListModel.ets
           test -s apps/algolab/entry/src/main/ets/codegen/CppLinkedListGenerator.ets
+          test -s apps/algolab/entry/src/main/ets/codegen/CppSyntaxHighlighter.ets
           test -s apps/algolab/entry/src/main/ets/pages/Index.ets
 
       - name: Verify API 26 bootstrap guard
@@ -47,3 +48,10 @@ jobs:
           grep -Fq 'panelDragStartX' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'panelResizeStartWidth' apps/algolab/entry/src/main/ets/pages/Index.ets
           grep -Fq 'onAreaChange' apps/algolab/entry/src/main/ets/pages/Index.ets
+
+      - name: Verify C++ highlighting and educational annotations
+        run: |
+          grep -Fq 'highlightCpp(generated.code, generated.annotations)' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'ForEach(line.tokens' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq 'annotationText' apps/algolab/entry/src/main/ets/pages/Index.ets
+          grep -Fq '引入哈希集合' apps/algolab/entry/src/main/ets/codegen/CppLinkedListGenerator.ets
