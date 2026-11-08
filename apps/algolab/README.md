@@ -40,6 +40,7 @@ AlgoLab 不替代华为笔记、系统浏览器、课程平台或通用 AI 助�
 ## 实现记录
 
 - [首轮实现记录与手动验收场景](../../docs/IMPLEMENTATION_LOG.md)
+- [AlgoLab 1.0.0 发布说明](../../docs/releases/v1.0.0.md)
 
 ## 目标平台
 
