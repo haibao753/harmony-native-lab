@@ -1,4 +1,3 @@
-import { XComponentController, XComponentType } from '@kit.ArkUI';
 import nativeRender from 'libfacelab_native.so';
 import { FaceMetrics } from '../common/FaceTrackingCallback';
 
