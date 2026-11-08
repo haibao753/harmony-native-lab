@@ -102,6 +102,19 @@ FaceLab 是一个 HarmonyOS 原生视觉与交互实验应用，优先研究 Mat
 - 不假定姿态轴正负方向的物理语义，方向校准与更丰富的可配置映射留待后续版本。
 - 所有数据只在设备内存中处理，不保存、不上传。
 
+### 0.6.0-alpha.1 — FacePen Prototype
+
+- 新增 FaceLab 自有的手写画布，以 M-Pencil 为目标设备；只接收 ArkUI `TouchEvent.sourceTool === SourceTool.Pen`，不按品牌或设备名限制其他手写笔。
+- 使用 CanvasRenderingContext2D，坐标采用 Canvas 默认 VP 单位，与 ArkUI TouchObject.x/y 的 VP 坐标一致。
+- 使用 `getHistoricalPoints()` 补齐帧间采样点；使用 API 15+ TouchObject.pressure（目标 SDK 26）作为可选笔宽输入，压力不可用时回退固定宽度。
+- 左眼单眨切换上一色，右眼单眨切换下一色；复用 0.5.2 的事件识别、80 ms 单侧闭合确认与 650 ms 冷却。
+- 笔画事务规则：DOWN 快照当前颜色；MOVE 始终使用快照颜色；书写期间的面部 / 手动调色更新 pending color；UP / CANCEL 结束后才提交 pending color。
+- 面部控制默认关闭、显式启用；与原 A/B/C 手势演示互斥；人脸丢失时自动暂停面部控制。
+- 画布位于独立 UI 卡片，不覆盖 FaceGpuSurface，不改变 ARViewContext 生命周期；手写笔事件通过 stopPropagation 阻止被外层滚动 / 观察器手势消费。
+- 在 API 26 上按需调用公开的 `StylusFrameBoost.forceRefreshOneFrame(event.type)`；构造失败、调用异常或返回非 0 时禁用加速并继续使用普通 Canvas 绘制。该优化仍需在目标 MatePad 上验证实际收益。
+- 仅控制 FaceLab 自身画布，不尝试控制华为笔记或其他应用。
+- 源码契约检查通过不等于 ArkTS 编译通过；DevEco 构建和 MatePad Pro 13.2（2023）真机验收是下一阶段门槛。
+
 ## 5. 非目标
 - 不访问系统人脸解锁或认证模板。
 - 不尝试绕过 TEE、安全权限或系统隐私边界。
