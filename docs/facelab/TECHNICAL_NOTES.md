@@ -280,7 +280,7 @@ Canvas 仍是 ArkUI `CanvasRenderingContext2D` 的 3D 投影绘制，并非 GPU 
 - LIVE MOTION Δ 与 NEUTRAL Δ 表示不同参考时间，不可直接视为同一类表情强度。
 - 如果 Canvas 仍明显卡顿，下一阶段迁移到原生 GPU 网格渲染。
 
-## 17. 0.5.0 — OpenGL ES 3.2 Native Face Renderer
+## 17. 0.5.0 — OpenGL ES 3.0 Native Face Renderer
 
 ### Surface / EGL lifecycle
 - ArkTS 侧使用 XComponentType.SURFACE 和 XComponentController 接收 onSurfaceCreated / Changed / Destroyed。
@@ -304,3 +304,6 @@ Canvas 仍是 ArkUI `CanvasRenderingContext2D` 的 3D 投影绘制，并非 GPU 
 - 原生线程以约 30 Hz 重绘最后一次提交的几何数据；此频率是代码目标，实际性能必须在 MatePad Pro 13.2（2023）上测量。
 - 5 Hz AR 数据更新与约 30 Hz GPU 重绘是两条不同的频率链路。
 - 本次实现尚未经过 DevEco 编译和设备验收，不能据此声称卡顿已解决或已达到 30 FPS。
+
+
+The current implementation requests an OpenGL ES 3.x context with `EGL_CONTEXT_CLIENT_VERSION = 3` and uses GLSL ES `#version 300 es` (the OpenGL ES 3.0 shader baseline). It does not currently request a 3.2 minor context.
