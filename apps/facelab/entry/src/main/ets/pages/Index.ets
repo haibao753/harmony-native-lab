@@ -40,11 +40,11 @@ struct Index {
   @State errorMessage: string = '';
 
   private faceCallback: FaceTrackingCallback | undefined = undefined;
-  private meshVertices: Float32Array = new Float32Array(0);
-  private meshTriangles: Uint32Array = new Uint32Array(0);
-  private meshEdges: Uint32Array = new Uint32Array(0);
-  private meshDeformation: Float32Array = new Float32Array(0);
-  private meshLabels: Int32Array = new Int32Array(0);
+  private meshVertices: number[] = [];
+  private meshTriangles: number[] = [];
+  private meshEdges: number[] = [];
+  private meshDeformation: number[] = [];
+  private meshLabels: number[] = [];
 
   private describeError(error: Object): string {
     const err = error as BusinessError;
@@ -86,12 +86,14 @@ struct Index {
     this.trackingStabilityLabel = metrics.trackingStabilityLabel;
     this.trackingStabilitySummary = metrics.trackingStabilitySummary;
     this.poseCalibrated = metrics.poseCalibrated;
-    this.meshVertices = metrics.meshVertices;
-    this.meshTriangles = metrics.meshTriangles;
-    this.meshEdges = metrics.meshEdges;
-    this.meshDeformation = metrics.meshDeformation;
+    // ArkUI @Prop wraps object values for observation. Convert TypedArrays to plain arrays here,
+    // because TypedArray accessors such as .length require the original internal slot.
+    this.meshVertices = Array.from(metrics.meshVertices);
+    this.meshTriangles = Array.from(metrics.meshTriangles);
+    this.meshEdges = Array.from(metrics.meshEdges);
+    this.meshDeformation = Array.from(metrics.meshDeformation);
     this.meshDataAvailable = metrics.meshFrameAvailable;
-    this.meshLabels = metrics.meshLabels;
+    this.meshLabels = Array.from(metrics.meshLabels);
     this.meshLabelsAvailable = metrics.meshLabelsAvailable;
     this.posePitch = metrics.posePitch;
     this.poseYaw = metrics.poseYaw;
@@ -242,11 +244,11 @@ struct Index {
       this.trackingStabilityLabel = '—';
       this.trackingStabilitySummary = '已停止';
       this.poseCalibrated = false;
-      this.meshVertices = new Float32Array(0);
-      this.meshTriangles = new Uint32Array(0);
-      this.meshEdges = new Uint32Array(0);
-      this.meshDeformation = new Float32Array(0);
-      this.meshLabels = new Int32Array(0);
+      this.meshVertices = [];
+      this.meshTriangles = [];
+      this.meshEdges = [];
+      this.meshDeformation = [];
+      this.meshLabels = [];
       this.meshLabelsAvailable = false;
       this.posePitch = 0;
       this.poseYaw = 0;
