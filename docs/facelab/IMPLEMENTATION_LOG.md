@@ -286,3 +286,12 @@
 - User reports that gesture recognition is stable in initial MatePad testing.
 - Record this as qualitative gesture-recognition acceptance only; no numerical latency / false-positive metrics or individual gesture confusion matrix are available.
 - GPU performance regression, touch / M-Pencil fallback, disabled-mode behavior, and stop / restart lifecycle remain to be checked before final release.
+
+
+## 2026-11-08 — FaceLab 0.5.2 release acceptance update
+- User confirms the ArkTS-fixed 0.5.2 HAP builds successfully in DevEco Studio.
+- User reports that gesture recognition is stable during device use.
+- User confirms all four GPU visualization modes remain smooth with gesture input enabled.
+- The above supersedes the earlier pending status for HAP build, overall gesture recognition, and GPU rendering regression.
+- Acceptance is qualitative; no numeric FPS, latency, false-positive, thermal, or battery benchmark was collected.
+- Stop / restart lifecycle and separate touch / M-Pencil fallback checks were not explicitly reported and remain unverified.
