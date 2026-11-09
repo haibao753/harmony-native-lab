@@ -91,6 +91,27 @@ void main() {
         outColor = vec4(0.30, 0.84, 0.91, 1.0);
         return;
     }
+    if (uMode == 4) {
+        vec3 normal = normalize(vNormal);
+        vec3 viewDir = vec3(0.0, 0.0, 1.0);
+        vec3 keyLight = normalize(vec3(-0.62, 0.72, 0.88));
+        vec3 fillLight = normalize(vec3(0.72, -0.28, 0.64));
+        float diffuse = max(dot(normal, keyLight), 0.0);
+        float keySpecular = pow(max(dot(reflect(-keyLight, normal), viewDir), 0.0), 88.0);
+        float fillSpecular = pow(max(dot(reflect(-fillLight, normal), viewDir), 0.0), 42.0);
+        float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 2.7);
+        float reflectionBand = 0.5 + 0.5 * sin(normal.x * 8.0 + normal.y * 5.0 + normal.z * 7.0);
+        vec3 environment = mix(vec3(0.012, 0.018, 0.026),
+                               vec3(0.42, 0.52, 0.62),
+                               smoothstep(0.22, 0.82, reflectionBand));
+        vec3 chrome = environment * (0.28 + diffuse * 0.52)
+                    + vec3(0.92, 0.97, 1.0) * keySpecular * 1.35
+                    + vec3(0.42, 0.70, 0.86) * fillSpecular * 0.78
+                    + vec3(0.24, 0.48, 0.68) * fresnel * 0.62;
+        chrome = mix(chrome, vec3(0.72, 0.82, 0.90), clamp(vHeat * 0.22, 0.0, 0.22));
+        outColor = vec4(chrome, 1.0);
+        return;
+    }
     if (uMode == 2) {
         outColor = vec4(heatColor(vHeat), 1.0);
         return;
@@ -194,7 +215,9 @@ void FaceGpuRenderer::UpdateMesh(const float *vertices, size_t vertexFloatCount,
     pitch_ = pitch;
     yaw_ = yaw;
     roll_ = roll;
-    mode_ = std::clamp(mode, 0, 3);
+    // Mode 4 is the dedicated FORM BEYOND chrome shader. Do not clamp it to
+    // mode 3 (face-region rendering), which silently bypasses the art material.
+    mode_ = std::clamp(mode, 0, 4);
     hasMesh_ = vertices_.size() >= 9 && triangles_.size() >= 3;
     ++dataRevision_;
 }
@@ -432,7 +455,10 @@ void FaceGpuRenderer::UploadMeshLocked()
     const float extent = std::max({maxBounds[0] - minBounds[0],
                                    maxBounds[1] - minBounds[1],
                                    maxBounds[2] - minBounds[2], 0.0001f});
-    const float scale = 1.72f / extent;
+    // Face-driven sculpture growth must remain visible. The generic mesh path
+    // normalizes every frame to its current bounds, which cancels uniform growth.
+    // FORM BEYOND uses a fixed world scale so growth/erosion alter the visible form.
+    const float scale = mode_ == 4 ? 0.60f : 1.72f / extent;
 
     float maxHeat = 0.0f;
     for (float value : deformation_) {
@@ -546,7 +572,11 @@ void FaceGpuRenderer::RenderFrame()
         return;
     }
     glViewport(0, 0, width, height);
-    glClearColor(0.035f, 0.065f, 0.105f, 1.0f);
+    if (mode == 4) {
+        glClearColor(0.003f, 0.004f, 0.009f, 1.0f);
+    } else {
+        glClearColor(0.035f, 0.065f, 0.105f, 1.0f);
+    }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (hasMesh && program_ != 0) {

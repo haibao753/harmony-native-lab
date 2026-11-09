@@ -29,8 +29,14 @@ grep -Fq "recordFramePulse(sysBootTs)" "$callback"
 grep -Fq "callbackCount: this.frameCallbackCount" "$callback"
 
 grep -Fq '"supportWindowMode": ["fullscreen", "split", "floating"]' "$module"
-grep -Fq '"versionCode": 10012' "$manifest"
-grep -Fq '"versionName": "0.7.0-alpha.1"' "$manifest"
+if grep -Fq '"versionCode": 10012' "$manifest" && grep -Fq '"versionName": "0.7.0-alpha.1"' "$manifest"; then
+  :
+elif grep -Fq '"versionCode": 10013' "$manifest" && grep -Fq '"versionName": "0.8.0-alpha.1"' "$manifest"; then
+  :
+else
+  echo "Unexpected FaceLab version metadata for the 0.7 compatibility contract."
+  exit 1
+fi
 
 if grep -Eq "OH_Input_InjectTouchEvent|CONTROL_DEVICE|injectGesture" "$page" "$ability"; then
   echo "Unexpected system-input injection code found."
