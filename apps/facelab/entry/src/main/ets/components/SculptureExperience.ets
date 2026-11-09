@@ -30,7 +30,7 @@ export class SculptureGpuSurfaceController extends XComponentController {
   private faceYaw: number = 0;
   private touchPitch: number = 0;
   private touchYaw: number = 0;
-  private viewZoom: number = 0.86;
+  private viewZoom: number = 0.92;
   private lastTouchX: number = -1;
   private lastTouchY: number = -1;
   private lastPinchDistance: number = 0;
@@ -118,7 +118,7 @@ export class SculptureGpuSurfaceController extends XComponentController {
     this.faceYaw = 0;
     this.touchPitch = 0;
     this.touchYaw = 0;
-    this.viewZoom = 0.86;
+    this.viewZoom = 0.92;
     this.lastTouchX = -1;
     this.lastTouchY = -1;
     this.lastPinchDistance = 0;

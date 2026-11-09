@@ -38,6 +38,7 @@ grep -Fq "SculptureExperience" "$page"
 grep -Fq "uMode == 4" "$renderer"
 grep -Fq "mode == 4" "$renderer"
 grep -Fq "std::clamp(mode, 0, 4)" "$renderer"
+grep -Fq "mode_ == 4 ? 0.60f : 1.72f / extent" "$renderer"
 grep -Fq '"versionCode": 10013' "$manifest"
 grep -Fq '"versionName": "0.8.0-alpha.1"' "$manifest"
 

@@ -455,7 +455,10 @@ void FaceGpuRenderer::UploadMeshLocked()
     const float extent = std::max({maxBounds[0] - minBounds[0],
                                    maxBounds[1] - minBounds[1],
                                    maxBounds[2] - minBounds[2], 0.0001f});
-    const float scale = 1.72f / extent;
+    // Face-driven sculpture growth must remain visible. The generic mesh path
+    // normalizes every frame to its current bounds, which cancels uniform growth.
+    // FORM BEYOND uses a fixed world scale so growth/erosion alter the visible form.
+    const float scale = mode_ == 4 ? 0.60f : 1.72f / extent;
 
     float maxHeat = 0.0f;
     for (float value : deformation_) {
