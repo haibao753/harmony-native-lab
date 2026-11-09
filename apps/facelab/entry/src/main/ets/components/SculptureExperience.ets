@@ -77,8 +77,9 @@ export class SculptureGpuSurfaceController extends XComponentController {
     }
 
     this.controls = this.mapper.map(metrics);
-    this.facePitch = this.controls.pitch * 0.42;
-    this.faceYaw = this.controls.yaw * 0.42;
+    // Face pose is neutral-relative and expressed in degrees; amplify it so movement is legible.
+    this.facePitch = this.controls.pitch * 0.88;
+    this.faceYaw = this.controls.yaw * 0.88;
 
     if (this.controls.leftWink) {
       this.growth = clamp(this.growth + 0.085, 1.0, 1.34);
@@ -212,7 +213,7 @@ export class SculptureGpuSurfaceController extends XComponentController {
         const crater = Math.pow(Math.max(0, Math.cos(theta * 2.0 + latitude * 2.8 + this.phase * 0.55)), 9);
         const pulseWave = Math.sin(theta * 4.0 + latitude * 4.2 - this.phase);
         const radial = clamp(
-          this.growth + waveA * 0.13 + waveB * 0.055 + gravity * 0.035 -
+          this.growth + waveA * 0.16 + waveB * 0.075 + gravity * 0.18 -
             crater * this.erosion * 0.16 + pulseWave * this.pulse * 0.10,
           0.70,
           1.48
@@ -265,6 +266,8 @@ export struct SculptureExperience {
   controller: SculptureGpuSurfaceController = new SculptureGpuSurfaceController();
   @Prop trackingActive: boolean = false;
   @Prop faceDetected: boolean = false;
+  @Prop controlSummary: string = '等待面部姿态数据';
+  @Prop gestureStatus: string = 'NO GESTURE';
   onExit: () => void = () => {};
 
   build() {
@@ -302,9 +305,9 @@ export struct SculptureExperience {
           .fontWeight(FontWeight.Medium)
           .fontColor(this.faceDetected ? '#A7D8DE' : '#77838D')
         Blank()
-        Text('ROLL → GRAVITY')
+        Text(this.gestureStatus)
           .fontSize(9)
-          .fontColor('#77838D')
+          .fontColor(this.faceDetected ? '#A7D8DE' : '#77838D')
           .letterSpacing(1)
       }
       .width('100%')
@@ -328,7 +331,12 @@ export struct SculptureExperience {
           .letterSpacing(0.5)
           .textAlign(TextAlign.Center)
           .width('100%')
-        Text('头部歪斜改变形变场；点头与转头改变观察角度。也可直接拖动与双指缩放。')
+        Text(this.controlSummary)
+          .fontSize(10)
+          .fontColor('#A7D8DE')
+          .textAlign(TextAlign.Center)
+          .width('100%')
+        Text('头部动作控制雕塑；单眨眼生长 / 侵蚀，张嘴触发脉冲。可拖动与双指缩放。')
           .fontSize(10)
           .fontColor('#71808B')
           .textAlign(TextAlign.Center)

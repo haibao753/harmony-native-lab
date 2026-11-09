@@ -62,6 +62,8 @@ struct Index {
   @State facePenStatus: string = '等待 M-Pencil 输入';
   @State facePenLastCommand: string = '面部控制关闭';
   @State showSculptureExperience: boolean = false;
+  @State sculptureControlSummary: string = '等待面部姿态数据';
+  @State sculptureGestureStatus: string = 'NO GESTURE';
 
   private faceCallback: FaceTrackingCallback | undefined = undefined;
   private gpuSurfaceController: FaceGpuSurfaceController = new FaceGpuSurfaceController();
@@ -206,6 +208,8 @@ struct Index {
       this.gestureJawOpen = '—';
       if (this.showSculptureExperience) {
         this.sculptureController.pauseFaceInput();
+        this.sculptureControlSummary = 'FACE LOST · 请将面部放回摄像头画面';
+        this.sculptureGestureStatus = 'NO FACE';
       }
       if (this.facePenControlEnabled) {
         this.facePenControlEnabled = false;
@@ -227,6 +231,13 @@ struct Index {
       this.gestureLeftBlink = metrics.leftBlinkWeight.toFixed(2);
       this.gestureRightBlink = metrics.rightBlinkWeight.toFixed(2);
       this.gestureJawOpen = metrics.jawOpenWeight.toFixed(2);
+      if (this.showSculptureExperience) {
+        this.sculptureControlSummary = 'PITCH ' + metrics.pitch.toFixed(1) + '°  ·  YAW ' +
+          metrics.yaw.toFixed(1) + '°  ·  ROLL ' + metrics.roll.toFixed(1) + '°';
+        this.sculptureGestureStatus = metrics.leftWink ? 'LEFT WINK · GROW' :
+          (metrics.rightWink ? 'RIGHT WINK · ERODE' :
+          (metrics.jawConfirm ? 'JAW · PULSE' : 'FACE TRACKING · LIVE'));
+      }
       this.lastGestureUiUpdate = now;
     }
 
@@ -571,6 +582,8 @@ struct Index {
         controller: this.sculptureController,
         trackingActive: this.arContext !== undefined,
         faceDetected: this.faceCount > 0,
+        controlSummary: this.sculptureControlSummary,
+        gestureStatus: this.sculptureGestureStatus,
         onExit: () => {
           this.exitSculptureExperience();
         }

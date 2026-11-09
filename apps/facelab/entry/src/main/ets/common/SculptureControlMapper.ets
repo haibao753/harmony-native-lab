@@ -29,9 +29,9 @@ export class SculptureControlMapper {
     const targetYaw = clamp(metrics.yaw, -48, 48);
     const targetRoll = clamp(metrics.roll, -42, 42);
 
-    this.filteredPitch += (targetPitch - this.filteredPitch) * 0.20;
-    this.filteredYaw += (targetYaw - this.filteredYaw) * 0.20;
-    this.filteredRoll += (targetRoll - this.filteredRoll) * 0.22;
+    this.filteredPitch += (targetPitch - this.filteredPitch) * 0.34;
+    this.filteredYaw += (targetYaw - this.filteredYaw) * 0.34;
+    this.filteredRoll += (targetRoll - this.filteredRoll) * 0.36;
 
     const rollRadians = this.filteredRoll * Math.PI / 180;
     return {

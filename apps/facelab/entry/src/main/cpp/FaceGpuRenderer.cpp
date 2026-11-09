@@ -215,7 +215,9 @@ void FaceGpuRenderer::UpdateMesh(const float *vertices, size_t vertexFloatCount,
     pitch_ = pitch;
     yaw_ = yaw;
     roll_ = roll;
-    mode_ = std::clamp(mode, 0, 3);
+    // Mode 4 is the dedicated FORM BEYOND chrome shader. Do not clamp it to
+    // mode 3 (face-region rendering), which silently bypasses the art material.
+    mode_ = std::clamp(mode, 0, 4);
     hasMesh_ = vertices_.size() >= 9 && triangles_.size() >= 3;
     ++dataRevision_;
 }
